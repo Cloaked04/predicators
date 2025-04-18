@@ -34,6 +34,15 @@ def run_motion_planning(
     num_interp = CFG.pybullet_birrt_extend_num_interp
 
     def _sample_fn(pt: JointPositions) -> JointPositions:
+        '''
+        Samples a new joint configuration from the robot's action space.
+        The joint_space.sample() method generates a random configuration for all joints.
+        Ensures that the finger joint positions remain unchanged.
+
+        Returns: returns new_pt, which is the new joint configuration with the finger
+                 positions preserved.
+        '''
+
         new_pt: JointPositions = list(joint_space.sample())
         # Don't change the fingers.
         new_pt[robot.left_finger_joint_idx] = pt[robot.left_finger_joint_idx]

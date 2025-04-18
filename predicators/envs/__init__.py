@@ -5,6 +5,10 @@ import logging
 from predicators import utils
 from predicators.envs.base_env import BaseEnv
 
+#Added for multitasking
+from predicators.envs.pddl_env import _PDDLEnv
+
+
 __all__ = ["BaseEnv"]
 _MOST_RECENT_ENV_INSTANCE = {}
 
@@ -31,6 +35,7 @@ def create_new_env(name: str,
     return env
 
 
+
 def get_or_create_env(name: str) -> BaseEnv:
     """Get the most recent cached env instance. If one does not exist in the
     cache, create it using create_new_env().
@@ -49,3 +54,4 @@ def get_or_create_env(name: str) -> BaseEnv:
             f"find {name} in the cache. Making a new instance.")
         create_new_env(name, do_cache=True, use_gui=False)
     return _MOST_RECENT_ENV_INSTANCE[name]
+

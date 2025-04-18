@@ -1,0 +1,39 @@
+pybullet build time: Jan 29 2025 23:16:28
+WARNING:root:WARNING: you called get_or_create_env, but I couldn't find multitasking_room in the cache. Making a new instance.
+Predicates found:
+  - basket-at
+  - at
+  - in-basket
+******************************************
+Options found:
+  - SingletonParameterizedOption(name='unload-block', types=[Type(name='block'), Type(name='basket'), Type(name='table')])
+  - SingletonParameterizedOption(name='move-basket', types=[Type(name='basket'), Type(name='table'), Type(name='table')])
+  - SingletonParameterizedOption(name='load-block', types=[Type(name='block'), Type(name='basket'), Type(name='table')])
+******************************************
+EnvironmentTask(init_obs=_PDDLEnvState(data={table1:table: array([], dtype=float32), table2:table: array([], dtype=float32), basket2:basket: array([], dtype=float32), red1:block: array([], dtype=float32), red2:block: array([], dtype=float32), table4:table: array([], dtype=float32), basket1:basket: array([], dtype=float32), blue1:block: array([], dtype=float32), red3:block: array([], dtype=float32), blue2:block: array([], dtype=float32), table3:table: array([], dtype=float32)}, simulator_state={at(red2:block, table1:table), basket-at(basket1:basket, table3:table), at(red1:block, table1:table), at(red3:block, table1:table), in-basket(blue2:block, basket1:basket), in-basket(blue1:block, basket1:basket), basket-at(basket2:basket, table2:table)}), goal_description={at(red3:block, table4:table), at(red1:block, table4:table), at(red2:block, table4:table)})
+******************************************
+
+Initial State Atoms:
+  basket1:basket
+  basket2:basket
+  blue1:block
+  blue2:block
+  red1:block
+  red2:block
+  red3:block
+  table1:table
+  table2:table
+  table3:table
+  table4:table
+
+Goal Atoms:
+  at(red3:block, table4:table)
+  at(red1:block, table4:table)
+  at(red2:block, table4:table)
+INFO:root:Planning succeeded! Found plan of length 8 after 1 skeletons with 8 samples, discovering 0 failures
+
+Generated Plan:
+[_Option(name='move-basket', objects=[basket1:basket, table3:table, table1:table], params=array([], dtype=float32)), _Option(name='load-block', objects=[red1:block, basket1:basket, table1:table], params=array([], dtype=float32)), _Option(name='load-block', objects=[red3:block, basket1:basket, table1:table], params=array([], dtype=float32)), _Option(name='load-block', objects=[red2:block, basket1:basket, table1:table], params=array([], dtype=float32)), _Option(name='move-basket', objects=[basket1:basket, table1:table, table4:table], params=array([], dtype=float32)), _Option(name='unload-block', objects=[red3:block, basket1:basket, table4:table], params=array([], dtype=float32)), _Option(name='unload-block', objects=[red1:block, basket1:basket, table4:table], params=array([], dtype=float32)), _Option(name='unload-block', objects=[red2:block, basket1:basket, table4:table], params=array([], dtype=float32))]
+
+Metrics:
+defaultdict(<class 'float'>, {'num_failures_discovered': 0.0, 'num_nodes_created': 151.0, 'num_skeletons_optimized': 1.0, 'num_nodes_expanded': 12.0, 'num_samples': 8.0, 'plan_length': 8, 'refinement_time': 0.041709511999215465})

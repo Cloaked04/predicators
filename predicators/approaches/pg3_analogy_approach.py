@@ -32,8 +32,8 @@ class PG3AnalogyApproach(PG3Approach):
         # Create base and target envs.
         base_env_name = CFG.pg3_init_base_env
         target_env_name = CFG.env
-        base_env = get_or_create_env(base_env_name)
-        target_env = get_or_create_env(target_env_name)
+        base_env = get_or_(base_env_name)
+        target_env = get_or_(target_env_name)
         base_options = get_gt_options(base_env.get_name())
         target_options = get_gt_options(target_env.get_name())
         base_nsrts = get_gt_nsrts(base_env.get_name(), base_env.predicates,

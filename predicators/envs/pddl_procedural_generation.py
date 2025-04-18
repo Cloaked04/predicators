@@ -847,3 +847,102 @@ def _generate_miconic_problem(
 )"""
 
     return problem_str
+
+
+########################################################################
+# Edits made by Pratyush Kumar for running experiments on multitasking
+# in the room environment and other domains.
+######################################################################
+
+"""
+Define a function to generate a room_multitasking problem.
+"""
+
+def create_room_multitasking_generator(
+    num_items: int = 3,
+    num_locations: int = 4
+) -> PDDLProblemGenerator:
+    """Create a generator for room multitasking problems.
+    
+    Args:
+        num_items: Number of items to manipulate
+        num_locations: Number of locations in the room
+    Returns:
+        A function that generates PDDL problem strings
+    """
+    
+    def _generate_problem(rng: np.random.Generator) -> str:
+        # Define objects
+        furniture = ["table", "sofa", "shelf"]  # fixed furniture
+        
+        # List of possible items (extend as needed)
+        possible_items = [
+            "book", "remote", "cup", "laptop", "phone", "keys", 
+            "plate", "bottle", "pen", "toy", "magazine", "glasses"
+        ]
+        # Randomly select num_items from possible_items
+        items = rng.choice(possible_items, size=num_items, replace=False)
+        
+        # Generate location names
+        locations = [f"loc{i}" for i in range(num_locations)]
+        grippers = ["left_gripper", "right_gripper"]
+        
+        # Initialize predicates
+        init_strs = set()
+        
+        # Set up furniture at fixed locations
+        # Ensure we have enough locations for furniture
+        min_locations = len(furniture)
+        if num_locations < min_locations:
+            raise ValueError(f"Need at least {min_locations} locations for furniture")
+            
+        for i, furn in enumerate(furniture):
+            init_strs.add(f"(at {furn} loc{i})")
+        
+        # Set up reachability between locations
+        for l1 in locations:
+            for l2 in locations:
+                if l1 != l2:
+                    init_strs.add(f"(reachable {l1} {l2})")
+        
+        # Place robot at initial location
+        init_strs.add(f"(robot_at {locations[0]})")
+        
+        # Set grippers as free
+        for g in grippers:
+            init_strs.add(f"(free {g})")
+        
+        # Place items randomly on furniture
+        initial_locations = rng.choice(furniture, size=len(items))
+        for item, furn in zip(items, initial_locations):
+            init_strs.add(f"(item_at {item} {furn})")
+        
+        # Create goal - move items to different furniture
+        goal_strs = set()
+        for item, current_furn in zip(items, initial_locations):
+            # Get furniture locations except current location
+            possible_goals = [f for f in furniture if f != current_furn]
+            goal_location = rng.choice(possible_goals)
+            goal_strs.add(f"(item_at {item} {goal_location})")
+        
+        # Create PDDL problem string
+        objects_str = "\n        ".join([
+            f"{' '.join(furniture)} - furniture",
+            f"{' '.join(items)} - item",
+            f"{' '.join(grippers)} - gripper",
+            f"{' '.join(locations)} - location"
+        ])
+        
+        init_str = " ".join(sorted(init_strs))
+        goal_str = " ".join(sorted(goal_strs))
+        
+        return f"""(define (problem multitasking_room_prob)
+    (:domain multitasking_room)
+    (:objects
+        {objects_str}
+    )
+    (:init {init_str})
+    (:goal (and {goal_str}))
+)"""
+    
+    return _generate_problem

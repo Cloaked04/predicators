@@ -16,6 +16,25 @@ class GlobalSettings:
     # global parameters
     num_train_tasks = 50
     num_test_tasks = 50
+
+    #########################################
+    # Variables defined by Pratyush for multitasking experiments. This could be dynamically
+    # by counting the number of files in the files in the folder and using that value but just setting this for 
+    # testing at the moment.
+
+    num_train_tasks_multitasking = 1
+    num_test_tasks_multitasking = 1
+
+
+
+
+    #########################################
+
+
+
+
+
+
     # Perform online learning for this many cycles or until this many
     # transitions have been collected, whichever happens first.
     num_online_learning_cycles = 10
@@ -132,8 +151,8 @@ class GlobalSettings:
 
     # general pybullet parameters
     pybullet_draw_debug = False  # useful for annotating in the GUI
-    pybullet_camera_width = 335  # for high quality, use 1674
-    pybullet_camera_height = 180  # for high quality, use 900
+    pybullet_camera_width = 1674  # for high quality, use 1674; default is 335
+    pybullet_camera_height = 900  # for high quality, use 900; default is 180
     pybullet_sim_steps_per_action = 20
     pybullet_max_ik_iters = 100
     pybullet_ik_tol = 1e-3

@@ -19,7 +19,97 @@ from predicators.settings import CFG
 
 @dataclass(frozen=True, order=True)
 class Type:
-    """Struct defining a type."""
+    """Struct defining a type. This class combined with the following 3 classes define the 
+    functionality of defining a type system in predicators. This includes both abstract objects called
+    variables (starting with ?) and concrete objects called objects (like block1, block2, etc.).
+      
+    Takes in name, feature_names, and parent as arguments. The __init__ method,
+    __repr__, and __str__ methods are defined automatically by the dataclass decorator.
+    The field repr=False means that the field is not included in the repr of the object.
+    The field default=None means that the field is optional.
+    The field order=True means that the field is used to sort the object.
+    The field frozen=True means that the field is immutable.
+
+    Since order=True, Python automatically generates comparison methods
+    (__lt__, __le__, __gt__, __ge__); by default, dataclasses compare fields in the order
+    they are defined. Comparison is based on name (first field).
+
+    The __call__ allows an instance of the Type class to be called as a function.
+    The __hash__ method returns a hash value for the object. This allows for the object to
+    be used as a key in a dictionary. For this, the class must be frozen/immutable.
+
+    The function definition of the type def(self, parameters) -> return_type sets the output
+    type of a function that takes in parameters and returns a return_type.
+
+    The @property decorator is used to define a property that is computed dynamically on access.
+    This allows that function to be called like an attribute. Eg: Person.name or Person.age for a 
+    class instance called Person.
+
+    The field(repr=False) for a certain parameter means that the field is not included in the repr of the object.
+    This is useful for fields that are not needed for the repr of the object just for debugging
+    or just to reduce clutter. 
+
+    The field(default=None, repr=False) means that the field is optional and not included in the repr of the object.
+
+    Example:
+
+        # Define a type "Block" with two features and no parent
+        block_type = Type(name="Block", feature_names=["color", "size"])
+
+        print(block_type.name)              # "Block"
+        print(block_type.feature_names)     # ["color", "size"]
+        print(block_type.dim)               # 2 (since two features are defined)
+
+        # Define a type "RedBlock" that inherits from "Block"
+        red_block_type = Type(name="RedBlock", feature_names=["color", "size"],\
+                                parent=block_type)
+
+        print(red_block_type.parent.name)  # "Block"
+
+        #Example of ordering:
+
+        t1 = Type(name="Block", feature_names=["color", "size"])
+        t2 = Type(name="RedBlock", feature_names=["color", "size", "texture"])
+
+        print(t1 < t2)  # True because "Block" < "RedBlock" (lexicographically)
+        print(t1 > t2)  # False
+
+        #Object/ Variable ordering (will make sense after going over the next 3 classes):
+
+        block_type = Type("Block", ["color", "size"])
+
+        obj1 = Object("block1", block_type)
+        obj2 = Object("block2", block_type)
+
+        print(obj1 < obj2)  # True because "block1" < "block2"
+
+        var1 = Variable("?x", block_type)
+        var2 = Variable("?y", block_type)
+
+        print(var1 < var2)  # True because "?x" < "?y"; "x" comes before "y", so var1 < var2.
+
+
+        ######################################################################
+
+        Type has a __call__() method, you can use it like a function to create objects and variables dynamically:
+
+        block_obj = block_type("block1")  # Calls Type.__call__()
+        block_var = block_type("?block")  # Calls Type.__call__()
+
+        # block_type("block1") creates an Object (since "block1" does not start with ?).
+        # block_type("?block") creates a Variable (since "?block" starts with ?).
+
+        # This is equivalent to:
+
+        block_obj = Object(name="block1", type=block_type)
+        block_var = Variable(name="?block", type=block_type)
+
+
+
+
+    
+    """
+
     name: str
     feature_names: Sequence[str] = field(repr=False)
     parent: Optional[Type] = field(default=None, repr=False)
@@ -77,7 +167,23 @@ class _TypedEntity:
 @dataclass(frozen=True, order=True, repr=False)
 class Object(_TypedEntity):
     """Struct defining an Object, which is just a _TypedEntity whose name does
-    not start with "?"."""
+    not start with "?".
+    
+    Example: 
+
+            # Define a type "Block" with two features and no parent
+            block_type = Type(name="Block", feature_names=["color", "size"])
+
+            # Create an object of type "Block"
+            block_obj = Object(name="block1", type=block_type)
+
+            print(block_obj)  # Outputs: "block1:Block"
+            print(block_obj.is_instance(block_type))  # True
+            print(block_obj.is_instance(red_block_type))  # False (not a RedBlock)
+    
+    
+    
+    """
 
     def __post_init__(self) -> None:
         assert not self.name.startswith("?")
@@ -91,7 +197,21 @@ class Object(_TypedEntity):
 @dataclass(frozen=True, order=True, repr=False)
 class Variable(_TypedEntity):
     """Struct defining a Variable, which is just a _TypedEntity whose name
-    starts with "?"."""
+    starts with "?".
+    
+    Example:
+
+        # Define a type "Block" with two features and no parent
+        block_type = Type(name="Block", feature_names=["color", "size"])
+
+        # Create a variable of type "Block"
+        block_var = Variable(name="?block", type=block_type)
+
+        print(block_var)  # Outputs: "?block:Block"
+        print(block_var.is_instance(block_type))  # True
+        print(block_var.is_instance(red_block_type))  # False (not a RedBlock)
+    
+    """
 
     def __post_init__(self) -> None:
         assert self.name.startswith("?")
@@ -104,7 +224,11 @@ class Variable(_TypedEntity):
 
 @dataclass
 class State:
-    """Struct defining the low-level state of the world."""
+    """Struct defining the low-level state of the world. simulator_states could be anything 
+    like random number generators, link to physics engines etc. It is considered immutable and
+    taken into account when copying states and comparing states them (last two methods in thie class).
+    That is why two states are cannot be comapared if their simulator_states are not None.
+    """
     data: Dict[Object, Array]
     # Some environments will need to store additional simulator state, so
     # this field is provided.
@@ -116,7 +240,11 @@ class State:
             assert len(self[obj]) == obj.type.dim
 
     def __iter__(self) -> Iterator[Object]:
-        """An iterator over the state's objects, in sorted order."""
+        """An iterator over the state's objects, in sorted order.
+         The sorting is based on the order of the objects in the state which 
+         is determined lexically by the name of the objects since order=True for
+        Type and Object/Variables.
+        """
         return iter(sorted(self.data))
 
     def __getitem__(self, key: Object) -> Array:
@@ -133,7 +261,9 @@ class State:
         self.data[obj][idx] = feature_val
 
     def get_objects(self, object_type: Type) -> List[Object]:
-        """Return objects of the given type in the order of __iter__()."""
+        """Return objects of the given type in the order of __iter__() -- the iterator defined above.
+        So it basically iterates over sorted(self.data).
+        """
         return [o for o in self if o.is_instance(object_type)]
 
     def vec(self, objects: Sequence[Object]) -> Array:
@@ -160,6 +290,11 @@ class State:
         if val is None or isinstance(val, (float, bool, int, str)):
             return val
         if isinstance(val, (list, tuple, set)):
+            # If val is a list, tuple, or set, it recursively copies
+            # each element and reconstructs the container using type(val).
+            # type(val) ensures that: a list stays a list, a tuple stays a tuple, 
+            # and a set stays a set.
+
             return type(val)(self._copy_state_value(v) for v in val)
         assert hasattr(val, "copy")
         return val.copy()
@@ -209,11 +344,16 @@ class Predicate:
     # The classifier takes in a complete state and a sequence of objects
     # representing the arguments. These objects should be the only ones
     # treated "specially" by the classifier.
+    # Consider classifier that performs the main logic of the predicate.
     _classifier: Callable[[State, Sequence[Object]],
                           bool] = field(compare=False)
 
     def __call__(self, entities: Sequence[_TypedEntity]) -> _Atom:
-        """Convenience method for generating Atoms."""
+        """Convenience method for generating Atoms. Generates Lifted and Ground Atom from the list
+        of entities. If the entities are objects, a GroundAtom is returned, otherwise if entities are 
+        Variables, a LiftedAtom is returned; finally, if the entities are a mix of objects and variables,
+        a ValueError is raised.
+        """
         if self.arity == 0:
             raise ValueError("Cannot use __call__ on a 0-arity predicate, "
                              "since we can't determine whether it becomes a "
@@ -244,8 +384,13 @@ class Predicate:
         Performs type checking first.
         """
         assert len(objects) == self.arity
+
+        # This check ensures that the types of the objects 
+        # being passed to the predicate match the expected types defined by the predicate.
+        # For example, a predicate defined for two blocks should not work with a block and a table.
         for obj, pred_type in zip(objects, self.types):
             assert isinstance(obj, Object)
+            # is_instance() method defined in _TypedEntity class.   
             assert obj.is_instance(pred_type)
         return self._classifier(state, objects)
 
@@ -291,6 +436,8 @@ class Predicate:
     def _negated_classifier(self, state: State,
                             objects: Sequence[Object]) -> bool:
         # Separate this into a named function for pickling reasons.
+        # Same as self._classifier(state, objects) but negated; gives out
+        # the opposite boolean value.
         return not self._classifier(state, objects)
 
 
@@ -300,7 +447,14 @@ class _Atom:
     objects).
 
     Should not be instantiated externally.
+
+    Note how _str is not defined and the both __str__ and __repr__ point to _str  which
+    will lead to a print statement on an instance of _Atom returning a NotImplementedError.
+    Since _Atom is an abstract class, this is fine and the concrete classes that inherit from it
+    will implement _str.
     """
+
+    # Takes in the predicate and the Objects/Variables.
     predicate: Predicate
     entities: Sequence[_TypedEntity]
 
@@ -308,7 +462,10 @@ class _Atom:
         if isinstance(self.entities, _TypedEntity):
             raise ValueError("Atoms expect a sequence of entities, not a "
                              "single entity.")
+        # This works becuase despite duplicate types, each of them is specified in the predicate.
+        # Thus number of entities must match the arity of the predicate.
         assert len(self.entities) == self.predicate.arity
+        #Works because the objects must be passed in the order the predicate expects them.
         for ent, pred_type in zip(self.entities, self.predicate.types):
             assert ent.is_instance(pred_type)
 
@@ -357,15 +514,22 @@ class LiftedAtom(_Atom):
         A list of "Variable"s.
         """
         return list(cast(Variable, ent) for ent in self.entities)
-
+    
+    # Concrete implementation of _str for LiftedAtom. Overrides the abstract method in _Atom.
     @cached_property
     def _str(self) -> str:
         return (str(self.predicate) + "(" +
                 ", ".join(map(str, self.variables)) + ")")
 
+    # VarToObjSub is a dictionary that maps variables to objects.
+    # Part of the list of higher-order data structures defined in this file towards the
+    # end in around lines 1900. 
     def ground(self, sub: VarToObjSub) -> GroundAtom:
         """Create a GroundAtom with a given substitution."""
+        # This check ensures that all variables in the lifted atom are present in the substitution.
         assert set(self.variables).issubset(set(sub.keys()))
+        # This creates a new GroundAtom with the same predicate as the lifted atom,
+        # but with the objects substituted for the variables.
         return GroundAtom(self.predicate, [sub[v] for v in self.variables])
 
     def substitute(self, sub: VarToVarSub) -> LiftedAtom:
@@ -384,6 +548,9 @@ class GroundAtom(_Atom):
 
         A list of "Object"s.
         """
+        # Each of the entities in the list is cast to an Object as in the
+        # ground case, they are supposed to be concrete objects. If they are not,
+        # they will be wrongfully assumed to be of the correct type.
         return list(cast(Object, ent) for ent in self.entities)
 
     @cached_property
@@ -448,6 +615,9 @@ class EnvironmentTask:
     def goal(self) -> Set[GroundAtom]:
         """Convenience method for environment tasks that are fully observed."""
         assert isinstance(self.goal_description, set)
+        # In order to be a valid goal description, it must be a set of GroundAtoms or
+        # the first part of the assert must be true which would be when self.goal_description
+        # a binary.
         assert not self.goal_description or isinstance(
             next(iter(self.goal_description)), GroundAtom)
         return self.goal_description
@@ -461,10 +631,24 @@ class ParameterizedOption:
     """Struct defining a parameterized option, which has a parameter space and
     can be ground into an Option, given parameter values.
 
+    This represents a high-level, reusable option template that can be 
+    grounded into a specific _Option by providing specific objects and parameter values.
+
     An option is composed of a policy, an initiation classifier, and a
     termination condition. We will stick with deterministic termination
     conditions. For a parameterized option, all of these are conditioned
     on parameters.
+
+    Example:
+
+        move_option = ParameterizedOption(
+        name="Move",
+        types=[robot_type, location_type],  # Expects 2 arguments: (robot, location)
+        params_space=Box(low=np.array([0.0]), high=np.array([1.0]), dtype=np.float32),
+        policy=move_policy,
+        initiable=move_initiable,
+        terminal=move_terminal
+    )
     """
     name: str
     types: Sequence[Type]
@@ -527,7 +711,28 @@ class _Option:
     """Struct defining an option, which is like a parameterized option except
     that its components are not conditioned on objects/parameters.
 
+    Brief note on Options: Options are prolonged actions/ steps that follow certain
+    conditions and start execution when the state/ system matches some initial conditions
+    and are continued until the termination conditions are met.
+
+    Represents a fully instantiated, executable option that has specific
+    objects and parameters assigned. Created from a ParameterizedOption
+    by specifying objects and parameter values. Stores specific objects and parameters.
+    The policy, initiable, and terminal functions no longer depend on objects/parameters,
+    since they are already assigned.
+
     Should not be instantiated externally.
+
+    Example: Continuing from the ParameterizedOption defined in the previous class:
+
+        robot = Object("robot1", robot_type)
+        loc = Object("loc1", location_type)
+
+        grounded_move = move_option.ground([robot, loc], [0.5])  # Grounding
+
+    Thus the grounding method gives out an _Option. However note that one doesn't necessarily 
+    defines it. The expected flow is to define a ParameterizedOption (an abstract option) and then 
+    ground it.
     """
     name: str
     # A policy maps a state to an action.
@@ -548,7 +753,10 @@ class _Option:
     memory: Dict = field(repr=False)
 
     def policy(self, state: State) -> Action:
-        """Call the policy and set the action's option."""
+        """Call the policy and set the action's option.
+            This action is an instance of the class Action later
+            in this file. Defines the set_option method used here.
+        """
         action = self._policy(state)
         action.set_option(self)
         return action
@@ -584,7 +792,9 @@ class STRIPSOperator:
         sampler: NSRTSampler = field(repr=False)
     ) -> NSRT:
         """Make an NSRT out of this STRIPSOperator object, given the necessary
-        additional fields."""
+        additional fields. NSRT is a type/class defined below in this file.
+        Also, read the paper on NSRT to under the concept better. 
+        """
         return NSRT(self.name, self.parameters, self.preconditions,
                     self.add_effects, self.delete_effects, self.ignore_effects,
                     option, option_vars, sampler)
@@ -599,6 +809,10 @@ class STRIPSOperator:
         assert len(objects) == len(self.parameters)
         assert all(
             o.is_instance(p.type) for o, p in zip(objects, self.parameters))
+
+        # Makes VarToObjSum which is then used later in the next line to ground liftedAtoms in
+        # pre-conditions and effects and then finally return a GroundSTRIPSOperator which is defined
+        # to be private.
         sub = dict(zip(self.parameters, objects))
         preconditions = {atom.ground(sub) for atom in self.preconditions}
         add_effects = {atom.ground(sub) for atom in self.add_effects}
@@ -673,7 +887,8 @@ class STRIPSOperator:
 
     def copy_with(self, **kwargs: Any) -> STRIPSOperator:
         """Create a copy of the operator, optionally while replacing any of the
-        arguments."""
+        arguments.
+        """
         default_kwargs = dict(name=self.name,
                               parameters=self.parameters,
                               preconditions=self.preconditions,
@@ -690,7 +905,60 @@ class STRIPSOperator:
                                 option_vars: Sequence[Variable],
                                 add_or_delete: str) -> STRIPSOperator:
         """Return a new STRIPS operator resulting from turning the given effect
-        (either add or delete) into an ignore effect."""
+        (either add or delete) into an ignore effect.
+        
+        remaining_params (a tuple defined below) works as follows that are the variables
+        still needed after modifying the effects.:
+
+        Collects all variables that appear in:
+            - self.preconditions (preconditions of the STRIPS operator);
+            - new_add_effects (remaining add effects after removing the effect);
+            - new_delete_effects (remaining delete effects after removing the effect);
+
+            - | set(option_vars) Ensures that all option variables (option_vars) remain as parameters;
+
+        Example:
+
+            STRIPSOperator(
+            name="stack",
+            parameters=[?x, ?y],  # Initially two parameters
+            preconditions={OnTable(?x), Clear(?y)},
+            add_effects={On(?x, ?y)},
+            delete_effects={Clear(?y)},
+            ignore_effects={}
+        )
+
+        Removing the effect: add effect On(?x, ?y)
+
+            new_add_effects = {}                # Empty because we removed the effect
+            new_delete_effects = {Clear(?y)}    # Delete effects remain unchanged
+
+        
+        Now, upon computing remaining_params:
+
+            preconditions → {OnTable(?x), Clear(?y)}
+            new_add_effects → {} (empty)
+            new_delete_effects → {Clear(?y)}
+            option_vars → {} (assume None)
+
+        Thus, we have:
+
+            remaining_params = {?x, ?y} and, new_params remains [?x, ?y].
+
+        If we were to remove Clear(?y) from delete_effects as well:
+
+            new_delete_effects = {}; this leaves:
+
+                 preconditions → {OnTable(?x), Clear(?y)}
+                 new_add_effects → {}
+                 new_delete_effects → {}
+
+        results in:
+
+            remaining_params = {?x}; and, new_params = [?x].    
+
+
+        """
         assert add_or_delete in ("add", "delete")
         if add_or_delete == "add":
             assert effect in self.add_effects
@@ -702,6 +970,8 @@ class STRIPSOperator:
             new_delete_effects = self.delete_effects - {effect}
         # Since we are removing an effect, it could be the case
         # that parameters need to be removed from the operator.
+
+
         remaining_params = {
             p
             for atom in self.preconditions | new_add_effects
@@ -727,6 +997,9 @@ class _GroundSTRIPSOperator:
     """A STRIPSOperator + objects.
 
     Should not be instantiated externally.
+
+    Created by grounding STRIPSOperator. Function to ground this defined in class STRIPSOperator.
+
     """
     parent: STRIPSOperator
     objects: Sequence[Object]
@@ -804,6 +1077,7 @@ class NSRT:
     # option that this NSRT contains.
     option_vars: Sequence[Variable]
     # A sampler maps a state, RNG, and objects to option parameters.
+    # NSRTSampler is a high-level data type defined later in the file.
     _sampler: NSRTSampler = field(repr=False)
 
     @cached_property
@@ -879,7 +1153,49 @@ class NSRT:
         return self._sampler
 
     def ground(self, objects: Sequence[Object]) -> _GroundNSRT:
-        """Ground into a _GroundNSRT, given objects."""
+        """Ground into a _GroundNSRT, given objects.
+        
+        Check that all objects are of the right data type, make the VarToObjSub
+        and ground the preconditions, add_effects, delete_effects, delete_effects, option_objs.
+
+        Example:
+
+            # Define predicate and option
+            block_type = Type("Block", ["color", "size"])
+            on_pred = Predicate("On", [block_type, block_type], lambda s, o: True)
+
+            # Define NSRT parameters (Lifted Variables)
+            x = Variable("?x", block_type)
+            y = Variable("?y", block_type)
+
+            # Define NSRT (lifted version)
+            lifted_nsrt = NSRT(
+                name="Stack",
+                parameters=[x, y],
+                preconditions={LiftedAtom(on_pred, [x, y])},  # Requires "On(?x, ?y)"
+                add_effects={LiftedAtom(on_pred, [x, y])},  # Adds "On(?x, ?y)"
+                delete_effects={},
+                ignore_effects=set(),
+                option=ParameterizedOption("Move", [block_type], Box(0, 1, dtype=np.float32),
+                                        lambda s, m, o, p: None,
+                                        lambda s, m, o, p: True,
+                                        lambda s, m, o, p: False),
+                option_vars=[x]
+            )
+
+
+            block1 = Object("block1", block_type)
+            block2 = Object("block2", block_type)
+
+            grounded_nsrt = lifted_nsrt.ground([block1, block2])
+            print(grounded_nsrt)  # _GroundNSRT instance
+
+
+         The lifted variables ?x and ?y are replaced with block1 and block2
+         creating a specific version of the NSRT.
+
+
+        """
         assert len(objects) == len(self.parameters)
         assert all(
             o.is_instance(p.type) for o, p in zip(objects, self.parameters))
@@ -899,13 +1215,18 @@ class NSRT:
         Note that the parameters must stay the same for the sake of the
         sampler inputs.
         """
+        # Removes preconditions that do not belong to the kept predicates.
         preconditions = {a for a in self.preconditions if a.predicate in kept}
+        # Removes unwanted effects, keeping only the predicates in kept.
         add_effects = {a for a in self.add_effects if a.predicate in kept}
         delete_effects = {
             a
             for a in self.delete_effects if a.predicate in kept
         }
         ignore_effects = {a for a in self.ignore_effects if a in kept}
+
+        #Returns a new NSRT with only the selected predicates.
+
         return NSRT(self.name, self.parameters, preconditions, add_effects,
                     delete_effects, ignore_effects, self.option,
                     self.option_vars, self._sampler)
@@ -990,6 +1311,26 @@ class _GroundNSRT:
 
         On the Option that is returned, one can call, e.g.,
         policy(state).
+
+        Does the following:
+
+            - Calls the _sampler function to generate parameters for the option.
+            - Ensures parameter values fall within valid ranges (clipping to params_space).
+            - Returns a fully instantiated _Option, which can then be executed
+        
+        Example:
+
+            state = State({...})  # Current environment state
+            goal = {...}  # Target goal
+            rng = np.random.default_rng()  # Random generator
+
+            sampled_option = grounded_nsrt.sample_option(state, goal, rng)
+
+            action = sampled_option.policy(state)
+            print(action)  # Returns an action generated by the policy
+
+
+
         """
         # Note that the sampler takes in ALL self.objects, not just the subset
         # self.option_objs of objects that are passed into the option.
@@ -1002,7 +1343,29 @@ class _GroundNSRT:
 
     def copy_with(self, **kwargs: Any) -> _GroundNSRT:
         """Create a copy of the ground NSRT, optionally while replacing any of
-        the arguments."""
+        the arguments.
+        
+        Does the following:
+
+            - Creates a new _GroundNSRT with modifications.
+            - Any unchanged attributes are copied from self.
+            - Prevents modifying the original _GroundNSRT (since it's immutable).
+        
+        Example:
+
+            new_grounded_nsrt = grounded_nsrt.copy_with(
+                    add_effects={GroundAtom(on_pred, [block1, block3])}  # Modify add effects
+                )
+            
+            print(new_grounded_nsrt)
+
+        
+        The new _GroundNSRT is the same as before but with modified add effects.
+        The original _GroundNSRT remains unchanged.
+
+
+        
+        """
         default_kwargs = dict(parent=self.parent,
                               objects=self.objects,
                               preconditions=self.preconditions,
@@ -1011,10 +1374,16 @@ class _GroundNSRT:
                               option=self.option,
                               option_objs=self.option_objs,
                               _sampler=self._sampler)
+        
+        # Ensures that only valid attributes are updated.
         assert set(kwargs.keys()).issubset(default_kwargs.keys())
+        # Updates values in default_kwargs with the new values from kwargs.
         default_kwargs.update(kwargs)
         # mypy is known to have issues with this pattern:
         # https://github.com/python/mypy/issues/5382
+
+        # Creates a new _GroundNSRT instance with the updated values.
+        # Prevents modifying the original object.
         return _GroundNSRT(**default_kwargs)  # type: ignore
 
 
@@ -1024,6 +1393,48 @@ class Action:
 
     This is a light wrapper around a numpy float array that can
     optionally store the option which produced it.
+
+    Example:
+
+    1. Creating an Action: The action defined below doesn't have an option assigned yet.
+
+        # Create a NumPy array representing the action (e.g., a movement command)
+        action_array = np.array([0.5, -0.2])
+
+        # Create an action without an associated option
+        action = Action(action_array)
+
+        print(action.arr)  # Output: [ 0.5 -0.2]
+        print(action.has_option())  # Output: False
+
+    
+    2. Associating an Option with an Action: Associating action with the move option.
+       Calling get_option() returns the grounded _Option that created the action.
+
+            # Create a dummy grounded option
+            move_option = _Option(
+                name="Move",
+                _policy=lambda s: Action(np.array([1.0, 0.0])),
+                initiable=lambda s: True,
+                terminal=lambda s: False,
+                parent=None,
+                objects=[],
+                params=np.array([]),
+                memory={}
+            )
+
+            # Set the option in the action
+            action.set_option(move_option)
+
+            print(action.has_option())  # Output: True
+            print(action.get_option().name)  # Output: "Move"
+
+    3. Unsetting an Option: Resets the option, making has_option() return False.
+
+            action.unset_option()
+            print(action.has_option())  # Output: False
+
+
     """
     _arr: Array
     _option: _Option = field(repr=False, default=DummyOption)

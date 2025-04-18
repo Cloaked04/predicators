@@ -34,9 +34,61 @@ from predicators.utils import EnvironmentFailure, _TaskPlanningHeuristic
 _NOT_CAUSES_FAILURE = "NotCausesFailure"
 
 
+# Importing the newly defined heuristic.py
+
+from .heuristics import HAddHeuristic, LMCutHeuristic
+
+
+
 @dataclass(repr=False, eq=False)
 class _Node:
-    """A node for the search over skeletons."""
+    """A node for the search over skeletons.
+    It represents a state in the high-level planning search space,
+    specifically for the A* search algorithm that generates action skeletons (symbolic sequences of high-level actions).
+
+    skeleton: The sequence of high-level actions (NSRTs) leading to this node.
+    parent: The parent node in the search tree (used for backtracking and reconstructing paths).
+    atoms_sequence : The expected sequence of ground atoms (state representations) over time.
+
+    The A* search algorithm expands _Node instances by applying NSRTs (symbolic operators) to generate new nodes.
+
+    Example:
+
+        initial_node = _Node(
+        atoms={GroundAtom(Predicate("On", [Block, Block]), [block1, block2])},
+        skeleton=[],
+        atoms_sequence=[{GroundAtom(Predicate("On", [Block, Block]), [block1, block2])}],
+        parent=None,
+        cumulative_cost=0.0
+    )
+
+    Expanding a _Node:
+
+        new_action = _GroundNSRT(
+        parent=some_nsrt,
+        objects=[block1, block2],
+        preconditions={GroundAtom(Predicate("Clear", [Block]), [block1])},
+        add_effects={GroundAtom(Predicate("Holding", [Block]), [block1])},
+        delete_effects={GroundAtom(Predicate("On", [Block, Block]), [block1, block2])},
+        option=some_option,
+        option_objs=[block1],
+        _sampler=some_sampler
+    )
+
+        child_node = _Node(
+            atoms={GroundAtom(Predicate("Holding", [Block]), [block1])},  # New state
+            skeleton=initial_node.skeleton + [new_action],  # Append action
+            atoms_sequence=initial_node.atoms_sequence + [{GroundAtom(Predicate("Holding", [Block]), [block1])}],
+            parent=initial_node,  # Parent node is the initial state
+            cumulative_cost=initial_node.cumulative_cost + 1.0
+    )
+
+
+    This expands initial_node by applying new_action. The new fact is Holding(block1), replacing On(block1, block2). 
+    The skeleton is updated to include the applied action, along with increasing the cost.
+
+
+    """
     atoms: Set[GroundAtom]
     skeleton: List[_GroundNSRT]
     atoms_sequence: List[Set[GroundAtom]]  # expected state sequence
@@ -55,6 +107,7 @@ def sesame_plan(
     task_planning_heuristic: str,
     max_skeletons_optimized: int,
     max_horizon: int,
+    heuristic_method: str = "pyperplan", #New parameter to use different methods for computing heuristics
     abstract_policy: Optional[AbstractPolicy] = None,
     max_policy_guided_rollout: int = 0,
     refinement_estimator: Optional[BaseRefinementEstimator] = None,
@@ -75,9 +128,11 @@ def sesame_plan(
     if CFG.sesame_task_planner == "astar":
         return _sesame_plan_with_astar(
             task, option_model, nsrts, predicates, types, timeout, seed,
-            task_planning_heuristic, max_skeletons_optimized, max_horizon,
+            task_planning_heuristic, max_skeletons_optimized, max_horizon, heuristic_method,
             abstract_policy, max_policy_guided_rollout, refinement_estimator,
             check_dr_reachable, allow_noops, use_visited_state_set)
+
+    # Calls fast-downward to get an optimal plan
     if CFG.sesame_task_planner == "fdopt":
         assert abstract_policy is None
         return _sesame_plan_with_fast_downward(task,
@@ -89,6 +144,8 @@ def sesame_plan(
                                                seed,
                                                max_horizon,
                                                optimal=True)
+
+    # Calls fast-downward to get a satisfiable plan
     if CFG.sesame_task_planner == "fdsat":
         assert abstract_policy is None
         return _sesame_plan_with_fast_downward(task,
@@ -115,6 +172,7 @@ def _sesame_plan_with_astar(
     task_planning_heuristic: str,
     max_skeletons_optimized: int,
     max_horizon: int,
+    heuristic_method: str,  # New parameter
     abstract_policy: Optional[AbstractPolicy] = None,
     max_policy_guided_rollout: int = 0,
     refinement_estimator: Optional[BaseRefinementEstimator] = None,
@@ -123,6 +181,8 @@ def _sesame_plan_with_astar(
     use_visited_state_set: bool = False
 ) -> Tuple[List[_Option], List[_GroundNSRT], Metrics]:
     """The default version of SeSamE, which runs A* to produce skeletons."""
+
+    # init_atoms contains all the atoms (Grounded) that hold in the initial state.
     init_atoms = utils.abstract(task.init, predicates)
     objects = list(task.init)
     start_time = time.perf_counter()
@@ -143,9 +203,29 @@ def _sesame_plan_with_astar(
         # that initially has empty effects may later have a _NOT_CAUSES_FAILURE.
         reachable_nsrts = filter_nsrts(task, init_atoms, ground_nsrts,
                                        check_dr_reachable, allow_noops)
-        heuristic = utils.create_task_planning_heuristic(
-            task_planning_heuristic, init_atoms, task.goal, reachable_nsrts,
-            predicates, objects)
+        # heuristic = utils.create_task_planning_heuristic(
+        #     task_planning_heuristic, init_atoms, task.goal, reachable_nsrts,
+        #     predicates, objects)
+
+        '''
+        Using the Pyperplan heurisitc as default; using the local heuristic if 
+        required as such.
+        '''
+
+        if heuristic_method == "pyperplan":
+            heuristic = utils.create_task_planning_heuristic(
+                task_planning_heuristic, init_atoms, task.goal, reachable_nsrts,
+                predicates, objects)
+        elif heuristic_method == "hadd":
+            heuristic = HAddHeuristic(init_atoms, task.goal, reachable_nsrts)
+        elif heuristic_method == "lmcut":
+            heuristic = LMCutHeuristic(init_atoms, task.goal, reachable_nsrts)
+        else:
+            raise ValueError(f"Unrecognized heuristic_method: {heuristic_method}")
+
+
+
+
         try:
             new_seed = seed + int(metrics["num_failures_discovered"])
             gen = _skeleton_generator(
@@ -153,6 +233,8 @@ def _sesame_plan_with_astar(
                 timeout - (time.perf_counter() - start_time), metrics,
                 max_skeletons_optimized, abstract_policy,
                 max_policy_guided_rollout, use_visited_state_set)
+
+            #print(gen)
             # If a refinement cost estimator is provided, generate a number of
             # skeletons first, then predict the refinement cost of each skeleton
             # and attempt to refine them in this order.
@@ -168,6 +250,8 @@ def _sesame_plan_with_astar(
                 gen = iter(
                     sorted(proposed_skeletons,
                            key=lambda s: estimator.get_cost(task, *s)))
+            # Refinement section: goes over each plan and tries to refine it using 
+            # _run_low_level_search.
             refinement_start_time = time.perf_counter()
             for skeleton, atoms_sequence in gen:
                 if CFG.sesame_use_necessary_atoms:
@@ -219,10 +303,13 @@ def sesame_ground_nsrts(
     start_time: float,
     timeout: float,
 ) -> List[_GroundNSRT]:
-    """Helper function for _sesame_plan_with_astar(); generate ground NSRTs."""
+    """Helper function for _sesame_plan_with_astar(); generate ground NSRTs from the list of objects."""
     if CFG.sesame_grounder == "naive":
         ground_nsrts = []
         for nsrt in sorted(nsrts):
+            # all_ground_nsrts -- defined in utils.py -- gets all possible groundings of the given NSRT with the given objects.
+            # Does this by collecting all the types of parameters for a particular NSRT, finding all possible object assignments
+            # to them and then calling nsrt.ground for each of the possible choices of objects that satisfy.
             for ground_nsrt in utils.all_ground_nsrts(nsrt, objects):
                 ground_nsrts.append(ground_nsrt)
                 if time.perf_counter() - start_time > timeout:
@@ -251,14 +338,28 @@ def filter_nsrts(
 ) -> List[_GroundNSRT]:
     """Helper function for _sesame_plan_with_astar(); optionally filter out
     NSRTs with empty effects and/or those that are unreachable."""
+
+    # List comprehension filters the ground_nsrts (a list of ground NSRTs), keeping only those that have the following:
+    #   - If allow_noops is True, all NSRTs are kept (even those with no effects).
+    #   - If allow_noops is False, only NSRTs with effects are kept.
+    # (nsrt.add_effects | nsrt.delete_effects) represents the union of both add and delete affects
+    # keeps the nsrt even if it only has one effect.
+
     nonempty_ground_nsrts = [
         nsrt for nsrt in ground_nsrts
         if allow_noops or (nsrt.add_effects | nsrt.delete_effects)
     ]
+
+    # get_reachable_atoms, defined in utils.py, computes all the atoms that are reachable
+    # from the current state (init_atoms). The function iterates over ground NSRTs and checks if ground NSRT's
+    # preconditions are a subset of the current init_ops and the; if it holds, adds the atoms in 
+    # NSRT's add_effects to the set of init_atoms.
     all_reachable_atoms = utils.get_reachable_atoms(nonempty_ground_nsrts,
                                                     init_atoms)
     if check_dr_reachable and not task.goal.issubset(all_reachable_atoms):
         raise PlanningFailure(f"Goal {task.goal} not dr-reachable")
+
+    # A bit redundant as you already go over the ground NSRTs and check for reachable atoms.
     reachable_nsrts = [
         nsrt for nsrt in nonempty_ground_nsrts
         if nsrt.preconditions.issubset(all_reachable_atoms)
@@ -347,7 +448,7 @@ def _skeleton_generator(
     task: Task,
     ground_nsrts: List[_GroundNSRT],
     init_atoms: Set[GroundAtom],
-    heuristic: _TaskPlanningHeuristic,
+    heuristic: Union[_TaskPlanningHeuristic, HAddHeuristic],  # Updated type
     seed: int,
     timeout: float,
     metrics: Metrics,
@@ -378,6 +479,14 @@ def _skeleton_generator(
                       cumulative_cost=0)
     metrics["num_nodes_created"] += 1
     rng_prio = np.random.default_rng(seed)
+
+    # heappush is a function in heapq; heapq is a min-heap, meaning that the smallest element is always at the top.
+    # A* search expands nodes with the lowest estimated cost first.
+    # heapq ensures that nodes are processed in increasing order of cost.
+    # The random tie-breaker (rng_prio.uniform()) prevents bias in search order.
+    # We push the value from the heuristic along with the random value; in case of a tie, this value is used to determine priority.
+
+
     hq.heappush(queue,
                 (heuristic(root_node.atoms), rng_prio.uniform(), root_node))
     # Initialize with empty skeleton for root.
@@ -386,7 +495,7 @@ def _skeleton_generator(
     visited_skeletons: Set[Tuple[_GroundNSRT, ...]] = set()
     visited_skeletons.add(tuple(root_node.skeleton))
     if use_visited_state_set:
-        # This set will maintain (frozen) atom sets that have been fully
+        # This set will maintain (frozen) atom sets that have been fully 
         # expanded already, and ensure that we never expand redundantly.
         visited_atom_sets = set()
     # Start search.
@@ -450,6 +559,8 @@ def _skeleton_generator(
                         cumulative_cost=child_cost)
                     metrics["num_nodes_created"] += 1
                     # priority is g [cost] plus h [heuristic]
+                    # Here, heuristic is an instance of _PyperplanHeuristicWrapper, which is called with child_node.atoms.
+                    # child_node.atoms contains the set of ground atoms at a particular node in the search tree.
                     priority = (child_node.cumulative_cost +
                                 heuristic(child_node.atoms))
                     hq.heappush(queue,
@@ -480,14 +591,24 @@ def _skeleton_generator(
                                    cumulative_cost=child_cost)
                 metrics["num_nodes_created"] += 1
                 # priority is g [cost] plus h [heuristic]
-                priority = (child_node.cumulative_cost +
-                            heuristic(child_node.atoms))
+                # priority = (child_node.cumulative_cost +
+                #             heuristic(child_node.atoms))
+
+                if isinstance(heuristic, HAddHeuristic):
+                    #print("Using local heuristic!!!")
+                    priority = (child_node.cumulative_cost + heuristic(child_node.atoms))
+                else:
+                    priority = (child_node.cumulative_cost + heuristic(child_node.atoms))
+
+
+
                 hq.heappush(queue, (priority, rng_prio.uniform(), child_node))
                 if time.perf_counter() - start_time >= timeout:
                     break
     if not queue:
         raise _MaxSkeletonsFailure("Planning ran out of skeletons!")
     assert time.perf_counter() - start_time >= timeout
+    #print("Unfortunately, control is here.")
     raise _SkeletonSearchTimeout
 
 
@@ -682,6 +803,37 @@ def _update_nsrts_with_failure(
     Returns a new list of ground NSRTs to replace the input one, where
     all ground NSRTs that need modification are replaced with new ones
     (because _GroundNSRTs are frozen).
+
+    -----------------------------------------------------------------------
+
+    ### Functionality:
+            1. Extracts the objects responsible for the failure from the discovered
+               failure event.
+            2. Creates a new failure predicate (`_NOT_CAUSES_FAILURE`) to track 
+               problematic objects that contributed to the failure.
+            3. Updates NSRT preconditions:
+               - If an NSRT was the one that failed, its preconditions are modified 
+                 to explicitly require that the failure predicate is true.
+            4. Updates NSRT effects.
+               - If an NSRT involves the failing object (but was not the failing NSRT),
+                 its add effects are modified to include the failure predicate.
+            5. Leaves unaffected NSRTs unchanged
+            6. Returns the updated list of NSRTs and the new failure predicates.
+
+     ### Returns:
+            - `new_predicates` (Set[Predicate]): 
+                - A set containing newly introduced predicates that track failures.
+            - `new_ground_nsrts` (List[_GroundNSRT]): 
+                - A new list of NSRTs with updated preconditions and effects to avoid
+                  re-executing failing actions in the future.
+
+    ### Example:
+
+            discovered_failure = _DiscoveredFailure(env_failure, failing_nsrt)
+            updated_predicates, updated_nsrts = _update_nsrts_with_failure(discovered_failure, ground_nsrts)
+
+
+
     """
     new_predicates = set()
     new_ground_nsrts = []

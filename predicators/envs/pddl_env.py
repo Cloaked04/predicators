@@ -92,12 +92,25 @@ class _PDDLEnv(BaseEnv):
         # The order is used for constructing actions; see class docstring.
         self._ordered_strips_operators = sorted(self._strips_operators)
         # Compute the train and test tasks.
+        # self._pregenerated_train_tasks = self._generate_tasks(
+        #     CFG.num_train_tasks, self._pddl_train_problem_generator,
+        #     self._train_rng)
+        # self._pregenerated_test_tasks = self._generate_tasks(
+        #     CFG.num_test_tasks, self._pddl_test_problem_generator,
+        #     self._test_rng)
+        """
+        The two vars below are the same as the ones below with only the variables
+        CFG.num_train_tasks and CFG.num_test_tasks changed to their multitasking counterparts
+        for experiments.
+
+        """
         self._pregenerated_train_tasks = self._generate_tasks(
-            CFG.num_train_tasks, self._pddl_train_problem_generator,
+            CFG.num_train_tasks_multitasking, self._pddl_train_problem_generator,
             self._train_rng)
         self._pregenerated_test_tasks = self._generate_tasks(
-            CFG.num_test_tasks, self._pddl_test_problem_generator,
+            CFG.num_test_tasks_multitasking, self._pddl_test_problem_generator,
             self._test_rng)
+
         # Determine the goal predicates from the tasks.
         tasks = self._pregenerated_train_tasks + self._pregenerated_test_tasks
         self._goal_predicates = {
@@ -235,15 +248,35 @@ class _FixedTasksPDDLEnv(_PDDLEnv):
         """
         raise NotImplementedError("Override me!")
 
+    # @property
+    # def _pddl_train_problem_generator(self) -> PDDLProblemGenerator:
+    #     assert len(self._train_problem_indices) >= CFG.num_train_tasks
+    #     return _file_problem_generator(self._pddl_problem_asset_dir,
+    #                                    self._train_problem_indices)
+
+    # @property
+    # def _pddl_test_problem_generator(self) -> PDDLProblemGenerator:
+    #     assert len(self._test_problem_indices) >= CFG.num_test_tasks
+    #     return _file_problem_generator(self._pddl_problem_asset_dir,
+    #                                    self._test_problem_indices)
+
+    """
+    The code below is the exact same as above two functions that are commented out
+    except for the variables CFG.num_train_tasks and CFG.num_test_tasks which are changed
+    to experiment with the fixed environment for multitasking.
+
+    """
+
+
     @property
     def _pddl_train_problem_generator(self) -> PDDLProblemGenerator:
-        assert len(self._train_problem_indices) >= CFG.num_train_tasks
+        assert len(self._train_problem_indices) >= CFG.num_train_tasks_multitasking
         return _file_problem_generator(self._pddl_problem_asset_dir,
                                        self._train_problem_indices)
 
     @property
     def _pddl_test_problem_generator(self) -> PDDLProblemGenerator:
-        assert len(self._test_problem_indices) >= CFG.num_test_tasks
+        assert len(self._test_problem_indices) >= CFG.num_test_tasks_multitasking
         return _file_problem_generator(self._pddl_problem_asset_dir,
                                        self._test_problem_indices)
 

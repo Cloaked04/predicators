@@ -2729,7 +2729,12 @@ def create_task_planning_heuristic(
     objects: Collection[Object],
 ) -> _TaskPlanningHeuristic:
     """Create a task planning heuristic that consumes ground atoms and
-    estimates the cost-to-go."""
+    estimates the cost-to-go.
+    
+    _PYPERPLAN_HEURISTICS is a collection of heuristics that A* can use like h_add, h_max, lm_cut etc.
+
+    """
+
     if heuristic_name in _PYPERPLAN_HEURISTICS:
         return _create_pyperplan_heuristic(heuristic_name, init_atoms, goal,
                                            ground_ops, predicates, objects)
@@ -2770,7 +2775,27 @@ def _create_pyperplan_heuristic(
     objects: Collection[Object],
 ) -> _PyperplanHeuristicWrapper:
     """Create a pyperplan heuristic that inherits from
-    _TaskPlanningHeuristic."""
+    _TaskPlanningHeuristic (_PyperplanheuristicWrapper inherists from _TaskPlanningHeuristic).
+
+    This function, called from create_task_planning_heurisitic method above, selects a heuristic from Pyperplan,
+    converts the planning problem into Pyperplan's format, and wraps the heuristic for use in task planning.
+
+    **Steps:**
+        
+       - Identifies static atoms (unchanging facts).
+       - Creates a _PyperplanTask using _create_pyperplan_task.
+       - Initializes the Pyperplan heuristic function using the task.
+       - Converts the goal state into Pyperplan facts.
+       - Returns a _PyperplanHeuristicWrapper, which allows our planner to use the Pyperplan heuristic.
+
+
+    Example usage:
+
+        heuristic = _create_pyperplan_heuristic("hFF", init_atoms, goal, ground_ops, predicates, objects)
+
+
+
+    """
     assert heuristic_name in _PYPERPLAN_HEURISTICS
     static_atoms = get_static_atoms(ground_ops, init_atoms)
     pyperplan_heuristic_cls = _PYPERPLAN_HEURISTICS[heuristic_name]
@@ -2786,16 +2811,30 @@ def _create_pyperplan_heuristic(
 _PyperplanFacts = FrozenSet[str]
 
 
+'''
+
+Pyperplan requires its own task representations. Use of the following classes and methods is a follows:
+
+    - Convert Ground Atoms to Pyperplan Facts using _atoms_to_pyperplan_facts.
+    - Wrap Data in Pyperplan-Compatible Classes like _PyperplanTask.
+    - Create a Pyperplan Heuristic using _create_pyperplan_heuristic.
+    - Use the Heuristic in A* Search in _skeleton_generator.
+
+
+A note about init_atoms
+
+'''
+
 @dataclass(frozen=True)
 class _PyperplanNode:
-    """Container glue for pyperplan heuristics."""
+    """Container glue for pyperplan heuristics. Represents a planning state in Pyperplan. """
     state: _PyperplanFacts
     goal: _PyperplanFacts
 
 
 @dataclass(frozen=True)
 class _PyperplanOperator:
-    """Container glue for pyperplan heuristics."""
+    """Container glue for pyperplan heuristics. Represents an action in Pyperplan."""
     name: str
     preconditions: _PyperplanFacts
     add_effects: _PyperplanFacts
@@ -2804,7 +2843,7 @@ class _PyperplanOperator:
 
 @dataclass(frozen=True)
 class _PyperplanTask:
-    """Container glue for pyperplan heuristics."""
+    """Container glue for pyperplan heuristics. Represents a full planning problem in Pyperplan."""
     facts: _PyperplanFacts
     initial_state: _PyperplanFacts
     goals: _PyperplanFacts
@@ -2819,7 +2858,8 @@ class _PyperplanHeuristicWrapper(_TaskPlanningHeuristic):
     _pyperplan_goal: _PyperplanFacts
 
     def __call__(self, atoms: Collection[GroundAtom]) -> float:
-        # Note: filtering out static atoms.
+        # Note: filtering out static atoms. These atoms are actually the atoms representing 
+        # the current state. It is passed to this class via heuristic(child_note.atoms) from _skeleton_generator.
         pyperplan_facts = _atoms_to_pyperplan_facts(set(atoms) \
                                                     - self._static_atoms)
         return self._evaluate(pyperplan_facts, self._pyperplan_goal,
@@ -2832,6 +2872,8 @@ class _PyperplanHeuristicWrapper(_TaskPlanningHeuristic):
                   pyperplan_heuristic: _PyperplanBaseHeuristic) -> float:
         pyperplan_node = _PyperplanNode(pyperplan_facts, pyperplan_goal)
         logging.disable(logging.DEBUG)
+        # Actually gives the heuristic value on current_state via computing the heuristic
+        # in Pyperplan.
         result = pyperplan_heuristic(pyperplan_node)
         logging.disable(logging.NOTSET)
         return result
@@ -2845,7 +2887,26 @@ def _create_pyperplan_task(
     objects: Collection[Object],
     static_atoms: Set[GroundAtom],
 ) -> _PyperplanTask:
-    """Helper glue for pyperplan heuristics."""
+    """Helper glue for pyperplan heuristics.
+
+    Once we have the wrappers, we need to construct a Pyperplan task from the given problem.
+    This converts the planning problem into Pyperplan's format, making it ready for heuristic computation.
+    Basically, need to convert all the atoms, inital state, goal state, and options/actions into
+    Pyperplan format.
+
+    Overview:
+
+       - Converts all ground atoms to Pyperplan facts (excluding static atoms).
+       - Converts initial state and goal state to Pyperplan facts.
+       - Converts ground NSRT operators into _PyperplanOperator objects.
+       - Returns a _PyperplanTask containing the converted data.
+    
+    Example usage: 
+
+        pyperplan_task = _create_pyperplan_task(init_atoms, goal, ground_ops, predicates, objects, static_atoms)
+
+
+    """
     all_atoms = set()
     for predicate in predicates:
         all_atoms.update(
@@ -2875,7 +2936,21 @@ def _create_pyperplan_task(
 
 @functools.lru_cache(maxsize=None)
 def _atom_to_pyperplan_fact(atom: GroundAtom) -> str:
-    """Convert atom to tuple for interface with pyperplan."""
+    """Convert atom to tuple for interface with pyperplan.
+    
+    Specifically, converts a GroundAtom into a string representation used by Pyperplan.
+
+    Example:
+
+            _atom_to_pyperplan_fact(GroundAtom(on, [block1, block2]))
+    
+    Returns something like:
+            
+            "(on block1 block2)"
+
+
+
+    """
     arg_str = " ".join(o.name for o in atom.objects)
     return f"({atom.predicate.name} {arg_str})"
 
@@ -2883,7 +2958,24 @@ def _atom_to_pyperplan_fact(atom: GroundAtom) -> str:
 def _atoms_to_pyperplan_facts(
         atoms: Collection[GroundAtom]) -> _PyperplanFacts:
     """Light wrapper around _atom_to_pyperplan_fact() that operates on a
-    collection of atoms."""
+    collection of atoms.
+    
+    Pyperplan operates on symbolic representations (i.e., strings instead of structured objects),
+    we need to convert our structured GroundAtom representations into Pyperplan-compatible facts.
+
+    Converts a set of atoms into a frozenset of string facts. Calls _atom_to_pyperplan_fact for each atom.
+
+    Example:
+
+        _atoms_to_pyperplan_facts({atom1, atom2, atom3})
+
+    Returns: 
+
+        frozenset({"(on block1 block2)", "(clear block1)", "(holding block3)"})
+
+
+
+    """
     return frozenset({_atom_to_pyperplan_fact(atom) for atom in atoms})
 
 

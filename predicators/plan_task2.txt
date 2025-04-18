@@ -1,0 +1,66 @@
+Predicates found:
+  - at
+  - holding
+  - free
+  - reachable
+  - item_at
+  - robot_at
+******************************************
+Options found:
+  - SingletonParameterizedOption(name='move', types=[Type(name='location'), Type(name='location')])
+  - SingletonParameterizedOption(name='pick', types=[Type(name='item'), Type(name='furniture'), Type(name='location'), Type(name='gripper')])
+  - SingletonParameterizedOption(name='place', types=[Type(name='item'), Type(name='furniture'), Type(name='location'), Type(name='gripper')])
+******************************************
+EnvironmentTask(init_obs=_PDDLEnvState(data={pen:item: array([], dtype=float32), sofa:furniture: array([], dtype=float32), shelf:furniture: array([], dtype=float32), phone:item: array([], dtype=float32), loc0:location: array([], dtype=float32), desk:furniture: array([], dtype=float32), remote:item: array([], dtype=float32), left_gripper:gripper: array([], dtype=float32), book:item: array([], dtype=float32), loc2:location: array([], dtype=float32), loc4:location: array([], dtype=float32), right_gripper:gripper: array([], dtype=float32), loc5:location: array([], dtype=float32), keys:item: array([], dtype=float32), cup:item: array([], dtype=float32), loc3:location: array([], dtype=float32), table:furniture: array([], dtype=float32), loc1:location: array([], dtype=float32)}, simulator_state={at(table:furniture, loc0:location), item_at(remote:item, shelf:furniture), reachable(loc5:location, loc3:location), item_at(cup:item, sofa:furniture), reachable(loc1:location, loc4:location), reachable(loc2:location, loc3:location), reachable(loc4:location, loc5:location), reachable(loc5:location, loc2:location), free(left_gripper:gripper), reachable(loc0:location, loc1:location), item_at(book:item, table:furniture), reachable(loc3:location, loc0:location), reachable(loc5:location, loc0:location), reachable(loc3:location, loc2:location), robot_at(loc5:location), reachable(loc2:location, loc1:location), item_at(keys:item, table:furniture), reachable(loc5:location, loc1:location), reachable(loc5:location, loc4:location), reachable(loc0:location, loc5:location), reachable(loc3:location, loc1:location), reachable(loc0:location, loc2:location), reachable(loc0:location, loc4:location), reachable(loc1:location, loc0:location), reachable(loc4:location, loc0:location), free(right_gripper:gripper), reachable(loc1:location, loc5:location), reachable(loc1:location, loc2:location), reachable(loc3:location, loc5:location), at(shelf:furniture, loc2:location), at(desk:furniture, loc3:location), item_at(pen:item, desk:furniture), reachable(loc4:location, loc3:location), reachable(loc4:location, loc1:location), reachable(loc4:location, loc2:location), reachable(loc2:location, loc5:location), reachable(loc0:location, loc3:location), reachable(loc1:location, loc3:location), reachable(loc2:location, loc4:location), item_at(phone:item, shelf:furniture), reachable(loc2:location, loc0:location), at(sofa:furniture, loc1:location), reachable(loc3:location, loc4:location)}), goal_description={item_at(cup:item, shelf:furniture), item_at(pen:item, sofa:furniture), item_at(keys:item, sofa:furniture), item_at(phone:item, desk:furniture), item_at(book:item, desk:furniture), item_at(remote:item, table:furniture)})
+******************************************
+
+Initial State Atoms:
+  book:item
+  cup:item
+  desk:furniture
+  keys:item
+  left_gripper:gripper
+  loc0:location
+  loc1:location
+  loc2:location
+  loc3:location
+  loc4:location
+  loc5:location
+  pen:item
+  phone:item
+  remote:item
+  right_gripper:gripper
+  shelf:furniture
+  sofa:furniture
+  table:furniture
+
+Goal Atoms:
+  item_at(cup:item, shelf:furniture)
+  item_at(pen:item, sofa:furniture)
+  item_at(keys:item, sofa:furniture)
+  item_at(phone:item, desk:furniture)
+  item_at(book:item, desk:furniture)
+  item_at(remote:item, table:furniture)
+
+Generated Plan:
+1. _Option(name='move', objects=[loc5:location, loc1:location], params=array([], dtype=float32))
+2. _Option(name='pick', objects=[cup:item, sofa:furniture, loc1:location, left_gripper:gripper], params=array([], dtype=float32))
+3. _Option(name='move', objects=[loc1:location, loc2:location], params=array([], dtype=float32))
+4. _Option(name='pick', objects=[phone:item, shelf:furniture, loc2:location, right_gripper:gripper], params=array([], dtype=float32))
+5. _Option(name='place', objects=[cup:item, shelf:furniture, loc2:location, left_gripper:gripper], params=array([], dtype=float32))
+6. _Option(name='pick', objects=[remote:item, shelf:furniture, loc2:location, left_gripper:gripper], params=array([], dtype=float32))
+7. _Option(name='move', objects=[loc2:location, loc0:location], params=array([], dtype=float32))
+8. _Option(name='place', objects=[remote:item, table:furniture, loc0:location, left_gripper:gripper], params=array([], dtype=float32))
+9. _Option(name='pick', objects=[book:item, table:furniture, loc0:location, left_gripper:gripper], params=array([], dtype=float32))
+10. _Option(name='move', objects=[loc0:location, loc3:location], params=array([], dtype=float32))
+11. _Option(name='place', objects=[phone:item, desk:furniture, loc3:location, right_gripper:gripper], params=array([], dtype=float32))
+12. _Option(name='place', objects=[book:item, desk:furniture, loc3:location, left_gripper:gripper], params=array([], dtype=float32))
+13. _Option(name='pick', objects=[pen:item, desk:furniture, loc3:location, right_gripper:gripper], params=array([], dtype=float32))
+14. _Option(name='move', objects=[loc3:location, loc0:location], params=array([], dtype=float32))
+15. _Option(name='pick', objects=[keys:item, table:furniture, loc0:location, left_gripper:gripper], params=array([], dtype=float32))
+16. _Option(name='move', objects=[loc0:location, loc1:location], params=array([], dtype=float32))
+17. _Option(name='place', objects=[pen:item, sofa:furniture, loc1:location, right_gripper:gripper], params=array([], dtype=float32))
+18. _Option(name='place', objects=[keys:item, sofa:furniture, loc1:location, left_gripper:gripper], params=array([], dtype=float32))
+
+Metrics:
+defaultdict(<class 'float'>, {'num_failures_discovered': 0.0, 'num_nodes_created': 155159.0, 'num_skeletons_optimized': 1.0, 'num_nodes_expanded': 25875.0, 'num_samples': 18.0, 'plan_length': 18, 'refinement_time': 6.820211615995504})

@@ -17,6 +17,8 @@ from predicators.settings import CFG
 from predicators.structs import Array, EnvironmentTask, Object, State
 
 
+
+
 class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
     """PyBullet Blocks domain."""
     # Parameters that aren't important enough to need to clog up settings.py
@@ -92,8 +94,25 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         # Create blocks. Note that we create the maximum number once, and then
         # later on, in reset_state(), we will remove blocks from the workspace
         # (teleporting them far away) based on which ones are in the state.
+
+        # Debug steps:
+
+        # CFG.blocks_num_blocks_train = [3,4]
+
+
+        # print("blocks_num_blocks_train:", CFG.blocks_num_blocks_train)
+        # print("blocks_num_blocks_test:", CFG.blocks_num_blocks_test)
+
+        # print("Type of blocks_num_blocks_train:", type(CFG.blocks_num_blocks_train))
+        # print("Type of blocks_num_blocks_test:", type(CFG.blocks_num_blocks_test))
+
+
+        # End debug steps
+
         num_blocks = max(max(CFG.blocks_num_blocks_train),
                          max(CFG.blocks_num_blocks_test))
+
+
         block_ids = []
         block_size = CFG.blocks_block_size
         for i in range(num_blocks):

@@ -248,6 +248,7 @@ class PyBulletEnv(BaseEnv):
     def step(self, action: Action) -> Observation:
         # Send the action to the robot.
         target_joint_positions = action.arr.tolist()
+        #target_joint_positions = action.tolist()
         self._pybullet_robot.set_motors(target_joint_positions)
 
         # If we are setting the robot joints directly, and if there is a held
