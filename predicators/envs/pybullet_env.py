@@ -17,6 +17,7 @@ from predicators.pybullet_helpers.camera import create_gui_connection
 from predicators.pybullet_helpers.geometry import Pose3D, Quaternion
 from predicators.pybullet_helpers.link import get_link_state
 from predicators.pybullet_helpers.robots import SingleArmPyBulletRobot
+from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 from predicators.settings import CFG
 from predicators.structs import Action, Array, EnvironmentTask, Observation, \
     State, Video
@@ -184,6 +185,9 @@ class PyBulletEnv(BaseEnv):
                                   "arbitrary states.")
 
     def reset(self, train_or_test: str, task_idx: int) -> Observation:
+        """
+        resets both symbolic and physics states, then returns initial observation
+        """
         state = super().reset(train_or_test, task_idx)
         self._reset_state(state)
         # Converts the State into a PyBulletState.
@@ -191,7 +195,9 @@ class PyBulletEnv(BaseEnv):
         return self._current_observation.copy()
 
     def _reset_state(self, state: State) -> None:
-        """Helper for reset and testing."""
+        """Helper for reset and testing.
+        Internal helper. Applies symbolic state to PyBullet — resets robot, removes held object constraints.
+        """
         # Tear down the old PyBullet scene.
         if self._held_constraint_id is not None:
             p.removeConstraint(self._held_constraint_id,
@@ -199,7 +205,7 @@ class PyBulletEnv(BaseEnv):
             self._held_constraint_id = None
         self._held_obj_id = None
 
-        # Reset robot.
+        # Reset robot. Extracts the robot-specific part of the symbolic state and applies it to the PyBullet robot.
         self._pybullet_robot.reset_state(self._extract_robot_state(state))
 
     def render(self,
@@ -214,6 +220,7 @@ class PyBulletEnv(BaseEnv):
                 "Rendering only works with GUI on. See "
                 "https://github.com/bulletphysics/bullet3/issues/1157")
 
+        #Sets camera viewpoint.
         view_matrix = p.computeViewMatrixFromYawPitchRoll(
             cameraTargetPosition=self._camera_target,
             distance=self._camera_distance,
@@ -226,6 +233,7 @@ class PyBulletEnv(BaseEnv):
         width = CFG.pybullet_camera_width
         height = CFG.pybullet_camera_height
 
+        # This configures the lens of the camera. nearVal, farVal - how close or far the camera sees.
         proj_matrix = p.computeProjectionMatrixFOV(
             fov=60,
             aspect=float(width / height),
@@ -233,6 +241,7 @@ class PyBulletEnv(BaseEnv):
             farVal=100.0,
             physicsClientId=self._physics_client_id)
 
+        #This call captures an image. px is the RGB pixel buffer; other return values are discarded.
         (_, _, px, _,
          _) = p.getCameraImage(width=width,
                                height=height,
@@ -241,6 +250,8 @@ class PyBulletEnv(BaseEnv):
                                renderer=p.ER_BULLET_HARDWARE_OPENGL,
                                physicsClientId=self._physics_client_id)
 
+        #Convert raw images to RGB Array. PyBullet gives you an image with 4 channels (RGBA),
+        #so the alpha channel is dropped.
         rgb_array = np.array(px).reshape((height, width, 4))
         rgb_array = rgb_array[:, :, :3]
         return [rgb_array]
@@ -249,7 +260,67 @@ class PyBulletEnv(BaseEnv):
         # Send the action to the robot.
         target_joint_positions = action.arr.tolist()
         #target_joint_positions = action.tolist()
-        self._pybullet_robot.set_motors(target_joint_positions)
+        #self._pybullet_robot.set_motors(target_joint_positions)
+
+        #Base motion if any:
+
+        if action.has_base_motion and \
+            isinstance(self._pybullet_robot, MobileSingleArmPyBulletRobot):
+
+            base_motion = action.base_motion
+            mode = base_motion['mode']
+            params = base_motion['params']
+
+            if mode == "position":
+                #Directly teleport the robot:
+                x,y,theta = params
+                #Convert to position and orientation
+                #z = self._pybullet_robot._base_pose_position[2]
+                position = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id, mode = "position")
+                #position = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id)
+                z = position[2]
+                new_pos = [x,y,z]
+                new_orn = p.getQuaternionFromEuler([0, 0, theta])
+                p.resetBasePositionAndOrientation(
+                    self._pybullet_robot.robot_id,
+                    new_pos,
+                    new_orn,
+                    physicsClientId=self._physics_client_id)
+
+            elif mode == "smooth_position":
+                x,y, theta = params
+                self._pybullet_robot.move_base_smoothly(
+                    (x,y, theta),
+                    self._physics_client_id)
+
+            elif mode == "velocity":
+                #Use the differential drive kinematics defined in mobile_single_arm.py
+                v, omega = params[0], params[1]
+                self._pybullet_robot.drive_base_twist(v, omega, self._physics_client_id)
+
+        
+        #Handle Arm joints if present
+
+        if len(action.arr)>0:
+            self._pybullet_robot.set_motors(target_joint_positions)
+
+
+        # Gripper commands if any
+
+        if action.has_gripper_command:
+            cmd = action.gripper_command
+            finger_pos = (self._pybullet_robot.open_fingers
+                if cmd>0.5 else
+                self._pybullet_robot.closed_fingers)
+            p.setJointMotorControlArray(
+                bodyUniqueId=self._pybullet_robot.robot_id,
+                jointIndices=[self._pybullet_robot.left_finger_id,
+                                self._pybullet_robot.right_finger_id],
+                controlMode=p.POSITION_CONTROL,
+                targetPositions=[finger_pos, finger_pos],
+                physicsClientId=self._physics_client_id)
+
+
 
         # If we are setting the robot joints directly, and if there is a held
         # object, we need to reset the pose of the held object directly. This
@@ -273,27 +344,30 @@ class PyBulletEnv(BaseEnv):
                 world_to_held_obj[1],
                 physicsClientId=self._physics_client_id)
 
+
         # Step the simulation here before adding or removing constraints
         # because detect_held_object() should use the updated state.
         if CFG.pybullet_control_mode != "reset":
             for _ in range(CFG.pybullet_sim_steps_per_action):
                 p.stepSimulation(physicsClientId=self._physics_client_id)
 
-        # If not currently holding something, and fingers are closing, check
-        # for a new grasp.
-        if self._held_constraint_id is None and self._fingers_closing(action):
-            # Detect if an object is held. If so, create a grasp constraint.
-            self._held_obj_id = self._detect_held_object()
-            if self._held_obj_id is not None:
-                self._create_grasp_constraint()
+        #Only handle grasping changes if we have arm/ finger actions
+        if len(action.arr)>0:
+            # If not currently holding something, and fingers are closing, check
+            # for a new grasp.
+            if self._held_constraint_id is None and self._fingers_closing(action):
+                # Detect if an object is held. If so, create a grasp constraint.
+                self._held_obj_id = self._detect_held_object()
+                if self._held_obj_id is not None:
+                    self._create_grasp_constraint()
 
-        # If placing, remove the grasp constraint.
-        if self._held_constraint_id is not None and \
-            self._fingers_opening(action):
-            p.removeConstraint(self._held_constraint_id,
-                               physicsClientId=self._physics_client_id)
-            self._held_constraint_id = None
-            self._held_obj_id = None
+            # If placing, remove the grasp constraint.
+            if self._held_constraint_id is not None and \
+                self._fingers_opening(action):
+                p.removeConstraint(self._held_constraint_id,
+                                   physicsClientId=self._physics_client_id)
+                self._held_constraint_id = None
+                self._held_obj_id = None
 
         self._current_observation = self._get_state()
         return self._current_observation.copy()
@@ -345,6 +419,9 @@ class PyBulletEnv(BaseEnv):
         return closest_held_obj
 
     def _create_grasp_constraint(self) -> None:
+        '''
+        Note from Pratyush: Don't understand this function yet.
+        '''
         assert self._held_obj_id is not None
         base_link_to_world = np.r_[p.invertTransform(
             *p.getLinkState(self._pybullet_robot.robot_id,
@@ -387,6 +464,8 @@ class PyBulletEnv(BaseEnv):
     def _action_to_finger_delta(self, action: Action) -> float:
         assert isinstance(self._current_observation, State)
         finger_position = self._get_finger_position(self._current_observation)
+        #Debug: Print to check what's in action.arr
+        #print(action.arr)
         target = action.arr[-1]
         return target - finger_position
 

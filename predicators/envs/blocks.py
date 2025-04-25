@@ -283,6 +283,18 @@ class BlocksEnv(BaseEnv):
 
     def _get_tasks(self, num_tasks: int, possible_num_blocks: List[int],
                    rng: np.random.Generator) -> List[EnvironmentTask]:
+        """
+        Chooses a number of blocks from possible_num_blocks.
+
+        Generates an initial arrangement of those blocks using _sample_initial_piles.
+
+        Converts that arrangement to a state using _sample_state_from_piles.
+
+        Repeatedly samples a goal using _sample_goal_from_piles until it is not already satisfied in the initial state.
+
+        Bundles that into an EnvironmentTask(init_state, goal) and adds it to a list.
+
+        """
         tasks = []
         for _ in range(num_tasks):
             num_blocks = rng.choice(possible_num_blocks)
@@ -297,6 +309,16 @@ class BlocksEnv(BaseEnv):
 
     def _sample_initial_piles(self, num_blocks: int,
                               rng: np.random.Generator) -> List[List[Object]]:
+        """
+    Each block is a unique Object, e.g., block0, block1, etc.
+
+    With a 20% chance (or on the first block), a new pile is started.
+
+    Blocks are sequentially added to the current pile.
+
+    Returns: a list of piles like [[block0, block1], [block2], [block3, block4]].
+
+    """
         piles: List[List[Object]] = []
         for block_num in range(num_blocks):
             block = Object(f"block{block_num}", self._block_type)
@@ -309,6 +331,18 @@ class BlocksEnv(BaseEnv):
 
     def _sample_state_from_piles(self, piles: List[List[Object]],
                                  rng: np.random.Generator) -> State:
+        """
+    Computes positions (x, y) for each pile (spaced out).
+
+    Computes a vertical position z for each block based on how deep it is in the pile.
+
+    Samples random colors (r, g, b) for each block.
+
+    Sets the "clear" flag if the block is on top of its pile.
+
+    Also adds the robot’s pose and gripper (fingers = 1.0 for open).
+
+    """
         data: Dict[Object, Array] = {}
         # Create objects
         block_to_pile_idx = {}
@@ -372,6 +406,10 @@ class BlocksEnv(BaseEnv):
     def _sample_initial_pile_xy(
             self, rng: np.random.Generator,
             existing_xys: Set[Tuple[float, float]]) -> Tuple[float, float]:
+        """
+    Randomly sample a new (x, y) position for a pile of blocks on the table, making sure it doesn’t overlap
+    too closely with any existing piles.
+    """
         while True:
             x = rng.uniform(self.x_lb, self.x_ub)
             y = rng.uniform(self.y_lb, self.y_ub)
@@ -380,6 +418,10 @@ class BlocksEnv(BaseEnv):
 
     def _table_xy_is_clear(self, x: float, y: float,
                            existing_xys: Set[Tuple[float, float]]) -> bool:
+        """
+    Determine whether a newly sampled (x, y) location is sufficiently far from all existing pile positions
+    to avoid a collision.
+    """
         if all(
                 abs(x - other_x) > self.collision_padding * self._block_size
                 for other_x, _ in existing_xys):

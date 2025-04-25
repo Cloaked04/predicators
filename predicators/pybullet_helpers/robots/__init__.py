@@ -6,21 +6,27 @@ from predicators.pybullet_helpers.robots.fetch import FetchPyBulletRobot
 from predicators.pybullet_helpers.robots.panda import PandaPyBulletRobot
 from predicators.pybullet_helpers.robots.single_arm import \
     SingleArmPyBulletRobot
+
+from predicators.pybullet_helpers.robots.mobile_fetch import MobileFetchRobot
+
 from predicators.settings import CFG
 
 # Note: these are static base poses which suffice for the current environments.
 _ROBOT_TO_BASE_POSE: Dict[str, Pose] = {
     "fetch": Pose(position=(0.75, 0.7441, 0.0)),
     "panda": Pose(position=(0.8, 0.7441, 0.195)),
+    "fetch_mobile": Pose(position=(0.40, 0.30, 0.0),
+                        orientation=(0.0,0.0,0.0,1.0))
 }
 
 _ROBOT_TO_CLS: Dict[str, Type[SingleArmPyBulletRobot]] = {
     "fetch": FetchPyBulletRobot,
     "panda": PandaPyBulletRobot,
+    "fetch_mobile": MobileFetchRobot
 }
 
 # Used if home position is not specified during robot creation.
-_DEFAULT_EE_HOME_POSITION: Pose3D = (1.35, 0.6, 0.7)
+_DEFAULT_EE_HOME_POSITION: Pose3D = (1.35, 0.6, 0.2)
 
 
 def create_single_arm_pybullet_robot(

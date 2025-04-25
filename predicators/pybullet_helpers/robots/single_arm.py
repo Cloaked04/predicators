@@ -30,6 +30,7 @@ class SingleArmPyBulletRobot(abc.ABC):
             ee_home_pose: Pose,
             physics_client_id: int,
             base_pose: Pose = Pose.identity(),
+            use_fixed_base: bool = True
     ) -> None:
         # The home positions and orientations should be "reasonable" because
         # IK will always reset to home before starting. Bad home poses will
@@ -45,7 +46,7 @@ class SingleArmPyBulletRobot(abc.ABC):
             self.urdf_path(),
             basePosition=self._base_pose.position,
             baseOrientation=self._base_pose.orientation,
-            useFixedBase=True,
+            useFixedBase=use_fixed_base,
             physicsClientId=self.physics_client_id,
         )
 
@@ -313,6 +314,7 @@ class SingleArmPyBulletRobot(abc.ABC):
 
     def set_motors(self, joint_positions: JointPositions) -> None:
         """Update the motors to move toward the given joint positions."""
+        #print(f"Print the arm_joints for debugging:{self.arm_joints}")
         assert len(joint_positions) == len(self.arm_joints)
 
         # Set arm joint motors.

@@ -1,5 +1,8 @@
 """Generic controllers for the robots."""
-from typing import Callable, Dict, Sequence, Set, Tuple, cast
+#from typing import Callable, Dict, Sequence, Set, Tuple, cast, Optional, Any
+
+from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
+    List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 
 import numpy as np
 from gym.spaces import Box
@@ -10,10 +13,13 @@ from predicators.pybullet_helpers.inverse_kinematics import \
     InverseKinematicsError
 from predicators.pybullet_helpers.robots.single_arm import \
     SingleArmPyBulletRobot
+from predicators.pybullet_helpers.robots.mobile_single_arm import\
+    MobileSingleArmPyBulletRobot
+from predicators.pybullet_helpers.joint import JointInfo, JointPositions
 from predicators.structs import Action, Array, Object, ParameterizedOption, \
     State, Type
 
-_SUPPORTED_ROBOTS: Set[str] = {"fetch", "panda"}
+_SUPPORTED_ROBOTS: Set[str] = {"fetch", "panda", "fetch_mobile"}
 
 
 def create_move_end_effector_to_pose_option(
@@ -169,3 +175,45 @@ def create_change_fingers_option(
                                policy=_policy,
                                initiable=lambda _1, _2, _3, _4: True,
                                terminal=_terminal)
+
+def execute_coordinated_path(
+    robot: MobileSingleArmPyBulletRobot,
+    base_path:Optional[Dict[str, Any]],
+    arm_path: Optional[List[JointPositions]]=None,
+    ) -> List[Action]:
+    
+    """
+    Generate a sequence of actions to execute a coordinate path.
+
+    Returns:
+        List of Action objects for execution by the environment.
+    """
+
+    actions = []
+
+    if not base_path:
+        return actions
+
+    # Start by following the base path using differential drive
+    for i in range(len(base_path)-1):
+        # Get current and next waypoint
+
+        current = base_path[i]
+        next_wp = base_path[i+1]
+
+        #Calculate velocities using the path_to_wheel_vels generator
+        for v, omega, _ in robot.path_to_wheel_vels([current, next_wp]):
+            # Create an action with velocity-based base motion
+            action = Action(np.array([])) #Initialize an empty action with and nd array.
+            action.set_base_motion(v, omega, 0.0, mode="velocity")
+            actions.append(action)
+
+
+    # Execute arm motion if provided, create actions for it
+    if arm_path is not None:
+        for joint_positions in arm_path:
+            action = Action(np.array(joint_positions, dtype=np.float32))
+            actions.append(action)
+
+
+    return actions

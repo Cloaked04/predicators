@@ -1437,12 +1437,12 @@ class Action:
 
     """
     _arr: Array
-    _option: _Option = field(repr=False, default=DummyOption)
+    _option: _Option = field(init=False, repr=False, default=DummyOption)
     # In rare cases, we want to associate additional information with an action
     # to control how it is executed in the environment. This is helpful if
     # actions are awkward to represent with continuous vectors, and if we have
     # no ambition to learn models over the actions directly.
-    extra_info: Optional[Any] = None
+    extra_info: Optional[Any] = None #For Action related to base motion, have extra_info: Optional[Dict[str, Any]]
 
     @property
     def arr(self) -> Array:
@@ -1466,6 +1466,87 @@ class Action:
         """Unset the option that produced this action."""
         self._option = DummyOption
         assert not self.has_option()
+
+    #Adding functions for help with base motion capabilities
+
+    def set_base_motion(self, params: Union[Tuple[float, float, float],Tuple[float, float]], mode: str) -> None:
+        """
+        Set the base motion component of this action.
+
+        Args:
+        params: Parameters depending on mode
+        mode: "position" for (x,y,theta), "smooth_position", "velocity" for (v,omega)
+        
+        """
+        if self.extra_info is None:
+            self.extra_info = {}
+
+        assert mode in ["position", "smooth_position", "velocity"]
+
+        if mode in ["position", "smooth_position"]:
+            assert len(params) == 3, "Position based motion requiere (x,y, thetea)"
+
+        else:
+            assert len(params) == 2, "Velocity mode requires (v, omega)"
+
+        self.extra_info = {
+            "base_motion": {
+                "mode": mode,
+                "params": params,
+            }
+        }
+
+    def set_gripper_command(self, cmd: float) -> None:
+        """
+        Set gripper copmmand component of this action.
+        """
+
+        if self.extra_info is None:
+            self.extra_info = {}
+
+        self.extra_info['gripper_cmd'] = cmd
+
+    @property
+    def has_base_motion(self) -> bool:
+        """
+        Check if this action has a base motion component.
+        """
+        return self.extra_info is not None and 'base_motion' in self.extra_info
+    
+    @property
+    def has_gripper_command(self) -> bool:
+        """
+        Return True iff this action includes a gripper command.
+        """
+        return self.extra_info is not None and 'gripper_cmd' in self.extra_info
+
+
+    @property
+    def base_motion(self) -> Optional[Tuple[float, float, float]]:
+        """
+        Get the base motion component if it exists.
+        Notice that unlike the get_xxxx function above in this class,
+        we don't use assert here because there could very well be cases
+        where there are no base_motion required. Using assertion would lead to an
+        assertion error.
+        """
+
+        if not self.has_base_motion:
+            return None
+
+        return self.extra_info['base_motion']
+
+    @property
+    def gripper_command(self) -> bool:
+        """
+        Get the gripper command component if it exists.
+        """
+
+        if not self.has_gripper_command:
+            return None
+
+        return self.extra_info['gripper_cmd']
+        
 
 
 @dataclass(frozen=True, repr=False, eq=False)

@@ -155,7 +155,8 @@ class GlobalSettings:
     pybullet_camera_height = 900  # for high quality, use 900; default is 180
     pybullet_sim_steps_per_action = 20
     pybullet_max_ik_iters = 100
-    pybullet_ik_tol = 1e-3
+    #pybullet_ik_tol = 1e-3
+    pybullet_ik_tol = 0.05
     pybullet_robot = "fetch"
     pybullet_birrt_num_attempts = 10
     pybullet_birrt_num_iters = 100
@@ -169,6 +170,7 @@ class GlobalSettings:
         lambda: {
             "fetch": (0.5, -0.5, -0.5, -0.5),
             "panda": (0.7071, 0.7071, 0.0, 0.0),
+            "fetch_mobile": (0.5, -0.5, -0.5, -0.5),
         },
         # In Blocks, Fetch gripper down since it's thin we don't need to
         # rotate 90 degrees.
@@ -176,6 +178,7 @@ class GlobalSettings:
             "pybullet_blocks": {
                 "fetch": (0.7071, 0.0, -0.7071, 0.0),
                 "panda": (0.7071, 0.7071, 0.0, 0.0),
+                "fetch_mobile": (0.7071, 0.0, -0.7071, 0.0),
             }
         })
 

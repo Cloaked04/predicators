@@ -41,7 +41,9 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         """Run super(), then handle blocks-specific initialization."""
         physics_client_id, pybullet_robot, bodies = super(
         ).initialize_pybullet(using_gui)
-
+        
+        #Initialize/ load table and set its pose and orientation based on the parameters
+        #defined above.
         table_id = p.loadURDF(utils.get_env_asset_path("urdf/table.urdf"),
                               useFixedBase=True,
                               physicsClientId=physics_client_id)
@@ -53,6 +55,8 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
 
         # Skip test coverage because GUI is too expensive to use in unit tests
         # and cannot be used in headless mode.
+        # Draws lines on the table in the workspace area and marks the pick height
+        # to visualize where pick is supposed to take.
         if CFG.pybullet_draw_debug:  # pragma: no cover
             assert using_gui, \
                 "using_gui must be True to use pybullet_draw_debug."
@@ -112,6 +116,7 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         num_blocks = max(max(CFG.blocks_num_blocks_train),
                          max(CFG.blocks_num_blocks_test))
 
+        #Initialize blocks in the environment.
 
         block_ids = []
         block_size = CFG.blocks_block_size
@@ -263,6 +268,9 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
             normal = np.array([1., 0., 0.], dtype=np.float32)
         elif CFG.pybullet_robot == "fetch":
             # gripper parallel to y-axis
+            normal = np.array([0., 1., 0.], dtype=np.float32)
+        elif CFG.pybullet_robot == "fetch_mobile":
+            #Same as "fetch"
             normal = np.array([0., 1., 0.], dtype=np.float32)
         else:  # pragma: no cover
             # Shouldn't happen unless we introduce a new robot.
