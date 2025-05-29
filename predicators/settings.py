@@ -183,7 +183,8 @@ class GlobalSettings:
         })
 
     # IKFast parameters
-    ikfast_max_time = 0.05
+    # ikfast_max_time = 0.05
+    ikfast_max_time = 0.5
     ikfast_max_candidates = 100
     ikfast_max_attempts = np.inf
     ikfast_max_distance = np.inf

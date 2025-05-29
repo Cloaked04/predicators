@@ -15,9 +15,10 @@ from predicators.settings import CFG
 _ROBOT_TO_BASE_POSE: Dict[str, Pose] = {
     "fetch": Pose(position=(0.75, 0.7441, 0.0)),
     "panda": Pose(position=(0.8, 0.7441, 0.195)),
-    "fetch_mobile": Pose(position=(0.40, 0.30, 0.0),
-                        orientation=(0.0,0.0,0.0,1.0))
+    "fetch_mobile": Pose(position=(0.75, 0.7441, 0.0))
 }
+
+# orientation=(0.0,0.0,0.0,1.0) position=(0.40, 0.30, 0.0)
 
 _ROBOT_TO_CLS: Dict[str, Type[SingleArmPyBulletRobot]] = {
     "fetch": FetchPyBulletRobot,

@@ -36,15 +36,38 @@ def get_joint_difference_fn(
     """Determine the difference between two joint positions. Returns a function
     that takes two joint positions and returns the difference between them.
 
-    Note: we do not support circular joints.
+    Note: we do not support circular joints.(Intially)
+
+    Adding support for circular joints as follows:
+
+
     """
-    if any(joint_info.is_circular for joint_info in joint_infos):
-        raise ValueError("Circular joints are not supported yet")
+    # if any(joint_info.is_circular for joint_info in joint_infos):
+    #     raise ValueError("Circular joints are not supported yet")
+
+    # Pre-compute which joint indices are circular once, outside the closure
+    circular_mask: List[bool] = [ji.is_circular for ji in joint_infos]
+
+    def shortest_angle_delta(a2: float, a1: float) -> float:
+        """Smallest signed difference between two angles (rad), in (−π, π]."""
+        delta = (a2 - a1) % (2.0 * np.pi)   # wrap to [0, 2π)
+        if delta > np.pi:                   # choose the shorter arc
+            delta -= 2.0 * np.pi
+        return delta
 
     def fn(q2: JointPositions, q1: JointPositions) -> JointPositions:
         if not len(q2) == len(q1) == len(joint_infos):
             raise ValueError("q2, q1, and joint infos must be the same length")
-        diff = list((value2 - value1) for value2, value1 in zip(q2, q1))
+
+
+        # diff = list((value2 - value1) for value2, value1 in zip(q2, q1))
+
+        diff: List[float] = []
+
+        for v2, v1, is_circ in zip(q2, q1, circular_mask):
+            diff.append(shortest_angle_delta(v2, v1) if is_circ else v2 - v1)
+        assert len(diff) == len(q1)
+
         return diff
 
     return fn
@@ -100,7 +123,20 @@ def get_base_from_ee(
     world_from_target: Pose,
 ) -> Pose:
     """Transform the target tool link pose from the world frame into the pose
-    of the end-effector link in the base link frame."""
+    of the end-effector link in the base link frame.
+
+    Tool link frame: the coordinate frame at the physical “tip” of your end
+    effector (gripper or tool), offset from the robot’s wrist flange. Tool is the coordinate frame you attach to the very end
+    of your robot’s wrist flange to represent whatever end‐effector or “tool” you’re actually manipulating—typically the gripper
+    jaws, a welding tip, a screwdriver bit, etc.
+
+    world_from_target: the desired pose of that tool frame in world coordinates
+                        to get to the target location.
+
+    You get a transform that reprsents the ee pose in the base coordinate
+    because IKFast computes in base coords.
+
+    """
     ikfast_info = robot.ikfast_info()
     if ikfast_info is None:
         # Keep mypy happy
@@ -157,6 +193,7 @@ def get_ikfast_joints(
     # Note: IKFast supports 6 joints, the rest are free joints which we
     # must sample over
     assert len(ik_joints) == 6 + len(free_joints)
+    #assert len(ik_joints) == 4 + len(free_joints)
 
     return ik_joints, free_joints
 
@@ -239,7 +276,13 @@ def ikfast_inverse_kinematics(
     # Get the desired pose of the end-effector in the base frame
     base_from_ee = get_base_from_ee(robot, world_from_target)
     position = list(base_from_ee.position)
+    print(f"Position:{position}.")
+    print(f"Position is of data type:{type(position)}.")
     rot_matrix = matrix_from_quat(base_from_ee.orientation).tolist()
+    rot_list = [float(x) for row in rot_matrix for x in row]
+    print(f"Rot List:{rot_list}.")
+    print(f"Rotation matrix:{rot_matrix}.")
+    print(f"rot_matrix is of data type:{type(rot_matrix)}.")
 
     # Sampler for free joints
     generator = free_joints_generator(robot, free_joint_infos, max_distance)
@@ -252,15 +295,23 @@ def ikfast_inverse_kinematics(
 
     start_time = time.perf_counter()
     for free_positions in generator:
+        #print(f"Free positions:{free_positions}")
         elapsed_time = time.perf_counter() - start_time
         if elapsed_time >= max_time:
             logging.warning("Max time reached. No IKFast solution found.")
             break
 
+        # ADD FUNCTIONALITY TO USE IKFAST BASED ON ROBOT NAMES AS THE IKFAST COMPILATION
+        # FOR PANDAS AND FETCH ARE DIFFERENT.
+
         # Call IKFast to compute candidates for sampled free joint positions
+        # ik_candidates: Optional[
+        #     List[JointPositions]] = ikfast.get_ik(  # type: ignore
+        #         rot_matrix, position, list(free_positions))
+
         ik_candidates: Optional[
-            List[JointPositions]] = ikfast.get_ik(  # type: ignore
-                rot_matrix, position, list(free_positions))
+        List[JointPositions]] = ikfast.inverse(position, rot_list, free_positions[0])
+
         if ik_candidates is None:
             continue
 

@@ -12,28 +12,75 @@ from types import ModuleType
 from predicators.pybullet_helpers.ikfast import IKFastInfo
 from predicators.utils import get_third_party_path
 
+#Adding for more transparent install process
+import subprocess
+
+
+# def install_ikfast_module(ikfast_dir: str) -> None:
+#     """One-time install an IKFast module for a specific robot.
+
+#     Assumes there is a subdirectory in envs/assets/ikfast with a
+#     setup.py file for the robot. See the panda_arm subdirectory for an
+#     example.
+#     """
+#     cmds = [
+#         # Go to the subdirectory with the setup.py file.
+#         f"cd {ikfast_dir}",
+#         # Run the setup.py file.
+#         "python setup.py",
+#     ]
+#     # Execute the command.
+#     cmd = "; ".join(cmds)
+#     logging.debug(f"Executing command: {cmd}")
+#     exit_value = os.system(cmd)
+#     if exit_value != 0:
+#         raise RuntimeError(
+#             f"IKFast install failed with exit code {exit_value}. "
+#             "Check messages above.")
 
 def install_ikfast_module(ikfast_dir: str) -> None:
-    """One-time install an IKFast module for a specific robot.
+    """One-time install an IKFast module for a specific robot."""
+    
+    print(f"\n{'='*80}")
+    print(f"INSTALLING IKFAST MODULE IN: {ikfast_dir}")
+    print(f"{'='*80}")
+    
+    # Change directory to ikfast_dir
+    original_dir = os.getcwd()
+    os.chdir(ikfast_dir)
+    print(f"Changed directory to: {ikfast_dir}")
+    
+    # List files in directory
+    print("Files in directory:")
+    for file in sorted(os.listdir('.')):
+        print(f"  - {file}")
+    
+    # Run setup.py with verbose output
+    print("Running setup.py with build command...")
+    try:
+        result = subprocess.run(
+            "python setup.py build -v",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False
+        )
+        
+        print("\nSETUP.PY OUTPUT:")
+        print(f"{'-'*80}")
+        print(result.stdout)
+        print(f"{'-'*80}")
+        
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"IKFast install failed with exit code {result.returncode}. "
+                "Check messages above.")
+    finally:
+        os.chdir(original_dir)
+        print(f"Returned to directory: {original_dir}")
+        print(f"{'='*80}\n")
 
-    Assumes there is a subdirectory in envs/assets/ikfast with a
-    setup.py file for the robot. See the panda_arm subdirectory for an
-    example.
-    """
-    cmds = [
-        # Go to the subdirectory with the setup.py file.
-        f"cd {ikfast_dir}",
-        # Run the setup.py file.
-        "python setup.py",
-    ]
-    # Execute the command.
-    cmd = "; ".join(cmds)
-    logging.debug(f"Executing command: {cmd}")
-    exit_value = os.system(cmd)
-    if exit_value != 0:
-        raise RuntimeError(
-            f"IKFast install failed with exit code {exit_value}. "
-            "Check messages above.")
 
 
 def install_ikfast_if_required(ikfast_info: IKFastInfo) -> str:

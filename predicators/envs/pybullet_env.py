@@ -463,11 +463,33 @@ class PyBulletEnv(BaseEnv):
 
     def _action_to_finger_delta(self, action: Action) -> float:
         assert isinstance(self._current_observation, State)
-        finger_position = self._get_finger_position(self._current_observation)
-        #Debug: Print to check what's in action.arr
-        #print(action.arr)
-        target = action.arr[-1]
-        return target - finger_position
+        current_finger_position = self._get_finger_position(self._current_observation)
+        
+        # The finger joint indices (e.g., left_finger_joint_idx) are indices
+        # into the robot's list of arm_joints, which corresponds to the
+        # arm/finger part of the action.arr.
+        
+        # Ensure the robot instance is a SingleArmPyBulletRobot or subclass
+        # to access finger_joint_idx.
+        if not isinstance(self._pybullet_robot, SingleArmPyBulletRobot):
+            # This environment setup assumes a single-arm robot for finger control.
+            # If it's not, this method is not applicable or needs robot-specific handling.
+            return 0.0
+
+        finger_idx = self._pybullet_robot.left_finger_joint_idx # Use left as reference
+
+        if len(action.arr) <= finger_idx :
+             # This case can happen if action.arr is for base only, or an error in construction.
+             # execute_coordinated_path should create full action arrays.
+             # If only base motion is intended, arm joints (including fingers) should be set to hold.
+            # print(f"Warning: action.arr too short ({len(action.arr)}) for finger index {finger_idx}")
+            # If action.arr doesn't include finger commands, assume no change is intended for fingers via this delta.
+            # The actual finger position will be whatever is in action.arr[finger_idx] if set directly,
+            # or held from previous state if not. This function is about *change from current*.
+            return 0.0 
+
+        target_finger_position = action.arr[finger_idx]
+        return target_finger_position - current_finger_position
 
     def _add_pybullet_state_to_tasks(
             self, tasks: List[EnvironmentTask]) -> List[EnvironmentTask]:

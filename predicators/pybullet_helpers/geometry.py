@@ -1,4 +1,6 @@
 """PyBullet helper class for geometry utilities."""
+
+#lets us use the class name Pose inside its own type hints.
 from __future__ import annotations
 
 from typing import NamedTuple, Tuple
@@ -19,11 +21,13 @@ class Pose(NamedTuple):
     """Pose which is a position (translation) and rotation.
 
     We use a NamedTuple as it supports retrieving by integer indexing
-    and most closely follows the PyBullet API.
+    and most closely follows the PyBullet API. Explicityly, allows you to do:
+    pose.position    # (x, y, z)
+    pose[0]          # same as above
     """
     # Cartesian (x, y, z) position
     position: Pose3D
-    # Quaternion in (x, y, z, w) representation
+    # Quaternion in (x, y, z, w) representation; defaults to the identity rotation
     orientation: Quaternion = (0.0, 0.0, 0.0, 1.0)
 
     @classmethod
@@ -38,7 +42,7 @@ class Pose(NamedTuple):
 
     @classmethod
     def identity(cls) -> Pose:
-        """Unit pose."""
+        """Unit pose: zero translation, zero rotation pose."""
         return cls((0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0))
 
     def multiply(self, *poses: Pose) -> Pose:

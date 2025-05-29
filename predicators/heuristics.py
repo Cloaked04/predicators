@@ -167,72 +167,9 @@ class RelaxedOp:
         return self.name
 
 
-class RelaxedFact:
-    """
-    A relaxed fact (atom) for LM-Cut.
-    """
-
-    def __init__(self, atom):
-        self.atom = atom  # The original atom or identifier.
-        self.name = str(atom)
-        self.hmax_value = float("inf")
-        self.precondition_of = []  # List of RelaxedOp instances.
-        self.effect_of = []        # List of RelaxedOp instances.
-
-    def __lt__(self, other):
-        return self.hmax_value < other.hmax_value
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        return isinstance(other, RelaxedFact) and self.name == other.name
-
-    def clear(self):
-        self.hmax_value = float("inf")
-
-    def __str__(self):
-        return self.name
-
-
-class RelaxedOp:
-    """
-    A relaxed operator (action) for LM-Cut.
-    """
-
-    def __init__(self, nsrt=None, name="", cost_zero=False):
-        self.nsrt = nsrt
-        self.name = name if name else str(nsrt)
-        self.precondition = []  # List of RelaxedFact instances.
-        self.effects = []       # List of RelaxedFact instances.
-        self.hmax_supporter = None
-        self.hmax_value = float("inf")
-        self.cost_zero = cost_zero
-        self.preconditions_unsat = 0
-        self.cost = 0.0 if cost_zero else 1.0
-
-    def __lt__(self, other):
-        return self.hmax_value < other.hmax_value
-
-    def clear(self, clear_op_cost):
-        self.preconditions_unsat = len(self.precondition)
-        if clear_op_cost and not self.cost_zero:
-            self.cost = 1.0
-        self.hmax_supporter = None
-        self.hmax_value = float("inf")
-
-    def __str__(self):
-        return self.name
-
-
 class LMCutHeuristic:
     """
-    Improved LM-Cut heuristic (without fallback).
-    Adjustments:
-      - Increased overall time budget.
-      - Removed artificial expansion/cut limits.
-      - The goal plateau and cut extraction follow the pyperplan design.
-      - If the time budget is exceeded, a TimeoutError is raised.
+    LM-Cut heuristic (without fallback).
     """
 
     def __init__(self, init_atoms: Set[Any], goal_atoms: Set[Any], ground_nsrts: List[Any]):
@@ -313,6 +250,14 @@ class LMCutHeuristic:
         self.reachable.clear()
         facts_seen = set()
         unexpanded = []
+        op_cleared_in_this_hmax_computation = set()
+        fact_cleared_in_this_hmax_computation = set() # Keep track of facts cleared in this call
+
+        # Reset all facts' hmax_values
+        for fact_obj in self.relaxed_facts.values():
+            fact_obj.clear()
+            # No need to add to fact_cleared_in_this_hmax_computation here, 
+            # as they are reset. Clearing happens when an effect is considered.
 
         # Initialize with the current state facts.
         for atom in state_atoms:
@@ -321,30 +266,42 @@ class LMCutHeuristic:
                 fact_obj.hmax_value = 0.0
                 facts_seen.add(fact_obj)
                 heapq.heappush(unexpanded, fact_obj)
-                self.reachable.add(fact_obj)
+                fact_cleared_in_this_hmax_computation.add(fact_obj) # Mark initial facts as 'cleared' (i.e., processed for init)
         # Also add the always-true fact.
         if self.ALWAYS_TRUE in self.relaxed_facts:
             fact_obj = self.relaxed_facts[self.ALWAYS_TRUE]
             fact_obj.hmax_value = 0.0
             facts_seen.add(fact_obj)
             heapq.heappush(unexpanded, fact_obj)
-            self.reachable.add(fact_obj)
+            fact_cleared_in_this_hmax_computation.add(fact_obj) # Mark initial facts as 'cleared'
 
         while unexpanded:
             fact_obj = heapq.heappop(unexpanded)
+            self.reachable.add(fact_obj) # Add to reachable when popped, as in pyperplan
             # Mark goal as reachable.
             if self.EXPLICIT_GOAL in self.relaxed_facts and fact_obj == self.relaxed_facts[self.EXPLICIT_GOAL]:
                 self.dead_end = False
-            current = fact_obj.hmax_value
+            current_hmax_val = fact_obj.hmax_value # Renamed for clarity
             for op in fact_obj.precondition_of:
-                op.clear(clear_op_cost)
+                # Clear op only once per hmax computation
+                if op not in op_cleared_in_this_hmax_computation:
+                    op.clear(clear_op_cost)
+                    op_cleared_in_this_hmax_computation.add(op)
+
                 op.preconditions_unsat -= 1
                 if op.preconditions_unsat == 0:
-                    if op.hmax_supporter is None or current > op.hmax_supporter.hmax_value:
+                    # Update hmax_supporter and hmax_value for the operator
+                    if op.hmax_supporter is None or current_hmax_val > op.hmax_supporter.hmax_value:
                         op.hmax_supporter = fact_obj
-                        op.hmax_value = current + op.cost
-                    h_next = op.hmax_supporter.hmax_value + op.cost
+                    # op.hmax_value should be based on its current hmax_supporter
+                    op.hmax_value = op.hmax_supporter.hmax_value + op.cost
+                    
+                    h_next = op.hmax_value # Use the operator's hmax_value for propagation
+
                     for eff in op.effects:
+                        if eff not in fact_cleared_in_this_hmax_computation:
+                            eff.clear() # Clear fact if not yet processed in this hmax computation
+                            fact_cleared_in_this_hmax_computation.add(eff)
                         if h_next < eff.hmax_value:
                             eff.hmax_value = h_next
                         if eff not in facts_seen:
@@ -397,6 +354,12 @@ class LMCutHeuristic:
         if self.ALWAYS_TRUE in self.relaxed_facts:
             start_state.add(self.ALWAYS_TRUE)
         for atom in start_state:
+            # Ensure atom exists in relaxed_facts before trying to access it.
+            # This can happen if state_atoms contains atoms not in the initial problem construction.
+            if atom not in self.relaxed_facts:
+                # Optionally log a warning or handle as a special case
+                # logging.warning(f"Atom {atom} from state_atoms not in relaxed_facts during find_cut.")
+                continue
             fact_obj = self.relaxed_facts[atom]
             facts_seen.add(fact_obj)
             heapq.heappush(unexpanded, fact_obj)
@@ -404,10 +367,10 @@ class LMCutHeuristic:
             fact_obj = heapq.heappop(unexpanded)
             for op in fact_obj.precondition_of:
                 if op not in op_cleared:
-                    op.precond_unsat = len(op.precondition)
+                    op.preconditions_unsat = len(op.precondition) # Corrected attribute name
                     op_cleared.add(op)
-                op.precond_unsat -= 1
-                if op.precond_unsat == 0:
+                op.preconditions_unsat -= 1 # Corrected attribute name
+                if op.preconditions_unsat == 0: # Corrected attribute name
                     for eff in op.effects:
                         if eff in facts_seen:
                             continue
@@ -451,14 +414,32 @@ class LMCutHeuristic:
                 self.compute_goal_plateau(self.EXPLICIT_GOAL)
                 cut = self.find_cut(state_atoms)
                 if not cut:
-                    break
+                    # If no cut is found, but goal hmax is not 0 and not inf, it's an issue.
+                    # This might indicate that the goal is unreachable through applicable actions from current plateau state.
+                    logging.warning("LM-Cut: No cut found but goal hmax is not 0. Setting heuristic to infinity.")
+                    self.heuristic_cache[state_key] = float("inf")
+                    return float("inf") # Or break, leading to dead_end check
+                    
                 min_cost = min([op.cost for op in cut])
-                if min_cost <= 0:
-                    break  # Prevent potential infinite loops.
+                
+                # Pyperplan also does not have the min_cost <= 0 check.
+                # It relies on hmax_from_last_cut to make progress.
+                # If min_cost is 0, heuristic_value doesn't increase, costs don't change for ops already at 0.
+                # The hmax_from_last_cut must then ensure goal_fact.hmax_value is driven to 0.
+                # Removing this break to align more with pyperplan's implicit assumptions.
+                # if min_cost <= 0:
+                #     break
                 heuristic_value += min_cost
                 for op in cut:
                     op.cost -= min_cost
                 self.compute_hmax_from_last_cut(cut)
+
+            if self.dead_end and goal_fact.hmax_value != float("inf"):
+                 # If dead_end is true, it means compute_hmax decided the goal was initially unreachable.
+                 # However, if the loop finished because goal_fact.hmax_value became 0, it's not a dead end.
+                 # This check is to ensure we don't return inf if the loop successfully reduced hmax to 0.
+                 if goal_fact.hmax_value == 0:
+                     self.dead_end = False # Correct the dead_end status
 
             if self.dead_end:
                 self.heuristic_cache[state_key] = float("inf")

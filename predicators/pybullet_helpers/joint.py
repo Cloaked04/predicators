@@ -81,7 +81,7 @@ def get_num_joints(body: int, physics_client_id: int) -> int:
 
 
 def get_joints(body: int, physics_client_id: int) -> List[int]:
-    """Get joint indices for a body."""
+    """Get joint indices for a body. Bacially lists the numbers of joints from 0 through n."""
     return list(range(get_num_joints(body, physics_client_id)))
 
 

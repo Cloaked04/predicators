@@ -1,9 +1,13 @@
 import numpy as np
 import pybullet as p
 import time
+import logging
 from predicators.envs.pybullet_blocks import PyBulletBlocksEnv
 from predicators.settings import CFG
 from predicators.structs import Action
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s-%(levelname)s-%(message)s')
 
 CFG.seed = 123
 CFG.pybullet_robot = "fetch_mobile"
@@ -14,7 +18,7 @@ def test_smooth_position_control():
     env = PyBulletBlocksEnv(use_gui=True)
 
     # Initialize the environment (critical step!)
-    observation = env.reset("train", 0)
+    # observation = env.reset("train", 0)
 
     robot = env._pybullet_robot
     physics_client_id = env._physics_client_id

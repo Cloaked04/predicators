@@ -30,7 +30,7 @@ class SingleArmPyBulletRobot(abc.ABC):
             ee_home_pose: Pose,
             physics_client_id: int,
             base_pose: Pose = Pose.identity(),
-            use_fixed_base: bool = True
+            use_fixed_base: bool = False
     ) -> None:
         # The home positions and orientations should be "reasonable" because
         # IK will always reset to home before starting. Bad home poses will
@@ -148,6 +148,7 @@ class SingleArmPyBulletRobot(abc.ABC):
 
     def joint_from_name(self, joint_name: str) -> int:
         """Get the joint index for a joint name."""
+        #print(f"Joint name is:{joint_name}")
         return self.joint_names.index(joint_name)
 
     def joint_info_from_name(self, joint_name: str) -> JointInfo:
