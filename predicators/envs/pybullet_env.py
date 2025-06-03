@@ -498,6 +498,15 @@ class PyBulletEnv(BaseEnv):
         for task in tasks:
             # Reset the robot.
             init = task.init
+
+            #Pratyush: Overide the default positions defined in blocks json
+            #          so custom positions can be used for fetch_mobile
+
+            if CFG.pybullet_robot == "fetch_mobile":
+                init.set(self._robot, "pose_x", 1.00)
+                init.set(self._robot, "pose_y", 0.30)
+                init.set(self._robot, "pose_z", 0.50)
+
             self._pybullet_robot.reset_state(self._extract_robot_state(init))
             # Extract the joints.
             joint_positions = self._pybullet_robot.get_joints()

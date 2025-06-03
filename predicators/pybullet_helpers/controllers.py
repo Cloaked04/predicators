@@ -6,6 +6,8 @@ from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
 
 import numpy as np
 from gym.spaces import Box
+import pybullet as p
+from predicators.settings import CFG
 
 from predicators import utils
 from predicators.pybullet_helpers.geometry import Pose
@@ -306,7 +308,8 @@ def create_coordinated_motion_option(
     physics_client_id: int,
     try_arm_only_first: bool = True,
     final_finger_state_fn: Optional[Callable[[State, Sequence[Object], Array], Optional[float]]]=None,
-    grabbable_object_type: Optional[Type] = None
+    grabbable_object_type: Optional[Type] = None,
+    initiable_fn: Optional[Callable[[State, Dict, Sequence[Object], Array], bool]] = None
     ) -> ParameterizedOption:
     
     """
@@ -483,12 +486,15 @@ def create_coordinated_motion_option(
         return memory["current_action_idx"] >= len(memory["actions"])
 
 
+    # Use the provided initiable_fn or the default
+    current_initiable = initiable_fn if initiable_fn is not None else lambda _1, _2, _3, _4: True
+
     return ParameterizedOption(
             name=name,
             types=types,
             params_space=params_space,
-            policy=policy,
-            initiable=lambda _1, _2, _3, _4: True,
+            policy=_policy,
+            initiable=current_initiable,  # Use the determined initiable
             terminal=_terminal
             )
 
@@ -501,7 +507,7 @@ def create_pick_object_option(
     grasp_height_offset: float = PICK_PRE_GRASP_Z_OFFSET,
     #Common grasp orientation: Pointing down -pi/2
     grasp_euler_orn: Tuple[float, float, float] = (0, -np.pi/2, 0),
-    # grabbable_object_type parameter removed from here, will be passed internally
+    initiable_fn: Optional[Callable[[State, Dict, Sequence[Object], Array], bool]] = None
 ) -> ParameterizedOption:
 
     """
@@ -542,20 +548,20 @@ def create_pick_object_option(
             physics_client_id=physics_client_id,
             try_arm_only_first=True,
             final_finger_state_fn=_get_final_finger_state_for_pick,
-            grabbable_object_type=object_to_pick_type
+            grabbable_object_type=object_to_pick_type,
+            initiable_fn=initiable_fn
             )
 
 def create_place_object_option(
     robot: MobileSingleArmPyBulletRobot,
     robot_type: Type,
     location_type: Type,
-    object_to_place_type: Type,
+    object_to_place_type: Type,  # This is the type of object being placed
     physics_client_id:int,
     place_height_offset: float = PLACE_RELEASE_Z_OFFSET,
     place_euler_orn: Tuple[float, float, float] = (0, -np.pi/2, 0),
-    # This grabbable_object_type is crucial: it's the type of object that would be *held*
-    # It should match the type of objects that PickObject can pick.
-    ) -> ParameterizedOption:
+    initiable_fn: Optional[Callable[[State, Dict, Sequence[Object], Array], bool]] = None
+) -> ParameterizedOption:
     
     """
     Creates ParamterizedOption for placing the currently held object at a location.
@@ -601,7 +607,8 @@ def create_place_object_option(
             physics_client_id=physics_client_id,
             try_arm_only_first=True, 
             final_finger_state_fn=_get_final_finger_state_for_place,
-            grabbable_object_type=object_to_place_type
+            grabbable_object_type=object_to_place_type,
+            initiable_fn=initiable_fn
         )
     
 

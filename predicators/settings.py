@@ -665,6 +665,10 @@ class GlobalSettings:
     # grammar search clustering algorithm parameters
     grammar_search_clustering_gmm_num_components = 10
 
+    # Added for the new RNG seed
+    pybullet_rng_seed = 123
+    pybullet_show_gui = True
+
     @classmethod
     def get_arg_specific_settings(cls, args: Dict[str, Any]) -> Dict[str, Any]:
         """A workaround for global settings that are derived from the

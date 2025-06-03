@@ -15,7 +15,8 @@ from predicators.settings import CFG
 _ROBOT_TO_BASE_POSE: Dict[str, Pose] = {
     "fetch": Pose(position=(0.75, 0.7441, 0.0)),
     "panda": Pose(position=(0.8, 0.7441, 0.195)),
-    "fetch_mobile": Pose(position=(0.75, 0.7441, 0.0))
+    "fetch_mobile": Pose(position=(0.40, 0.30, 0.0),
+                        orientation=(0.0, 0.0, 0.0, 1.0))
 }
 
 # orientation=(0.0,0.0,0.0,1.0) position=(0.40, 0.30, 0.0)
@@ -38,6 +39,17 @@ def create_single_arm_pybullet_robot(
     """Create a single-arm PyBullet robot."""
     if robot_name not in _ROBOT_TO_CLS:
         raise NotImplementedError(f"Unrecognized robot name: {robot_name}.")
+
+    # Changing the ee_home_pose for fetch_mobile so that it works with the 
+    # spawn position defined in _ROBOT_TO_BASE_POSE when IKFast is called for
+    # ee_home_pose.
+
+    # if robot_name == "fetch_mobile":
+    #     mobile_fetch_home_position = (1.00, 0.30, 0.50)
+    #     mobile_fetch_home_orientation = (0.7071, 0.0, -0.7071, 0.0)
+
+    #     ee_home_pose = Pose(mobile_fetch_home_position, mobile_fetch_home_orientation)
+
     if ee_home_pose is None:
         robot_to_ee_orn = CFG.pybullet_robot_ee_orns[CFG.env]
         assert robot_name in robot_to_ee_orn, \

@@ -61,8 +61,10 @@ class MobileFetchRobot(MobileSingleArmPyBulletRobot):
 		return IKFastInfo(
 			module_dir="fetch_arm",
 			module_name="pyikfast_fetch",
-			base_link="base_link",
-			ee_link="gripper_link",
+			#base_link="base_link",
+			base_link="torso_lift_link",
+			#ee_link="gripper_link",
+			ee_link="wrist_roll_link",
 			# The 7-DOF arm chain for fetch includes shoulder_pan, shoulder_lift, upperarm_roll,
 			# elbow_flex, forearm_roll, wrist_flex, wrist_roll. However since IKFast only computes 
 			# on 6 joints out of the 7, one of the redundant joints is passed as a free joint.

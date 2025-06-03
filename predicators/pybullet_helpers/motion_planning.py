@@ -431,6 +431,314 @@ def _collision_fn(pose: Tuple[float, float, float],
     return collides
 
 
+# def run_coordinated_motion_planning(
+#     robot: MobileSingleArmPyBulletRobot,
+#     target_ee_pose: Pose,
+#     collision_bodies: Collection[int],
+#     seed: int,
+#     physics_client_id: int,
+#     try_arm_only_first: bool = True,
+#     base_path_planner_max_tries: int = 30,
+#     workspace_bounds: Optional[Tuple[float, float, float, float]] = None,
+#     rng: Optional[np.random.Generator] = None,
+#     final_finger_state: Optional[float] = None,
+#     held_object_id_at_start: Optional[int] = None,
+#     ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
+# ) -> Optional[Tuple[List[Tuple[float, float, float]], List[JointPositions]]]:
+#     """
+#     Run co-ordinated motion planning for both base and arm.
+
+#     Attempts to reach the target EE pose, potentially moving the base if
+#     necessary.
+
+#     Args:
+#         robot: The mobile robot
+#         target_ee_pose: Target end-effector pose in world frame.
+#         collision_bodies: collection of body ids to avoid while moving
+#         seed: Random seed for planning.
+#         physics_client_id: PyBullet physics client id.
+#         try_arm_only_first: If True, try to reach target orientation only
+#                             by using arm movements first.
+#         base_path_planner_max_tries: Number of candidate base poses to check.
+#         workspace_bounds: Optional workspace limits (min_X, min_Y, max_X, max_y).
+#         rng: Optional random number generator.
+#         final_finger_state: Optional final finger state for the arm.
+#         held_object_id_at_start: Optional ID of an object held by the robot at the start of the coordinated plan.
+#         ee_to_held_object_transform_at_start: Optional transform (pos, orn) from EE to held object at the start of the coordinated plan.
+
+#     Returns:
+#         Tuple of (base_path, arm_path);
+
+#         base_path: List of (x, y, theta) waypoints for the base. Can contain just the current pose
+#                     if only arm movement is needed.
+#         arm_path: List of JointPositions waypoints for the arm. Can be empty if only base movement occurs
+#                   or if arm planning fails after base movement (should ideally
+#                   not happen if reachable base pose was found correctly).
+
+#         Returns None if no plan is found.
+#     """
+#     if rng is None:
+#         rng = np.random.default_rng(seed)
+
+#     # Get robot's current state to restore later.
+#     current_base_pose = robot.get_base_pose(physics_client_id)
+#     current_joint_positions = robot.get_joints()
+
+#     # First: check whether target is reachable from current
+#     # base positions (if try_arm_only_first flag is True)
+#     if try_arm_only_first:
+#         try:
+#             # Try to solve with inverse kinematics
+#             target_joint_solution = robot.inverse_kinematics(
+#                 target_ee_pose, validate=True, set_joints=False)
+
+#             if final_finger_state is not None and target_joint_solution is not None:
+#                 mutable_joint_solution = list(target_joint_solution)
+#                 # Ensure indices are valid for the joint_solution array length and only move
+#                 # ahead if finger joint indices are present.
+#                 # Set the left and right finger values to the same value: either open or closed value.
+#                 if robot.left_finger_joint_idx < len(mutable_joint_solution) and \
+#                    robot.right_finger_joint_idx < len(mutable_joint_solution):
+#                     mutable_joint_solution[robot.left_finger_joint_idx] = final_finger_state
+#                     mutable_joint_solution[robot.right_finger_joint_idx] = final_finger_state
+#                     target_joint_solution = tuple(mutable_joint_solution)
+#                 else:
+#                     print(f"Warning: Finger joint indices out of bounds for target_joint_solution in arm-only.")
+
+
+#             # If IK succeeded, try planning the arm path
+#             # Check if this solution is collision-free
+#             arm_path = run_motion_planning(
+#                 robot,
+#                 current_joint_positions,
+#                 target_joint_solution,
+#                 collision_bodies,
+#                 seed, # Consider using rng.integers for better seed generation in loops/retries
+#                 physics_client_id,
+#                 held_object=held_object_id_at_start,
+#                 ee_to_held_object_transform=ee_to_held_object_transform_at_start
+#                 )
+
+#             if arm_path is not None:
+#                 print("Coordinated planning: Succeeded with arm-only movement.")
+
+#                 #Padding the returned arm_path to include fingers as well so
+#                 #set_motors function doesn't run into an error:
+
+#                 padded_arm_path: List[JointPositions] = []
+
+#                 for arm_wp in arm_path:
+#                     if len(list(arm_wp)) == 9:
+#                         continue
+#                     wp7 = list(arm_wp)
+#                     #Insert left finger:
+#                     wf = robot.open_fingers
+#                     wp7.insert(robot.left_finger_joint_idx, wf)
+#                     #Insert right finger:
+#                     wp7.insert(robot.right_finger_joint_idx, wf)
+
+#                     padded_arm_path.append(wp7)
+
+#                 # Target position was reachable via arm motion only; return it
+#                 # Restore the robot to initial positions (in the case these were
+#                 # modified during above steps,)
+#                 robot.move_base_to(current_base_pose, physics_client_id)
+#                 robot.set_joints(current_joint_positions)
+#                 return ([current_base_pose], padded_arm_path)
+
+#         except InverseKinematicsError:
+#             print("Coordinated Planning: Arm-only IK failed. Moving to base planning.")
+#             pass
+
+#         # Restore initial/current state of the robot if planning modified it
+#         robot.move_base_to(current_base_pose, physics_client_id)
+#         robot.set_joints(current_joint_positions)
+
+#     # Then find a base position that makes the target reachable
+#     best_reachable_base_pos = None
+#     best_joint_solution = None
+#     min_base_distance = float('inf')
+
+#     # target x,y
+#     target_pos = np.array(target_ee_pose.position[:2])
+
+#     # try multiple candidate base positions
+#     for attempt in range(base_path_planner_max_tries):
+#         # Sample a base position near the target EE pose
+#         dist_to_target = rng.uniform(0.4, 0.8)  # Sample distance from EE target
+#         angle_to_target = rng.uniform(-np.pi/4, np.pi/4)  # Sample angle offset relative to target
+
+#         # ----- Calculate base position relative to target---------
+#         # Angle from current base pose to target
+#         target_angle = np.arctan2(target_pos[1] - current_base_pose[1],
+#                                 target_pos[0] - current_base_pose[0])
+
+#         # Base orientation relative to world
+#         candidate_angle_offset = angle_to_target+target_angle
+
+#         # Position behind the target
+#         candidate_x = target_pos[0] - dist_to_target*np.cos(candidate_angle_offset)
+#         candidate_y = target_pos[1] - dist_to_target*np.sin(candidate_angle_offset)
+#         # Orientation towards the target
+#         candidate_theta = (candidate_angle_offset+np.pi)%(2*np.pi)
+
+#         # Make the candidate base pose
+#         candidate_base_pose = (candidate_x, candidate_y, candidate_theta)
+#         # ----------------------------------------------------------
+
+#         # -------- Temp. move base to check IK -------------
+#         # Save current state
+#         current_sim_base_pos, current_sim_base_orn = p.getBasePositionAndOrientation(
+#             robot.robot_id, physicsClientId=physics_client_id)
+
+#         # Temporarily move base to candidate position
+#         robot.move_base_to(candidate_base_pose, physics_client_id)
+
+#         # Check if target is reachable from this base pose
+#         try:
+#             # Check IK reachability without validating collisons
+#             joint_solution = robot.inverse_kinematics(
+#                 target_ee_pose, validate=True, set_joints=False)
+
+#             # If reachable, check if this candidate is closer
+#             base_distance = np.sqrt(
+#                 (candidate_x - current_base_pose[0])**2 + 
+#                 (candidate_y - current_base_pose[1])**2
+#             )
+
+#             # If this is a better solution, save it
+#             if base_distance < min_base_distance:
+#                 # Basic collision check for candidate base pose itself
+#                 if not _collision_fn(
+#                     candidate_base_pose, robot, collision_bodies, physics_client_id,
+#                     current_arm_positions=current_joint_positions, 
+#                     held_object_id=held_object_id_at_start,
+#                     ee_to_held_object_transform=ee_to_held_object_transform_at_start
+#                 ):
+#                     min_base_distance = base_distance
+#                     best_reachable_base_pos = candidate_base_pose
+#                     # Apply final_finger_state to this joint_solution as well
+#                     if final_finger_state is not None and joint_solution is not None:
+#                         mutable_js = list(joint_solution)
+#                         if robot.left_finger_joint_idx < len(mutable_js) and \
+#                            robot.right_finger_joint_idx < len(mutable_js):
+#                             mutable_js[robot.left_finger_joint_idx] = final_finger_state
+#                             mutable_js[robot.right_finger_joint_idx] = final_finger_state
+#                             best_joint_solution = tuple(mutable_js)
+#                         else:
+#                             print(f"Warning: Finger joint indices out of bounds for joint_solution in base candidate.")
+#                             best_joint_solution = joint_solution # Use original if indices invalid
+#                     else:
+#                         best_joint_solution = joint_solution
+#                     print(f"Coordinated planning: Found reachable base candidate")
+
+#         except InverseKinematicsError:
+#             # Not reachable from this base position
+#             pass
+
+#         # Restore original base pose after checking
+#         p.resetBasePositionAndOrientation(robot.robot_id,
+#                                           current_sim_base_pos,
+#                                           current_sim_base_orn,
+#                                           physicsClientId=physics_client_id)
+
+#         # Also reset the robot's internal joint state if IK modified it
+#         robot.set_joints(current_joint_positions)
+
+#     if best_reachable_base_pos is None:
+#         print("Coordinated planning: Failed to find any reachable base pose.")
+#         return None
+
+#     print(f"Coordinated planning: Selected best base pose:{best_reachable_base_pos}")
+
+#     # Plan Base Path
+#     # Restore initial state before planning base path
+#     robot.move_base_to(current_base_pose, physics_client_id)
+#     robot.set_joints(current_joint_positions)
+
+#     base_path = run_base_motion_planning(
+#         robot,
+#         best_reachable_base_pos,
+#         collision_bodies,
+#         current_joint_positions,
+#         seed,
+#         physics_client_id,
+#         workspace_bounds=workspace_bounds,
+#         held_object_id=held_object_id_at_start,
+#         ee_to_held_object_transform=ee_to_held_object_transform_at_start,
+#     )
+
+#     if base_path is None:
+#         print("Coordinated planning: Base path planning failed.")
+#         # Restore initial state
+#         robot.move_base_to(current_base_pose, physics_client_id)
+#         robot.set_joints(current_joint_positions)
+#         return None
+
+#     print(f"Coordinated planning: Base path found with {len(base_path)} waypoints.")
+
+#     # Plan Arm Path
+#     # Temporarily move the robot to the end of the planned base path
+#     final_base_pose = base_path[-1]
+#     robot.move_base_to(final_base_pose, physics_client_id)
+
+#     # Need the joint positions *after* potential base movement influence,
+#     # or more robustly, start arm planning from the initial joints *before*
+#     # base movement, assuming the target `best_joint_solution` is valid
+#     # from the `final_base_pose`. Let's assume the latter for simplicity now.
+#     # A more robust method might re-run IK at the final base pose if needed.
+    
+#     # Ensure best_joint_solution (which is target_positions for arm planner)
+#     # has the correct final_finger_state if it was determined.
+#     if final_finger_state is not None and best_joint_solution is not None:
+#         mutable_bjs = list(best_joint_solution)
+#         # Check if finger indices are valid for the length of best_joint_solution
+#         if robot.left_finger_joint_idx < len(mutable_bjs) and \
+#            robot.right_finger_joint_idx < len(mutable_bjs):
+#             mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
+#             mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
+#             best_joint_solution = tuple(mutable_bjs)
+#         else:
+#             # This case should be rare if IK solution was valid
+#             print(f"Warning: Finger joint indices out of bounds for best_joint_solution. Length: {len(mutable_bjs)}")
+
+
+#     # It's crucial that run_motion_planning starts from the *correct*
+#     # joint state corresponding to the state *before* arm motion begins,
+#     # which is current_joint_positions in this sequential execution model.
+#     arm_path = run_motion_planning(
+#         robot,
+#         current_joint_positions,  # Joints before any movement starts
+#         best_joint_solution,      # Target joints from IK at final base pose (with fingers updated)
+#         collision_bodies,
+#         seed,                     # Consider using rng.integers here as well
+#         physics_client_id,
+#         held_object=held_object_id_at_start,
+#         ee_to_held_object_transform=ee_to_held_object_transform_at_start,
+#     )
+
+#     # Restore initial state after planning is complete
+#     robot.move_base_to(current_base_pose, physics_client_id)
+#     robot.set_joints(current_joint_positions)
+
+#     if arm_path is None:
+#         print("Coordinated planning: Arm path planning failed after base movement.")
+#         # Base path was found, but arm path failed. Depending on desired behavior,
+#         # we could return just the base path, but returning None indicates failure
+#         # to reach the final coordinated state.
+#         return None
+
+#     print(f"Coordinated planning: Arm path found with {len(arm_path)} waypoints.")
+#     print("Coordinated planning: Succeeded.")
+#     return (base_path, arm_path)
+
+
+def _compute_facing_theta(robot_pos: np.ndarray, target_pos: np.ndarray) -> float:
+    """Compute theta such that robot faces the target."""
+    dx = target_pos[0] - robot_pos[0]
+    dy = target_pos[1] - robot_pos[1]
+    return np.arctan2(dy, dx)
+
 def run_coordinated_motion_planning(
     robot: MobileSingleArmPyBulletRobot,
     target_ee_pose: Pose,
@@ -445,202 +753,110 @@ def run_coordinated_motion_planning(
     held_object_id_at_start: Optional[int] = None,
     ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
 ) -> Optional[Tuple[List[Tuple[float, float, float]], List[JointPositions]]]:
-    """
-    Run co-ordinated motion planning for both base and arm.
-
-    Attempts to reach the target EE pose, potentially moving the base if
-    necessary.
-
-    Args:
-        robot: The mobile robot
-        target_ee_pose: Target end-effector pose in world frame.
-        collision_bodies: collection of body ids to avoid while moving
-        seed: Random seed for planning.
-        physics_client_id: PyBullet physics client id.
-        try_arm_only_first: If True, try to reach target orientation only
-                            by using arm movements first.
-        base_path_planner_max_tries: Number of candidate base poses to check.
-        workspace_bounds: Optional workspace limits (min_X, min_Y, max_X, max_y).
-        rng: Optional random number generator.
-        final_finger_state: Optional final finger state for the arm.
-        held_object_id_at_start: Optional ID of an object held by the robot at the start of the coordinated plan.
-        ee_to_held_object_transform_at_start: Optional transform (pos, orn) from EE to held object at the start of the coordinated plan.
-
-    Returns:
-        Tuple of (base_path, arm_path);
-
-        base_path: List of (x, y, theta) waypoints for the base. Can contain just the current pose
-                    if only arm movement is needed.
-        arm_path: List of JointPositions waypoints for the arm. Can be empty if only base movement occurs
-                  or if arm planning fails after base movement (should ideally
-                  not happen if reachable base pose was found correctly).
-
-        Returns None if no plan is found.
-    """
+    
     if rng is None:
         rng = np.random.default_rng(seed)
 
-    # Get robot's current state to restore later.
+    # Get robot's current state to restore later
     current_base_pose = robot.get_base_pose(physics_client_id)
     current_joint_positions = robot.get_joints()
 
-    # First: check whether target is reachable from current
-    # base positions (if try_arm_only_first flag is True)
+    # First: check whether target is reachable from current base position
     if try_arm_only_first:
         try:
-            # Try to solve with inverse kinematics
             target_joint_solution = robot.inverse_kinematics(
                 target_ee_pose, validate=True, set_joints=False)
-
+            
             if final_finger_state is not None and target_joint_solution is not None:
                 mutable_joint_solution = list(target_joint_solution)
-                # Ensure indices are valid for the joint_solution array length and only move
-                # ahead if finger joint indices are present.
-                # Set the left and right finger values to the same value: either open or closed value.
                 if robot.left_finger_joint_idx < len(mutable_joint_solution) and \
                    robot.right_finger_joint_idx < len(mutable_joint_solution):
                     mutable_joint_solution[robot.left_finger_joint_idx] = final_finger_state
                     mutable_joint_solution[robot.right_finger_joint_idx] = final_finger_state
                     target_joint_solution = tuple(mutable_joint_solution)
-                else:
-                    print(f"Warning: Finger joint indices out of bounds for target_joint_solution in arm-only.")
 
-
-            # If IK succeeded, try planning the arm path
-            # Check if this solution is collision-free
             arm_path = run_motion_planning(
                 robot,
                 current_joint_positions,
                 target_joint_solution,
                 collision_bodies,
-                seed, # Consider using rng.integers for better seed generation in loops/retries
+                seed,
                 physics_client_id,
                 held_object=held_object_id_at_start,
                 ee_to_held_object_transform=ee_to_held_object_transform_at_start
-                )
+            )
 
             if arm_path is not None:
                 print("Coordinated planning: Succeeded with arm-only movement.")
-                # Target position was reachable via arm motion only; return it
-                # Restore the robot to initial positions (in the case these were
-                # modified during above steps,)
+
+                #Padding the returned arm_path to include fingers as well so
+#               #set_motors function doesn't run into an error:
+
+                padded_arm_path: List[JointPositions] = []
+
+                for arm_wp in arm_path:
+                    if len(list(arm_wp)) == 9:
+                        continue
+                    wp7 = list(arm_wp)
+                    #Insert left finger:
+                    wf = robot.open_fingers
+                    wp7.insert(robot.left_finger_joint_idx, wf)
+                    #Insert right finger:
+                    wp7.insert(robot.right_finger_joint_idx, wf)
+
+                    padded_arm_path.append(wp7)
+
                 robot.move_base_to(current_base_pose, physics_client_id)
                 robot.set_joints(current_joint_positions)
-                return ([current_base_pose], arm_path)
+                return ([current_base_pose], padded_arm_path)
 
         except InverseKinematicsError:
             print("Coordinated Planning: Arm-only IK failed. Moving to base planning.")
             pass
 
-        # Restore initial/current state of the robot if planning modified it
-        robot.move_base_to(current_base_pose, physics_client_id)
-        robot.set_joints(current_joint_positions)
-
-    # Then find a base position that makes the target reachable
-    best_reachable_base_pos = None
-    best_joint_solution = None
-    min_base_distance = float('inf')
-
-    # target x,y
-    target_pos = np.array(target_ee_pose.position[:2])
-
-    # try multiple candidate base positions
-    for attempt in range(base_path_planner_max_tries):
-        # Sample a base position near the target EE pose
-        dist_to_target = rng.uniform(0.4, 0.8)  # Sample distance from EE target
-        angle_to_target = rng.uniform(-np.pi/4, np.pi/4)  # Sample angle offset relative to target
-
-        # ----- Calculate base position relative to target---------
-        # Angle from current base pose to target
-        target_angle = np.arctan2(target_pos[1] - current_base_pose[1],
-                                target_pos[0] - current_base_pose[0])
-
-        # Base orientation relative to world
-        candidate_angle_offset = angle_to_target+target_angle
-
-        # Position behind the target
-        candidate_x = target_pos[0] - dist_to_target*np.cos(candidate_angle_offset)
-        candidate_y = target_pos[1] - dist_to_target*np.sin(candidate_angle_offset)
-        # Orientation towards the target
-        candidate_theta = (candidate_angle_offset+np.pi)%(2*np.pi)
-
-        # Make the candidate base pose
-        candidate_base_pose = (candidate_x, candidate_y, candidate_theta)
-        # ----------------------------------------------------------
-
-        # -------- Temp. move base to check IK -------------
-        # Save current state
-        current_sim_base_pos, current_sim_base_orn = p.getBasePositionAndOrientation(
-            robot.robot_id, physicsClientId=physics_client_id)
-
-        # Temporarily move base to candidate position
-        robot.move_base_to(candidate_base_pose, physics_client_id)
-
-        # Check if target is reachable from this base pose
-        try:
-            # Check IK reachability without validating collisons
-            joint_solution = robot.inverse_kinematics(
-                target_ee_pose, validate=True, set_joints=False)
-
-            # If reachable, check if this candidate is closer
-            base_distance = np.sqrt(
-                (candidate_x - current_base_pose[0])**2 + 
-                (candidate_y - current_base_pose[1])**2
-            )
-
-            # If this is a better solution, save it
-            if base_distance < min_base_distance:
-                # Basic collision check for candidate base pose itself
-                if not _collision_fn(
-                    candidate_base_pose, robot, collision_bodies, physics_client_id,
-                    current_arm_positions=current_joint_positions, 
-                    held_object_id=held_object_id_at_start,
-                    ee_to_held_object_transform=ee_to_held_object_transform_at_start
-                ):
-                    min_base_distance = base_distance
-                    best_reachable_base_pos = candidate_base_pose
-                    # Apply final_finger_state to this joint_solution as well
-                    if final_finger_state is not None and joint_solution is not None:
-                        mutable_js = list(joint_solution)
-                        if robot.left_finger_joint_idx < len(mutable_js) and \
-                           robot.right_finger_joint_idx < len(mutable_js):
-                            mutable_js[robot.left_finger_joint_idx] = final_finger_state
-                            mutable_js[robot.right_finger_joint_idx] = final_finger_state
-                            best_joint_solution = tuple(mutable_js)
-                        else:
-                            print(f"Warning: Finger joint indices out of bounds for joint_solution in base candidate.")
-                            best_joint_solution = joint_solution # Use original if indices invalid
-                    else:
-                        best_joint_solution = joint_solution
-                    print(f"Coordinated planning: Found reachable base candidate")
-
-        except InverseKinematicsError:
-            # Not reachable from this base position
-            pass
-
-        # Restore original base pose after checking
-        p.resetBasePositionAndOrientation(robot.robot_id,
-                                          current_sim_base_pos,
-                                          current_sim_base_orn,
-                                          physicsClientId=physics_client_id)
-
-        # Also reset the robot's internal joint state if IK modified it
-        robot.set_joints(current_joint_positions)
-
-    if best_reachable_base_pos is None:
-        print("Coordinated planning: Failed to find any reachable base pose.")
-        return None
-
-    print(f"Coordinated planning: Selected best base pose:{best_reachable_base_pos}")
-
-    # Plan Base Path
-    # Restore initial state before planning base path
+    # Restore robot state before base planning
     robot.move_base_to(current_base_pose, physics_client_id)
     robot.set_joints(current_joint_positions)
 
+    
+    # Get target base pose near the target EE position
+    target_pos = np.array(target_ee_pose.position[:2])
+    
+    # Position the base at a reasonable distance from target (0.6m behind it)
+    dist_to_target = 0.5
+
+    # Calculate distance to target first
+    dist_to_target_actual = np.sqrt((target_pos[0] - current_base_pose[0])**2 + 
+                                    (target_pos[1] - current_base_pose[1])**2)
+
+    if dist_to_target_actual < 0.3:  # If very close to target
+        print("Robot already close to target, skipping base movement")
+        return None
+    
+    # Calculate angle from current base to target
+    target_angle = np.arctan2(target_pos[1] - current_base_pose[1],
+                             target_pos[0] - current_base_pose[0])
+    
+    print(f"Target angle:({target_angle}).")
+
+    # Use adaptive distance based on how far we are from target
+    adaptive_dist = min(dist_to_target, max(0.3, dist_to_target_actual * 0.7))
+
+    # Position base behind the target, facing toward it
+    target_base_x = target_pos[0] - adaptive_dist*np.cos(target_angle)
+    target_base_y = target_pos[1] - adaptive_dist*np.sin(target_angle)
+
+    print(f"Target base pose:({target_base_x, target_base_y}).")
+    target_base_theta = target_angle  # Face toward the target
+    
+    target_base_pose = (target_base_x, target_base_y, target_base_theta)
+    
+    print(f"Coordinated planning: Moving base to {target_base_pose}")
+
+    # Plan base path to target position
     base_path = run_base_motion_planning(
         robot,
-        best_reachable_base_pos,
+        target_base_pose,
         collision_bodies,
         current_joint_positions,
         seed,
@@ -652,67 +868,71 @@ def run_coordinated_motion_planning(
 
     if base_path is None:
         print("Coordinated planning: Base path planning failed.")
-        # Restore initial state
         robot.move_base_to(current_base_pose, physics_client_id)
         robot.set_joints(current_joint_positions)
         return None
 
     print(f"Coordinated planning: Base path found with {len(base_path)} waypoints.")
 
-    # Plan Arm Path
-    # Temporarily move the robot to the end of the planned base path
+    # Move robot to final base position and check if target is reachable
     final_base_pose = base_path[-1]
     robot.move_base_to(final_base_pose, physics_client_id)
-
-    # Need the joint positions *after* potential base movement influence,
-    # or more robustly, start arm planning from the initial joints *before*
-    # base movement, assuming the target `best_joint_solution` is valid
-    # from the `final_base_pose`. Let's assume the latter for simplicity now.
-    # A more robust method might re-run IK at the final base pose if needed.
     
-    # Ensure best_joint_solution (which is target_positions for arm planner)
-    # has the correct final_finger_state if it was determined.
-    if final_finger_state is not None and best_joint_solution is not None:
-        mutable_bjs = list(best_joint_solution)
-        # Check if finger indices are valid for the length of best_joint_solution
-        if robot.left_finger_joint_idx < len(mutable_bjs) and \
-           robot.right_finger_joint_idx < len(mutable_bjs):
-            mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
-            mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
-            best_joint_solution = tuple(mutable_bjs)
+    try:
+        # Check if target is reachable from this base position
+        joint_solution = robot.inverse_kinematics(
+            target_ee_pose, validate=True, set_joints=False)
+        
+        # Apply final finger state if specified
+        if final_finger_state is not None and joint_solution is not None:
+            mutable_js = list(joint_solution)
+            if robot.left_finger_joint_idx < len(mutable_js) and \
+               robot.right_finger_joint_idx < len(mutable_js):
+                mutable_js[robot.left_finger_joint_idx] = final_finger_state
+                mutable_js[robot.right_finger_joint_idx] = final_finger_state
+                joint_solution = tuple(mutable_js)
+        
+        # Plan arm path from final base position
+        arm_path = run_motion_planning(
+            robot,
+            current_joint_positions,
+            joint_solution,
+            collision_bodies,
+            seed,
+            physics_client_id,
+            held_object=held_object_id_at_start,
+            ee_to_held_object_transform=ee_to_held_object_transform_at_start
+        )
+
+        padded_arm_path: List[JointPositions] = []
+
+        for arm_wp in arm_path:
+            if len(list(arm_wp)) == 9:
+                continue
+            wp7 = list(arm_wp)
+            #Insert left finger:
+            wf = robot.open_fingers
+            wp7.insert(robot.left_finger_joint_idx, wf)
+            #Insert right finger:
+            wp7.insert(robot.right_finger_joint_idx, wf)
+
+            padded_arm_path.append(wp7)
+        
+        # Restore robot state
+        robot.move_base_to(current_base_pose, physics_client_id)
+        robot.set_joints(current_joint_positions)
+        
+        if arm_path is not None:
+            print("Coordinated planning: Succeeded with base + arm movement.")
+            return (base_path, padded_arm_path)
         else:
-            # This case should be rare if IK solution was valid
-            print(f"Warning: Finger joint indices out of bounds for best_joint_solution. Length: {len(mutable_bjs)}")
-
-
-    # It's crucial that run_motion_planning starts from the *correct*
-    # joint state corresponding to the state *before* arm motion begins,
-    # which is current_joint_positions in this sequential execution model.
-    arm_path = run_motion_planning(
-        robot,
-        current_joint_positions,  # Joints before any movement starts
-        best_joint_solution,      # Target joints from IK at final base pose (with fingers updated)
-        collision_bodies,
-        seed,                     # Consider using rng.integers here as well
-        physics_client_id,
-        held_object=held_object_id_at_start,
-        ee_to_held_object_transform=ee_to_held_object_transform_at_start,
-    )
-
-    # Restore initial state after planning is complete
-    robot.move_base_to(current_base_pose, physics_client_id)
-    robot.set_joints(current_joint_positions)
-
-    if arm_path is None:
-        print("Coordinated planning: Arm path planning failed after base movement.")
-        # Base path was found, but arm path failed. Depending on desired behavior,
-        # we could return just the base path, but returning None indicates failure
-        # to reach the final coordinated state.
+            print("Coordinated planning: Arm planning failed from target base position.")
+            return None
+            
+    except InverseKinematicsError:
+        print("Coordinated planning: Target not reachable from planned base position.")
+        robot.move_base_to(current_base_pose, physics_client_id)
+        robot.set_joints(current_joint_positions)
         return None
-
-    print(f"Coordinated planning: Arm path found with {len(arm_path)} waypoints.")
-    print("Coordinated planning: Succeeded.")
-    return (base_path, arm_path)
-
 
 

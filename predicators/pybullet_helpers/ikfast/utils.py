@@ -126,9 +126,10 @@ def get_base_from_ee(
     of the end-effector link in the base link frame.
 
     Tool link frame: the coordinate frame at the physical “tip” of your end
-    effector (gripper or tool), offset from the robot’s wrist flange. Tool is the coordinate frame you attach to the very end
-    of your robot’s wrist flange to represent whatever end‐effector or “tool” you’re actually manipulating—typically the gripper
-    jaws, a welding tip, a screwdriver bit, etc.
+    effector (gripper or tool), offset from the robot’s wrist flange. Tool is
+    the coordinate frame you attach to the very end of your robot’s wrist flange
+    to represent whatever end‐effector or “tool” you’re actually manipulating—typically
+    the gripper jaws, a welding tip, a screwdriver bit, etc.
 
     world_from_target: the desired pose of that tool frame in world coordinates
                         to get to the target location.
@@ -276,13 +277,13 @@ def ikfast_inverse_kinematics(
     # Get the desired pose of the end-effector in the base frame
     base_from_ee = get_base_from_ee(robot, world_from_target)
     position = list(base_from_ee.position)
-    print(f"Position:{position}.")
-    print(f"Position is of data type:{type(position)}.")
+    # print(f"Position:{position}.")
+    # print(f"Position is of data type:{type(position)}.")
     rot_matrix = matrix_from_quat(base_from_ee.orientation).tolist()
     rot_list = [float(x) for row in rot_matrix for x in row]
-    print(f"Rot List:{rot_list}.")
-    print(f"Rotation matrix:{rot_matrix}.")
-    print(f"rot_matrix is of data type:{type(rot_matrix)}.")
+    # print(f"Rot List:{rot_list}.")
+    # print(f"Rotation matrix:{rot_matrix}.")
+    # print(f"rot_matrix is of data type:{type(rot_matrix)}.")
 
     # Sampler for free joints
     generator = free_joints_generator(robot, free_joint_infos, max_distance)

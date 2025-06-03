@@ -48,29 +48,33 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
             robot=self._pybullet_robot,
             robot_type=self._robot_type,
             object_to_pick_type=self._block_type,
-            physics_client_id=self._physics_client_id
+            physics_client_id=self._physics_client_id,
+            # Pass initiable here as ParameterizedOption is defined as
+            # a frozen dataclass.
+            initiable_fn=self._pick_block_initiable  
             # grasp_height_offset and grasp_euler_orn use defaults
         )
 
         # For PlaceObject, location_type will be another block for stacking.
-        # grabbable_object_type must be self._block_type.
+        # object_to_place_type must be self._block_type.
         self._place_block_option = create_place_object_option(
             robot=self._pybullet_robot,
             robot_type=self._robot_type,
-            location_type=self._block_type,  # Placing on another block
-            grabbable_object_type=self._block_type, # Must be what Pick can pick
-            physics_client_id=self._physics_client_id
+            # Placing on another block
+            location_type=self._block_type,
+            # Must be what Pick can pick
+            object_to_place_type=self._block_type,
+            physics_client_id=self._physics_client_id,
+            # Pass initiable here as ParameterizedOption is defined as
+            # a frozen dataclass.
+            initiable_fn=self._place_block_initiable  
             # place_height_offset and place_euler_orn use defaults
         )
-
-        # Define initiable predicates for these new options
-        self._pick_block_option.initiable = self._pick_block_initiable
-        self._place_block_option.initiable = self._place_block_initiable
 
     @property
     def options(self) -> Set[ParameterizedOption]:
         """Expose all implemented parameterized options."""
-        # If there were other pre-existing options, they should be added here too.
+        # Other pre-existing options should be added here too.
         # For now, just adding the new coordinated ones.
         return {self._pick_block_option, self._place_block_option}
 
@@ -92,7 +96,8 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
     def _place_block_initiable(self, state: State, memory: Dict,
                                 objects: Sequence[Object], params: Array) -> bool:
         del memory, params # Unused
-        robot_obj, loc_obj = objects # loc_obj is the block we are placing on
+        # loc_obj is the block we are placing on
+        robot_obj, loc_obj = objects
         # Robot must be holding a block
         held_block = self._get_held_block(state)
         if held_block is None:
@@ -210,35 +215,6 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         self._table_id = pybullet_bodies["table_id"]
         self._block_ids = pybullet_bodies["block_ids"]
 
-    # @classmethod
-    # def _create_pybullet_robot(
-    #         cls, physics_client_id: int) -> SingleArmPyBulletRobot:
-    #     # cls.robot_init_x,y,z are defined in BlocksEnv:
-    #     # robot_init_x: ClassVar[float] = (x_lb + x_ub) / 2  
-    #     # robot_init_y: ClassVar[float] = (y_lb + y_ub) / 2 
-    #     # robot_init_z: ClassVar[float] = pick_z (0.7)
-    #     # So ee_home here is roughly Pose(position=(x,y,z), orientation=CFG_ORN)
-    #     robot_ee_orn = cls.get_robot_ee_home_orn()
-    #     ########################################################################
-    #     # Pratyush: Making changes to the ee_home_pose for mobile_fetch robot  #
-    #     # as currently I am spawning it at somewhat the center of the room     #
-    #     # so the default ee_home_pose is causing issues with IKFast (it seems).#
-    #     ########################################################################
-
-    #     if CFG.pybullet_robot == "fetch_mobile":
-    #         ee_home_position = (0.7, 0.3, 0.5)
-    #         #Log this info for clarity.
-    #         logging.info(f"PyBulletBlocksEnv: Using CUSTOM ee_home_pose for fetch_mobile:{ee_home_position}.")
-
-    #     else:
-    #         # ee_home_pose for fixed base fetch and panda robot remain the same.
-    #         ee_home_position = (cls.robot_init_x, cls.robot_init_y, cls.robot_init_z)
-
-
-    #     ee_home = Pose(ee_home_position, robot_ee_orn)
-    #     return create_single_arm_pybullet_robot(CFG.pybullet_robot,
-    #                                             physics_client_id, ee_home)
-
     @classmethod
     def _create_pybullet_robot(
             cls, physics_client_id: int) -> SingleArmPyBulletRobot:
@@ -248,9 +224,38 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         # robot_init_z: ClassVar[float] = pick_z (0.7)
         # So ee_home here is roughly Pose(position=(x,y,z), orientation=CFG_ORN)
         robot_ee_orn = cls.get_robot_ee_home_orn()
-        ee_home = Pose((cls.robot_init_x, cls.robot_init_y, cls.robot_init_z), robot_ee_orn)
+        ########################################################################
+        # Pratyush: Making changes to the ee_home_pose for mobile_fetch robot  #
+        # as currently I am spawning it at somewhat the center of the room     #
+        # so the default ee_home_pose is causing issues with IKFast (it seems).#
+        ########################################################################
+
+        if CFG.pybullet_robot == "fetch_mobile":
+            ee_home_position = (1.00, 0.30, 0.50)
+            #Log this info for clarity.
+            logging.info(f"PyBulletBlocksEnv: Using CUSTOM ee_home_pose for fetch_mobile:{ee_home_position}.")
+
+        else:
+            # ee_home_pose for fixed base fetch and panda robot remain the same.
+            ee_home_position = (cls.robot_init_x, cls.robot_init_y, cls.robot_init_z)
+
+
+        ee_home = Pose(ee_home_position, robot_ee_orn)
         return create_single_arm_pybullet_robot(CFG.pybullet_robot,
                                                 physics_client_id, ee_home)
+
+    # @classmethod
+    # def _create_pybullet_robot(
+    #         cls, physics_client_id: int) -> SingleArmPyBulletRobot:
+    #     # cls.robot_init_x,y,z are defined in BlocksEnv:
+    #     # robot_init_x: ClassVar[float] = (x_lb + x_ub) / 2  
+    #     # robot_init_y: ClassVar[float] = (y_lb + y_ub) / 2 
+    #     # robot_init_z: ClassVar[float] = pick_z (0.7)
+    #     # So ee_home here is roughly Pose(position=(x,y,z), orientation=CFG_ORN)
+    #     robot_ee_orn = cls.get_robot_ee_home_orn()
+    #     ee_home = Pose((cls.robot_init_x, cls.robot_init_y, cls.robot_init_z), robot_ee_orn)
+    #     return create_single_arm_pybullet_robot(CFG.pybullet_robot,
+    #                                             physics_client_id, ee_home)
 
     def _extract_robot_state(self, state: State) -> Array:
         # The orientation is fixed in this environment.

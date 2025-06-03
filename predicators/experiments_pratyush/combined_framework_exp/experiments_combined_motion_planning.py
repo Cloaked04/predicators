@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pybullet as p
 import time
@@ -11,7 +12,7 @@ from predicators.settings import CFG
 #Import core environment methods, robot function etc.
 
 from predicators.envs.pybullet_blocks import PyBulletBlocksEnv
-from predicators.envs.pybullet_env import PyBulletEnv
+from predicators.envs.pybullet_env import PyBulletEnv, create_pybullet_block
 from predicators.pybullet_helpers.robots import SingleArmPyBulletRobot
 from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 from predicators.pybullet_helpers.geometry import Pose
@@ -56,9 +57,9 @@ def reset_robot_fetch_mobile(robot: MobileSingleArmPyBulletRobot,
     """
 
     robot.move_base_to(base_pose, physics_client_id)
-    if arm_joint_angles:
+    if arm_joint_angle:
         #Set arm joints only
-        robot.set_joints(arm_joint_angles)
+        robot.set_joints(arm_joint_angle)
     else:
         #robot.initial_joint_positions includes arm and finger joints
         robot.set_joints(robot.initial_joint_positions)
@@ -77,7 +78,7 @@ def create_test_block(env: PyBulletEnv,
     """
 
     #Use the fn defined in utils to create block
-    block_id = utils.create_pybullet_block(
+    block_id = create_pybullet_block(
         color,
         (CFG.blocks_block_size/2,)*3,
         env._obj_mass,
@@ -154,6 +155,10 @@ def main_test_script():
     #Store permament, fixed bodies
     static_collision_bodies = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
+    print(f"Static_collision_bodies:{static_collision_bodies}")
+
+    #sys.exit(0)
+
     #Define a rectangular workspace for base motion planning tests.
     #(min_x, min_y, max_x, max_y)
     workspace_bounds = (1.0, 0.2, 1.7, 1.3)
@@ -203,7 +208,8 @@ def main_test_script():
             # act.arr has a length greater than 0, it means there's an arm component to this action.
             if len(act.arr) > 0 :
                 logging.debug(f"    Arm joints (first 3 of {len(act.arr)}): {act.arr.tolist()[:3]}")
-                robot.set_motors(act.arr.tolist()) # Commands motors to move arm joints
+                #Commands motors to move arm joints
+                robot.set_motors(act.arr.tolist()) 
 
             #------- Handle gripper commands
             if act.has_gripper_command:
@@ -242,7 +248,7 @@ def main_test_script():
     logging.info("\n----Test 1: run_motion_planning (Arm Only)---")
 
     #Reset robot to known starting place
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=(1.35, 0.75, 0.0), arm_joint_angles=home_arm_joints)
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=(0.80, 0.70, 0.0), arm_joint_angle=home_arm_joints)
 
     # Create an obstacle for the arm to navigate around.
     obstacle_block_id_1 = create_test_block(env, pose=(1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.1))
@@ -293,14 +299,14 @@ def main_test_script():
     #-----------------------------------------------------------
 
     logging.info("\n--- Test 2: run_base_motion_planning (Base Only) ---")
-    initial_base_pose_2 = (1.2, 0.6, 0.0) # Starting base pose
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_2, arm_joint_angles=home_arm_joints)
+    initial_base_pose_2 = (-2.40, 0.30, 0.0) # Starting base pose
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_2, arm_joint_angle=home_arm_joints)
 
     # Create an obstacle for the base to navigate around.
     obstacle_block_id_2 = create_test_block(env, pose=(1.4, 0.7, CFG.blocks_block_size / 2 + env.table_height))
     current_collision_bodies_2 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
-    target_base_pose_2 = (1.5, 0.9, np.pi / 4) # Target base pose
+    target_base_pose_2 = (0.75, 0.7441, np.pi / 4) # Target base pose
     logging.info(f"Testing base-only motion from {initial_base_pose_2} to {target_base_pose_2}...")
 
     # Call the base motion planner.
@@ -332,12 +338,12 @@ def main_test_script():
     #-----------------------------------------------------------
 
     logging.info("\n--- Test 3: Coordinated Motion (Arm-Only) ---")
-    initial_base_pose_3 = (1.35, 0.75, 0.0) # Robot is well-positioned
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_3, arm_joint_angles=home_arm_joints)
+    initial_base_pose_3 = (-1.40, 0.60, 0.0) # Robot is well-positioned
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_3, arm_joint_angle=home_arm_joints)
 
     current_ee_pose_3 = robot.forward_kinematics(home_arm_joints)
     target_ee_pos_3_list = list(current_ee_pose_3.position)
-    target_ee_pos_3_list[0] += 0.1 # Small EE movement in x, likely reachable by arm
+    target_ee_pos_3_list[0] += 0.2 # Small EE movement in x, likely reachable by arm
     target_ee_pose_3 = Pose(tuple(target_ee_pos_3_list), current_ee_pose_3.orientation) # Keep orientation same
 
     logging.info(f"Testing coordinated motion (expect arm-only success) to EE pose: {target_ee_pose_3}")
@@ -369,12 +375,13 @@ def main_test_script():
 
     logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
     # Start further away and rotated, likely needing base movement
-    initial_base_pose_4 = (1.1, 0.4, -np.pi/2) 
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angles=home_arm_joints)
+    initial_base_pose_4 = (0.4, 0.6, -np.pi/2) 
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angle=home_arm_joints)
 
     # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
-    target_ee_pose_4 = Pose(position=(1.5, 0.9, env.robot_init_z + 0.05), # A point on the table
-                             orientation=robot._ee_home_pose.orientation) # Use robot's default EE orientation
+    # A point on the table 1.35, 0.6, 0.2
+    target_ee_pose_4 = Pose(position=(1.20, 0.6, 0.2), 
+                             orientation=robot._ee_home_pose.orientation)
 
     logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
     coord_path_4_result = run_coordinated_motion_planning(
@@ -403,8 +410,8 @@ def main_test_script():
     # (potentially moving base and arm), then closing fingers. 
 
     logging.info("\n--- Test 5: PickObject Option ---")
-    initial_base_pose_5 = (1.3, 0.6, 0.0) # Base pose from which block should be reachable
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5, arm_joint_angles=home_arm_joints)
+    initial_base_pose_5 = (0.4, 0.6, -np.pi/2) # Base pose from which block should be reachable
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5, arm_joint_angle=home_arm_joints)
 
     # Create a block to be picked.
     block_to_pick_pose_world = (1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height)
@@ -414,23 +421,61 @@ def main_test_script():
     # --- Symbolic State Setup for Option ---
     # For option testing, we need a symbolic State that the option's policy can understand.
     # In a real run, PyBulletEnv.step() would update env._current_state. Here, we mock it.
-    # 1. Map PyBullet ID to symbolic Object for the new block.
-    #    PyBulletBlocksEnv maintains _block_id_to_block. We need to add our test block.
-
-    # Make a unique name
+    
+    # Make a unique name for the symbolic object
     symbolic_block_name = f"block{block_to_pick_id}" 
     block_to_pick_obj_sym = Object(symbolic_block_name, env._block_type)
+
+    # 1. Update the environment's internal tracking
     env._block_id_to_block[block_to_pick_id] = block_to_pick_obj_sym
-    # 2. Get the current symbolic state from the environment (which now "knows" about the test block).
-    current_symbolic_state_5 = env._get_state()
-    # 3. Ensure the new block's features are correctly in the symbolic state.
-    #    _get_state() in PyBulletBlocksEnv should populate this if _block_id_to_block is updated.
-    #    Double-check and manually add if necessary for robustness in this isolated test.
-    if block_to_pick_obj_sym not in current_symbolic_state_5.data:
-        current_symbolic_state_5.data[block_to_pick_obj_sym] = np.array(
-            [block_to_pick_pose_world[0], block_to_pick_pose_world[1], block_to_pick_pose_world[2], # pose_x,y,z
-             0.0, # held
-             0.8, 0.2, 0.2], dtype=np.float32) # color_r,g,b (default for block type in BlocksEnv)
+
+    # 2. CRITICAL: Update env._current_state to include the new symbolic object
+    #    and its features BEFORE calling env._get_state().
+    #    We'll copy the existing _current_state and add to it.
+    #    If _current_state is None (e.g., before first reset), initialize it.
+    if env._current_state is None:
+        # This case might not happen if reset_robot_fetch_mobile calls env.reset indirectly
+        # or if tests always start with a reset. But good to be robust.
+        # We'd need to fully initialize _current_state here, perhaps by calling _get_state
+        # for existing objects first, then adding. For simplicity in this test,
+        # assume env.reset or similar has been called once to populate _current_state.
+        # If not, the first call to env._get_state() below would handle existing objects.
+        # For this specific test flow, resetting ensures _current_state is populated.
+        # Let's assume env.reset() has been called, or reset_robot_fetch_mobile ensures
+        # _current_state is set via env's mechanisms.
+        # A more robust way if _current_state could be None here is more complex.
+        # Given the test structure, env.reset() at the start of main_test_script
+        # should mean _current_state is not None.
+        pass # Assuming _current_state is populated from env initialization
+
+    # CRITICAL: Update symbolic state as well before _get_state() is called internally by option
+    # Get the current simulator state (joint positions) to preserve it
+    current_simulator_state = env._current_state.simulator_state # Access before modifying
+    updated_state_data = env._current_state.data.copy()
+    # Add the new block with its features
+    # Features: "pose_x", "pose_y", "pose_z", "held", "color_r", "color_g", "color_b"
+    updated_state_data[block_to_pick_obj_sym] = np.array(
+        [block_to_pick_pose_world[0], block_to_pick_pose_world[1], block_to_pick_pose_world[2],
+         0.0,  # not held
+         0.8, 0.2, 0.2], # color (r,g,b)
+        dtype=np.float32
+    )
+
+    # Modify the existing State object (_current_observation) directly
+    state_obj_to_modify = env._current_observation
+    assert isinstance(state_obj_to_modify, State), \
+        f"Expected env._current_observation to be a State, got {type(state_obj_to_modify)}"
+    
+    state_obj_to_modify.data = updated_state_data
+    # current_simulator_state was extracted from the original state object before data modification
+    state_obj_to_modify.simulator_state = current_simulator_state 
+    
+    # Keep BaseEnv's _simulator_state attribute consistent
+    env._simulator_state = current_simulator_state
+
+    logging.info(f"Test 5: Symbolic state updated for new block {block_to_pick_obj_sym.name}.")
+    logging.info(f"Test 5: Current objects in state: {list(env._current_state.data.keys())}")
+
 
     env._held_obj_id = None # Crucial: ensure robot starts not holding anything. PyBulletEnv uses this.
     robot_obj_sym = env._robot # The symbolic robot object, already in env.types and env._get_state()
@@ -439,7 +484,7 @@ def main_test_script():
     pick_option = env._pick_block_option # Get the option instance from the environment
 
     # Check if the option thinks it can start.
-    if not pick_option.initiable(current_symbolic_state_5, {}, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
+    if not pick_option.initiable(env._current_state, {}, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
         logging.error("PickOption is not initiable. Check state/predicates (e.g., GripperOpen, Clear).")
     else:
         logging.info("PickOption is initiable. Executing policy (will plan and generate actions)...")
@@ -455,10 +500,10 @@ def main_test_script():
             # 4. Store these actions in option_memory_pick["actions"].
             # 5. Return the first action from this list.
             # We simulate multiple calls to the policy to get all actions.
-            while not pick_option.terminal(current_symbolic_state_5, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
-                 act = pick_option.policy(current_symbolic_state_5, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([]))
+            while not pick_option.terminal(env._current_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
+                 act = pick_option.policy(env._current_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([]))
                  actions_for_pick.append(act)
-                 # In a real scenario, current_symbolic_state_5 would be updated after each env.step(act)
+                 # In a real scenario, env._current_state would be updated after each env.step(act)
                  # For this test visualization, we execute all planned actions sequentially from the initial state.
                  # The terminal condition checks memory, so it will become true after all planned actions are retrieved.
 
