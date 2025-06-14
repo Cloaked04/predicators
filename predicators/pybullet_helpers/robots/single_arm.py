@@ -1,6 +1,7 @@
 """Abstract class for single armed manipulators with PyBullet helper
 functions."""
 import abc
+import sys
 from functools import cached_property
 from typing import List, Optional
 
@@ -274,12 +275,17 @@ class SingleArmPyBulletRobot(abc.ABC):
         """Get the robot state vector based on the current PyBullet state.
 
         This corresponds to the State vector for the robot object.
+        In the return vector state, state[:3] is the robot's link
+        position, state[3:7] is the robot's link's orientation,
+        state[7] is the finger's joint state.
         """
         ee_link_state = get_link_state(
             self.robot_id,
             self.end_effector_id,
             physics_client_id=self.physics_client_id)
+        #These are the link's positions
         rx, ry, rz = ee_link_state.worldLinkFramePosition
+        #Thesea are the link's orientation returned in the form of quaternions
         qx, qy, qz, qw = ee_link_state.worldLinkFrameOrientation
         # Note: we assume both left and right gripper have the same joint
         # position.
@@ -314,7 +320,39 @@ class SingleArmPyBulletRobot(abc.ABC):
             )
 
     def set_motors(self, joint_positions: JointPositions) -> None:
-        """Update the motors to move toward the given joint positions."""
+        """
+        Update the motors to move toward the given joint positions.
+
+        Pratyush: Adding section to set wheel positions to 0 
+        when there is no base motion so that they can hold 
+        position.
+        """
+        from predicators.pybullet_helpers.mobile_single_arm import MobileSingleArmPyBulletRobot
+
+        if isinstance(self, MobileSingleArmPyBulletRobot):
+
+            base_motor_force = 10.0
+            p.setJointMotorControlArray(
+                bodyUniqueId=self.robot_id,
+                jointIndices=self.arm_joints,
+                controlMode=p.VELOCITY_CONTROL,
+                targetVelocities=[0.0]*len(self.wheel_ids),
+                forces=[base_motor_force]*len(self.wheel_ids),
+                physicsClientId=self.physics_client_id
+                )
+
+        # Prepare arm joint positions, handling potential truncation.
+        #arm_joint_positions = list(joint_positions)
+        # Should be 9 for Fetch
+        num_arm_joints = len(self.arm_joints)
+
+        if len(joint_positions) == 11:
+            joint_positions = joint_positions[:len(self.arm_joints)]
+        else:
+            print("Joint positions inconsistent with robot.")
+            sys.exit(0)
+
+
         #print(f"Print the arm_joints for debugging:{self.arm_joints}")
         assert len(joint_positions) == len(self.arm_joints)
 
@@ -327,6 +365,7 @@ class SingleArmPyBulletRobot(abc.ABC):
                 targetPositions=joint_positions,
                 physicsClientId=self.physics_client_id,
             )
+
         elif CFG.pybullet_control_mode == "reset":
             self.set_joints(joint_positions)
         else:

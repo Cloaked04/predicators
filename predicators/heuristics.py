@@ -1,452 +1,635 @@
 import numpy as np
 from typing import Set, List, Dict, Any, FrozenSet
 from predicators.structs import GroundAtom, _GroundNSRT
-import heapq
+from heapq import *
 import time
 import logging
+import functools
+
+from .heuristic_base import Heuristic
+from predicators import utils
+from predicators.structs import Object, Predicate
+from predicators.utils import _create_pyperplan_task, _atom_to_pyperplan_fact
+from typing import Set, List, Dict, Any, FrozenSet, Sequence
 
 logging.basicConfig(level=logging.INFO)
 
+# Forward-declare this type for the type hint.
+_PyperplanTask = Any 
 
+
+# class CombinedHeuristic:
+#     def __init__(self, pyperplan_task: _PyperplanTask, heuristic_type: str = "lmcut"):
+#         # self.init_atoms = init_atoms
+#         # self.goal_atoms = goal_atoms
+#         # self.ground_nsrts = ground_nsrts
+#         # self.heuristic_type = heuristic_type
+#         # self.hadd = HAddHeuristic(init_atoms, goal_atoms, ground_nsrts)
+#         # self.lmcut = LMCutHeuristic(init_atoms, goal_atoms, ground_nsrts)
+
+#         self.heuristic_type = heuristic_type
+
+#         if self.heuristic_type == "lmcut":
+#             self.lmcut = LMCutHeuristic(pyperplan_task)
+
+#         elif self.heuristic_type != "lmcut":
+#             raise ValueError(f"Unknown or unsupported heuristic type: {self.heuristic_type}.")
+
+#     def __call__(self, state_atoms: Set[GroundAtom]) -> float:
+#         # if self.heuristic_type == "hadd":
+#         #     return self.hadd(state_atoms)
+#         if self.heuristic_type == "lmcut":
+#             # LMCutHeuristic expects a node with a .state attribute
+#             # containing string facts.
+#             class DummyNode:
+#                 def __init__(self, state_facts):
+#                     self.state = state_facts
+
+#             pyperplan_facts = {_atom_to_pyperplan_fact(a) for a in state_atoms}
+#             node = DummyNode(pyperplan_facts)
+#             return self.lmcut(node)
+#         else:
+#             raise ValueError(f"Unknown heuristic type: {self.heuristic_type}")
 
 class CombinedHeuristic:
-    def __init__(self, init_atoms: Set[GroundAtom], goal_atoms: Set[GroundAtom], 
-                 ground_nsrts: List[_GroundNSRT], heuristic_type: str = "hadd"):
-        self.init_atoms = init_atoms
-        self.goal_atoms = goal_atoms
-        self.ground_nsrts = ground_nsrts
+    def __init__(self, init_atoms: Set[GroundAtom], goal_atoms:Set[GroundAtom],
+                 ground_nsrts: List[_GroundNSRT], predicates: Set[Predicate], 
+                 objects: Sequence[Object], heuristic_type: str = "lmcut"):
         self.heuristic_type = heuristic_type
-        self.hadd = HAddHeuristic(init_atoms, goal_atoms, ground_nsrts)
-        self.lmcut = LMCutHeuristic(init_atoms, goal_atoms, ground_nsrts)
 
-    def __call__(self, state_atoms: Set[GroundAtom]) -> float:
-        if self.heuristic_type == "hadd":
-            return self.hadd(state_atoms)
-        elif self.heuristic_type == "lmcut":
-            return self.lmcut(state_atoms)
+        # Compute and store static atoms. This is the key change.
+        self.static_atoms = utils.get_static_atoms(ground_nsrts, init_atoms)
+
+        pyperplan_task = _create_pyperplan_task(init_atoms, goal_atoms, ground_nsrts,
+                                                predicates, objects, self.static_atoms)
+
+        # This will be used when you re-implement HAdd
+        # if self.heuristic_type == "hadd":
+        #     self.hadd = HAddHeuristic(pyperplan_task)
+
+        if self.heuristic_type == "lmcut":
+            self.heuristic = LMCutHeuristic(pyperplan_task)
+        elif self.heuristic_type == "hmax":
+            self.heuristic = HMaxHeuristic(pyperplan_task)
+        elif self.heuristic_type == "hadd":
+            self.heuristic = HAddHeuristic(pyperplan_task)
         else:
-            raise ValueError(f"Unknown heuristic type: {self.heuristic_type}")
+            raise ValueError(f"Unknown or unsupported heuristic type: {self.heuristic_type}")
 
-
-
-class HAddHeuristic:
-    """Implements the h_add heuristic for A* search in task planning.
-    
-    The h_add heuristic sums the estimated cost of achieving each goal atom 
-    independently in a relaxed problem where delete effects are ignored.
-    """
-    
-    def __init__(self, init_atoms: Set[GroundAtom], goal_atoms: Set[GroundAtom], 
-                 ground_nsrts: List[_GroundNSRT]):
-        """Initialize the heuristic.
-        
-        Args:
-            init_atoms: The initial state atoms (not used directly but kept for interface consistency)
-            goal_atoms: The goal state atoms that must be achieved
-            ground_nsrts: List of ground NSRTs (actions)
-        """
-        self.goal_atoms = goal_atoms
-        self.ground_nsrts = ground_nsrts
-    
     def __call__(self, state_atoms: Set[GroundAtom]) -> float:
-        """Calculate the h_add heuristic for the given state.
-        
-        Args:
-            state_atoms: The current state (set of ground atoms that are true)
-            
-        Returns:
-            The h_add heuristic value (sum of costs for each goal atom)
+
+        # Filter out the static atoms from the input state:
+        non_static_state_atoms = set(state_atoms)-self.static_atoms
+
+        # Convert the state into a hashable representation for caching.
+        pyperplan_facts = frozenset({_atom_to_pyperplan_fact(a) for a in non_static_state_atoms})
+
+        # if self.heuristic_type == "lmcut":
+        #     return self._evaluate_lmcut(pyperplan_facts, self.lmcut)
+
+        # Call the cached evaluation method.
+        return self._evaluate_heuristic(pyperplan_facts, self.heuristic) 
+
+        raise ValueError(f"Heuristic logic for {self.heuristic_type} not implemented in __call__.")
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _evaluate_heuristic(pyperplan_facts: frozenset, heuristic_obj: Heuristic) -> float:
         """
-        # Collect all atoms that appear in the problem
-        all_atoms = set()
-        all_atoms.update(state_atoms)
-        all_atoms.update(self.goal_atoms)
-        for nsrt in self.ground_nsrts:
-            all_atoms.update(nsrt.preconditions)
-            all_atoms.update(nsrt.add_effects)
+        Caches the result of the heuristic evaluation.
+        """
+        # A dummy node is needed because the heuristic expects a .state attribute
+        class DummyNode:
+            def __init__(self, state_facts):
+                self.state = state_facts
         
-        # Initialize costs: 0 for atoms in the current state, infinity otherwise
-        costs: Dict[GroundAtom, float] = {}
-        for atom in all_atoms:
-            costs[atom] = 0 if atom in state_atoms else float('inf')
-        
-        # Fixed-point iteration until costs stabilize
-        changed = True
-        while changed:
-            changed = False
-            for nsrt in self.ground_nsrts:
-                # Check if all preconditions are achievable
-                precond_cost = 0
-                all_achievable = True
-                
-                for precond in nsrt.preconditions:
-                    if costs.get(precond, float('inf')) == float('inf'):
-                        all_achievable = False
-                        break
-                    precond_cost += costs[precond]
-                
-                if all_achievable:
-                    # Update costs for add effects
-                    action_cost = 1.0 + precond_cost  # Action cost + precondition cost
-                    for atom in nsrt.add_effects:
-                        if action_cost < costs.get(atom, float('inf')):
-                            costs[atom] = action_cost
-                            changed = True
-        
-        # Sum up the costs for all goal atoms
-        total_cost = 0
-        for atom in self.goal_atoms:
-            if costs.get(atom, float('inf')) < float('inf'):
-                total_cost += costs[atom]
-            else:
-                # If any goal atom can't be achieved, return infinity
-                return float('inf')
-        
-        return total_cost
+        node = DummyNode(pyperplan_facts)
+        return heuristic_obj(node)
 
 
+
+def _compare(op):
+    """
+    General compare function for objects containing hmax values.
+    This is picked up straight from Pyperplan.
+    """
+
+    def comp(self, x):
+        m = getattr(self.hmax_value, op)
+        return m(x.hmax_value)
+
+    return comp
 
 
 class RelaxedFact:
-    """
-    Represents a relaxed fact (atom) in the LM-Cut computation.
-    """
-
-    def __init__(self, atom):
-        self.atom = atom  # Can be a GroundAtom or other type
-        self.name = str(atom)
+    def __init__(self, name):
+        self.name = name
         self.hmax_value = float("inf")
-        self.precondition_of = []  # List of RelaxedOp objects
-        self.effect_of = []        # List of RelaxedOp objects
+        self.precondition_of = list()  # list of RelaxedOp
+        self.effect_of = list()  # list of RelaxedOp
 
-    def __lt__(self, other):
-        return self.hmax_value < other.hmax_value
+    # We want to be able to insert RelaxedFact into a heap.
+    # We thus use a general compare function here
+    # and instantiate the __lt__, __gt__ etc. class methods with this function.
+    (__lt__, __leq__, __gt__, __geq__) = map(
+        _compare, ["__lt__", "__leq__", "__gt__", "__geq__"]
+    )
 
     def __hash__(self):
         return hash(self.name)
 
     def __eq__(self, other):
-        if isinstance(other, RelaxedFact):
-            return self.name == other.name
-        return False
+        return isinstance(other, RelaxedFact) and self.name == other.name
 
     def clear(self):
         self.hmax_value = float("inf")
 
+    def dump(self):
+        return "< FACT name: {}, hmax: {:f}, precond_of: {}, effect_of: {} >".format(
+            self.name,
+            self.hmax_value,
+            [str(p) for p in self.precondition_of],
+            [str(e) for e in self.effect_of],
+        )
+
     def __str__(self):
         return self.name
 
+    __repr__ = dump
+
 
 class RelaxedOp:
-    """
-    Represents a relaxed operator in the LM-Cut computation.
-    """
-
-    def __init__(self, nsrt=None, name="", cost_zero=False):
-        self.nsrt = nsrt
-        self.name = name if name else str(nsrt)
-        self.precondition = []  # List of RelaxedFact objects
-        self.effects = []       # List of RelaxedFact objects
-        self.hmax_supporter = None  # Most expensive precondition (RelaxedFact)
+    def __init__(self, name, cost_zero=False):
+        self.name = name
+        # list of RelaxedFact
+        self.precondition = list()
+        # list of RelaxedFact
+        self.effects = list()
+        # the most expensive predecessor (a RelaxedFact)
+        self.hmax_supporter = None
         self.hmax_value = float("inf")
         self.cost_zero = cost_zero
+        # used to check whether an operator can be applied
         self.preconditions_unsat = 0
-        self.cost = 0.0 if cost_zero else 1.0
+        if self.cost_zero:
+            self.cost = 0.0
+        else:
+            self.cost = 1.0
 
-    def __lt__(self, other):
-        return self.hmax_value < other.hmax_value
+    # We want to be able to insert RelaxedOp into a heap.
+    # We thus use a general compare function for Operators here
+    # and instantiate the __lt__, __gt__ etc. class methods with this function.
+    (__lt__, __leq__, _gt__, __geq__) = map(
+        _compare, ["__lt__", "__leq__", "__gt__", "__geq__"]
+    )
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        return isinstance(other, RelaxedOp) and self.name == other.name
 
     def clear(self, clear_op_cost):
+        """This method resets the operator values to its defaults.
+
+        It is called during the hmax computation on each operator.
+        Effect:
+        -------
+        clears preconditions_unsat
+        sets cost to 1
+        """
         self.preconditions_unsat = len(self.precondition)
         if clear_op_cost and not self.cost_zero:
             self.cost = 1.0
         self.hmax_supporter = None
         self.hmax_value = float("inf")
 
+    def dump(self):
+        return (
+            "< OPERATOR name: %s, "
+            "hmax_supp: %s, precond: %s, effects: %s, cost: %d >"
+            % (
+                self.name,
+                str(self.hmax_supporter),
+                [str(p) for p in self.precondition],
+                [str(e) for e in self.effects],
+                self.cost,
+            )
+        )
+
     def __str__(self):
         return self.name
 
+    __repr__ = dump
 
-class LMCutHeuristic:
+
+class LMCutHeuristic(Heuristic):
+    """Class and methods for computing the LM-cut heuristic value.
+
+    We define some constant names for special facts and operators.
+    NOTE: we use upper case names here as the PDDL tasks generally do not
+    contain any upper case names. This way it is ensured that the denominators
+    'ALWAYSTRUE', 'GOAL' and 'GOALOP' are always unique.
     """
-    LM-Cut heuristic (without fallback).
-    """
 
-    def __init__(self, init_atoms: Set[Any], goal_atoms: Set[Any], ground_nsrts: List[Any]):
-        # Special names.
-        self.ALWAYS_TRUE = "ALWAYSTRUE"
-        self.EXPLICIT_GOAL = "GOAL"
-        self.GOAL_OP_NAME = "GOALOP"
+    # operators without precondition get ALWAYSTRUE as precondition
+    always_true = "ALWAYSTRUE"
+    # we use this to have a single goal instead of multiple goals
+    explicit_goal = "GOAL"
+    goal_operator_name = "GOALOP"
 
-        self.init_atoms = init_atoms
-        self.goal_atoms = goal_atoms
-        self.ground_nsrts = ground_nsrts
-
-        # Data structures for the relaxed planning graph.
-        self.relaxed_facts = {}  # Mapping: atom -> RelaxedFact.
-        self.relaxed_ops = {}    # Mapping: nsrt or special name -> RelaxedOp.
+    def __init__(self, task):
+        self.relaxed_facts = dict()  # fact name -> RelaxedFact
+        self.relaxed_ops = dict()
         self.reachable = set()
         self.goal_plateau = set()
         self.dead_end = True
 
-        # Cache for computed heuristic values.
-        self.heuristic_cache = {}
+        self._compute_relaxed_facts_and_operators(task)
 
-        # Overall time budget (in seconds).
-        self.max_time = 10.0
+    def _compute_relaxed_facts_and_operators(self, task):
+        """Store all facts from the task as relaxed facts into our dict."""
 
-        self._build_relaxed_planning_graph()
-        logging.info(f"LM-Cut: {len(self.relaxed_facts)} facts, {len(self.relaxed_ops)} operators")
+        # little helper functions that build the relaxed operator graph
+        def link_op_to_precondition(relaxed_op, factname):
+            relaxed_op.precondition.append(self.relaxed_facts[factname])
+            self.relaxed_facts[factname].precondition_of.append(relaxed_op)
 
-    def _build_relaxed_planning_graph(self):
-        """Constructs the relaxed planning graph from NSRTs."""
-        def link_op_to_pre(op, fact_obj):
-            op.precondition.append(fact_obj)
-            fact_obj.precondition_of.append(op)
+        def link_op_to_effect(relaxed_op, factname):
+            relaxed_op.effects.append(self.relaxed_facts[factname])
+            self.relaxed_facts[factname].effect_of.append(relaxed_op)
 
-        def link_op_to_eff(op, fact_obj):
-            op.effects.append(fact_obj)
-            fact_obj.effect_of.append(op)
+        for fact in task.facts:
+            self.relaxed_facts[fact] = RelaxedFact(fact)
 
-        # Collect all atoms from NSRTs, initial state, and goals.
-        all_atoms = set()
-        for nsrt in self.ground_nsrts:
-            all_atoms.update(nsrt.preconditions)
-            all_atoms.update(nsrt.add_effects)
-        all_atoms.update(self.init_atoms)
-        all_atoms.update(self.goal_atoms)
+        for op in task.operators:
+            assert not op.name in self.relaxed_ops
+            # build new relaxed operator from the task operator
+            relaxed_op = RelaxedOp(op.name)
+            # insert all preconditions into relaxed_op and
+            # mark all preconditions in the relaxed_facts
 
-        for atom in all_atoms:
-            self.relaxed_facts[atom] = RelaxedFact(atom)
-
-        # Add the special always-true fact.
-        always_true_fact = RelaxedFact(self.ALWAYS_TRUE)
-        self.relaxed_facts[self.ALWAYS_TRUE] = always_true_fact
-
-        # Create relaxed operators for each NSRT.
-        for nsrt in self.ground_nsrts:
-            op = RelaxedOp(nsrt=nsrt)
-            self.relaxed_ops[nsrt] = op
-            if not nsrt.preconditions:
-                link_op_to_pre(op, always_true_fact)
+            if not op.preconditions:
+                # insert one fact that is always true if not already defined
+                # --> this fact will be used for all operators with empty
+                # preconditions
+                if not self.always_true in self.relaxed_facts:
+                    self.relaxed_facts[self.always_true] = RelaxedFact(self.always_true)
+                link_op_to_precondition(relaxed_op, self.always_true)
             else:
-                for pre in nsrt.preconditions:
-                    link_op_to_pre(op, self.relaxed_facts[pre])
-            for eff in nsrt.add_effects:
-                link_op_to_eff(op, self.relaxed_facts[eff])
+                for fact in op.preconditions:
+                    assert fact in self.relaxed_facts
+                    link_op_to_precondition(relaxed_op, fact)
+            # insert all effects into relaxed_op and
+            # mark all effects in relaxed_facts
+            for fact in op.add_effects:
+                assert fact in self.relaxed_facts
+                link_op_to_effect(relaxed_op, fact)
+            # insert relaxed_op into hash
+            self.relaxed_ops[op.name] = relaxed_op
 
-        # Create the explicit goal fact and corresponding goal operator.
-        goal_fact = RelaxedFact(self.EXPLICIT_GOAL)
-        self.relaxed_facts[self.EXPLICIT_GOAL] = goal_fact
+        # insert explicit goal and goal operator
+        goalfact = RelaxedFact(self.explicit_goal)
+        goalop = RelaxedOp(self.goal_operator_name, True)
+        self.relaxed_facts[self.explicit_goal] = goalfact
+        self.relaxed_ops[self.goal_operator_name] = goalop
 
-        goal_op = RelaxedOp(name=self.GOAL_OP_NAME, cost_zero=True)
-        self.relaxed_ops[self.GOAL_OP_NAME] = goal_op
-        link_op_to_eff(goal_op, goal_fact)
-        for g in self.goal_atoms:
-            link_op_to_pre(goal_op, self.relaxed_facts[g])
+        link_op_to_effect(goalop, self.explicit_goal)
 
-    def compute_hmax(self, state_atoms, clear_op_cost=True):
-        """Compute hmax values using a Dijkstra-like propagation (without local expansion limits)."""
+        # link all goals to the explicit goal
+        for fact in task.goals:
+            assert fact in self.relaxed_facts
+            link_op_to_precondition(goalop, fact)
+
+    def compute_hmax(self, state, clear_op_cost=True):
+        """Compute hmax values with a Dijkstra like procedure."""
         self.reachable.clear()
         facts_seen = set()
         unexpanded = []
-        op_cleared_in_this_hmax_computation = set()
-        fact_cleared_in_this_hmax_computation = set() # Keep track of facts cleared in this call
-
-        # Reset all facts' hmax_values
-        for fact_obj in self.relaxed_facts.values():
-            fact_obj.clear()
-            # No need to add to fact_cleared_in_this_hmax_computation here, 
-            # as they are reset. Clearing happens when an effect is considered.
-
-        # Initialize with the current state facts.
-        for atom in state_atoms:
-            if atom in self.relaxed_facts:
-                fact_obj = self.relaxed_facts[atom]
-                fact_obj.hmax_value = 0.0
-                facts_seen.add(fact_obj)
-                heapq.heappush(unexpanded, fact_obj)
-                fact_cleared_in_this_hmax_computation.add(fact_obj) # Mark initial facts as 'cleared' (i.e., processed for init)
-        # Also add the always-true fact.
-        if self.ALWAYS_TRUE in self.relaxed_facts:
-            fact_obj = self.relaxed_facts[self.ALWAYS_TRUE]
+        op_cleared = set()
+        fact_cleared = set()
+        start_state = {x for x in state}
+        if self.always_true in self.relaxed_facts:
+            start_state.add(self.always_true)
+        for fact in start_state:
+            self.reachable.add(fact)
+            fact_obj = self.relaxed_facts[fact]
             fact_obj.hmax_value = 0.0
+            # mark all initial facts such that they are not cleared again!
+            fact_cleared.add(fact_obj)
             facts_seen.add(fact_obj)
-            heapq.heappush(unexpanded, fact_obj)
-            fact_cleared_in_this_hmax_computation.add(fact_obj) # Mark initial facts as 'cleared'
-
+            heappush(unexpanded, fact_obj)
         while unexpanded:
-            fact_obj = heapq.heappop(unexpanded)
-            self.reachable.add(fact_obj) # Add to reachable when popped, as in pyperplan
-            # Mark goal as reachable.
-            if self.EXPLICIT_GOAL in self.relaxed_facts and fact_obj == self.relaxed_facts[self.EXPLICIT_GOAL]:
+            fact_obj = heappop(unexpanded)
+            if fact_obj == self.relaxed_facts[self.explicit_goal]:
                 self.dead_end = False
-            current_hmax_val = fact_obj.hmax_value # Renamed for clarity
+            # store fact as reachable
+            self.reachable.add(fact_obj)
+            hmax_value = fact_obj.hmax_value
+            # update all operators that have this fact
+            # as their precondition
             for op in fact_obj.precondition_of:
-                # Clear op only once per hmax computation
-                if op not in op_cleared_in_this_hmax_computation:
+                # check if we have explored this operator in this iteration
+                # --> if this is not the case then precond_fulfilled might
+                # still contain facts from a previous heuristic computation
+                # hence we need to clear it first!
+                if not op in op_cleared:
                     op.clear(clear_op_cost)
-                    op_cleared_in_this_hmax_computation.add(op)
-
+                    op_cleared.add(op)
                 op.preconditions_unsat -= 1
+                # first check if all preconditions are fullfilled
                 if op.preconditions_unsat == 0:
-                    # Update hmax_supporter and hmax_value for the operator
-                    if op.hmax_supporter is None or current_hmax_val > op.hmax_supporter.hmax_value:
+                    # update hmax_supporter if necessary
+                    if (
+                        op.hmax_supporter is None
+                        or hmax_value > op.hmax_supporter.hmax_value
+                    ):
                         op.hmax_supporter = fact_obj
-                    # op.hmax_value should be based on its current hmax_supporter
-                    op.hmax_value = op.hmax_supporter.hmax_value + op.cost
-                    
-                    h_next = op.hmax_value # Use the operator's hmax_value for propagation
-
+                        # store for next hmax iteration
+                        op.hmax_value = hmax_value + op.cost
+                    hmax_next = op.hmax_supporter.hmax_value + op.cost
                     for eff in op.effects:
-                        if eff not in fact_cleared_in_this_hmax_computation:
-                            eff.clear() # Clear fact if not yet processed in this hmax computation
-                            fact_cleared_in_this_hmax_computation.add(eff)
-                        if h_next < eff.hmax_value:
-                            eff.hmax_value = h_next
-                        if eff not in facts_seen:
+                        if not eff in fact_cleared:
+                            # clear fact if necessary
+                            eff.clear()
+                            fact_cleared.add(eff)
+                        if hmax_next < eff.hmax_value:
+                            eff.hmax_value = hmax_next
+                        if not eff in facts_seen:
+                            # enqueue effect if not already explored
                             facts_seen.add(eff)
-                            heapq.heappush(unexpanded, eff)
+                            heappush(unexpanded, eff)
 
-    def compute_hmax_from_last_cut(self, last_cut):
-        """Recompute hmax values incrementally from the last computed cut."""
+    def compute_hmax_from_last_cut(self, state, last_cut):
+        """This computes hmax values starting from the last cut.
+
+        This saves us from recomputing the hmax values of all facts/operators
+        that have not changed anyway.
+        NOTE: a complete cut procedure needs to be finished (i.e. one cut must
+        be computed) for this to work!
+        """
         unexpanded = []
+        # add all operators from the last cut
+        # to the queue of operators for which the hmax value needs to be
+        # recomouted
         for op in last_cut:
-            if op.hmax_supporter is not None:
-                op.hmax_value = op.hmax_supporter.hmax_value + op.cost
-                heapq.heappush(unexpanded, op)
-            else:
-                logging.warning(f"Operator {op.name} has no hmax_supporter")
+            op.hmax_value = op.hmax_supporter.hmax_value + op.cost
+            heappush(unexpanded, op)
         while unexpanded:
-            op = heapq.heappop(unexpanded)
-            next_val = op.hmax_value
+            # iterate over all operators whose effects might need updating
+            op = heappop(unexpanded)
+            next_hmax = op.hmax_value
+            # op_seen.add(op)
             for fact_obj in op.effects:
-                if fact_obj.hmax_value > next_val:
-                    fact_obj.hmax_value = next_val
+                # if hmax value of this fact is outdated
+                fact_hmax = fact_obj.hmax_value
+                if fact_hmax > next_hmax:
+                    # update hmax value
+                    # logging.debug('updating %s' % fact_obj)
+                    fact_obj.hmax_value = next_hmax
+                    # enqueue all ops of which fact_obj is a hmax supporter
                     for next_op in fact_obj.precondition_of:
                         if next_op.hmax_supporter == fact_obj:
-                            next_op.hmax_value = next_val + next_op.cost
+                            next_op.hmax_value = next_hmax + next_op.cost
                             for supp in next_op.precondition:
                                 if supp.hmax_value + next_op.cost > next_op.hmax_value:
                                     next_op.hmax_supporter = supp
                                     next_op.hmax_value = supp.hmax_value + next_op.cost
-                            heapq.heappush(unexpanded, next_op)
+                            heappush(unexpanded, next_op)
 
     def compute_goal_plateau(self, fact_name):
-        """Recursively mark the goal plateau, following pyperplan's design."""
-        if fact_name not in self.relaxed_facts:
-            return
-        fact = self.relaxed_facts[fact_name]
-        if fact not in self.reachable or fact in self.goal_plateau:
-            return
-        self.goal_plateau.add(fact)
-        for op in fact.effect_of:
-            if op.cost == 0 and op.hmax_supporter is not None:
-                self.compute_goal_plateau(op.hmax_supporter.name)
+        """Recursively mark a goal plateau."""
+        # assure the fact itself is not in an unreachable region
+        fact_in_plateau = self.relaxed_facts[fact_name]
+        if (
+            fact_in_plateau in self.reachable
+            and not fact_in_plateau in self.goal_plateau
+        ):
+            # add this fact to the goal plateau
+            self.goal_plateau.add(fact_in_plateau)
+            for op in fact_in_plateau.effect_of:
+                # recursive call to mark hmax_supporters of all operators
+                if op.cost == 0:
+                    self.compute_goal_plateau(op.hmax_supporter.name)
 
-    def find_cut(self, state_atoms):
-        """Extract a cut from the justification graph."""
+    def find_cut(self, state):
+        """This returns the set of relaxed operators which are in the cut."""
         unexpanded = []
         facts_seen = set()
         op_cleared = set()
         cut = set()
-        start_state = set(state_atoms)
-        if self.ALWAYS_TRUE in self.relaxed_facts:
-            start_state.add(self.ALWAYS_TRUE)
-        for atom in start_state:
-            # Ensure atom exists in relaxed_facts before trying to access it.
-            # This can happen if state_atoms contains atoms not in the initial problem construction.
-            if atom not in self.relaxed_facts:
-                # Optionally log a warning or handle as a special case
-                # logging.warning(f"Atom {atom} from state_atoms not in relaxed_facts during find_cut.")
-                continue
-            fact_obj = self.relaxed_facts[atom]
+
+        start_state = {x for x in state}
+        if self.always_true in self.relaxed_facts:
+            start_state.add(self.always_true)
+        for fact in start_state:
+            assert fact in self.relaxed_facts
+            fact_obj = self.relaxed_facts[fact]
             facts_seen.add(fact_obj)
-            heapq.heappush(unexpanded, fact_obj)
+            heappush(unexpanded, fact_obj)
         while unexpanded:
-            fact_obj = heapq.heappop(unexpanded)
-            for op in fact_obj.precondition_of:
-                if op not in op_cleared:
-                    op.preconditions_unsat = len(op.precondition) # Corrected attribute name
-                    op_cleared.add(op)
-                op.preconditions_unsat -= 1 # Corrected attribute name
-                if op.preconditions_unsat == 0: # Corrected attribute name
-                    for eff in op.effects:
+            fact_obj = heappop(unexpanded)
+            for relaxed_op in fact_obj.precondition_of:
+                if not relaxed_op in op_cleared:
+                    relaxed_op.precond_unsat = len(relaxed_op.precondition)
+                    op_cleared.add(relaxed_op)
+                relaxed_op.precond_unsat -= 1
+                # check if the operator preconditions are all satisfied
+                if relaxed_op.precond_unsat == 0:
+                    # if so we can expand this operator
+                    for eff in relaxed_op.effects:
                         if eff in facts_seen:
                             continue
                         if eff in self.goal_plateau:
-                            cut.add(op)
+                            cut.add(relaxed_op)
                         else:
                             facts_seen.add(eff)
-                            heapq.heappush(unexpanded, eff)
+                            heappush(unexpanded, eff)
         return cut
 
-    def __call__(self, state_atoms: Set[Any]) -> float:
-        """
-        Compute the LM-Cut heuristic value.
-        If the computation exceeds the allowed time budget, a TimeoutError is raised.
-        """
-        state_key = frozenset(state_atoms)
-        if state_key in self.heuristic_cache:
-            return self.heuristic_cache[state_key]
-
-        start_time = time.time()
+    def __call__(self, node):
+        state = node.state
         heuristic_value = 0.0
-        goal_fact = self.relaxed_facts[self.EXPLICIT_GOAL]
+        goal_state = self.relaxed_facts[self.explicit_goal]
+        # reset dead end flag
+        # --> asume node to be a dead end unless proven otherwise by the hmax
+        # computation
         self.dead_end = True
-
-        try:
-            # Initial propagation.
-            self.compute_hmax(state_atoms, True)
-            if time.time() - start_time > self.max_time:
-                raise TimeoutError("LM-Cut computation timed out during initial hmax.")
-
-            if goal_fact.hmax_value == float("inf"):
-                self.heuristic_cache[state_key] = float("inf")
+        # next find all cuts
+        # first compute hmax starting from the current state
+        self.compute_hmax(state, True)
+        if goal_state.hmax_value == float("inf"):
                 return float("inf")
-
-            # Main LM-Cut loop.
-            while goal_fact.hmax_value != 0:
-                if time.time() - start_time > self.max_time:
-                    raise TimeoutError("LM-Cut computation timed out during cut iterations.")
-
-                self.goal_plateau.clear()
-                self.compute_goal_plateau(self.EXPLICIT_GOAL)
-                cut = self.find_cut(state_atoms)
-                if not cut:
-                    # If no cut is found, but goal hmax is not 0 and not inf, it's an issue.
-                    # This might indicate that the goal is unreachable through applicable actions from current plateau state.
-                    logging.warning("LM-Cut: No cut found but goal hmax is not 0. Setting heuristic to infinity.")
-                    self.heuristic_cache[state_key] = float("inf")
-                    return float("inf") # Or break, leading to dead_end check
-                    
-                min_cost = min([op.cost for op in cut])
-                
-                # Pyperplan also does not have the min_cost <= 0 check.
-                # It relies on hmax_from_last_cut to make progress.
-                # If min_cost is 0, heuristic_value doesn't increase, costs don't change for ops already at 0.
-                # The hmax_from_last_cut must then ensure goal_fact.hmax_value is driven to 0.
-                # Removing this break to align more with pyperplan's implicit assumptions.
-                # if min_cost <= 0:
-                #     break
-                heuristic_value += min_cost
-                for op in cut:
-                    op.cost -= min_cost
-                self.compute_hmax_from_last_cut(cut)
-
-            if self.dead_end and goal_fact.hmax_value != float("inf"):
-                 # If dead_end is true, it means compute_hmax decided the goal was initially unreachable.
-                 # However, if the loop finished because goal_fact.hmax_value became 0, it's not a dead end.
-                 # This check is to ensure we don't return inf if the loop successfully reduced hmax to 0.
-                 if goal_fact.hmax_value == 0:
-                     self.dead_end = False # Correct the dead_end status
-
-            if self.dead_end:
-                self.heuristic_cache[state_key] = float("inf")
-                return float("inf")
-            self.heuristic_cache[state_key] = heuristic_value
+        while goal_state.hmax_value != 0:
+            # next find an appropriate cut
+            # first calculate the goal plateau
+            self.goal_plateau.clear()
+            self.compute_goal_plateau(self.explicit_goal)
+            # then find the cut itself
+            cut = self.find_cut(state)
+            # finally update heuristic value
+            min_cost = min([o.cost for o in cut])
+            # logging.debug("compute cut done")
+            heuristic_value += min_cost
+            for o in cut:
+                o.cost -= min_cost
+                logging.debug(repr(o))
+            # compute next hmax
+            self.compute_hmax_from_last_cut(state, cut)
+        if self.dead_end:
+            return float("inf")
+        else:
             return heuristic_value
 
-        except (TimeoutError, MemoryError) as e:
-            # With no fallback, we raise the error (or alternatively, return float("inf"))
-            raise e
+
+##################################################################################################
+############## Implementation of h_max and h_add.#################################################
+############## For these, we slight change in the way data structures are defined.################
+############## This structure and logic is completely inspired from Pyperplan's implementation.###
+############## Some would say I copied it from there and they's be around 80% correct. :-)########
+##################################################################################################
+
+
+
+class _RelaxedFactForH:
+    """A relaxed fact specifically for h_add and h_max."""
+    def __init__(self, name):
+        self.name = name
+        self.precondition_of = []
+        self.expanded = False
+        self.distance = float("inf")
+        # Attributes for other heuristics like hFF, kept for consistency
+        self.cheapest_achiever = None
+
+
+class _RelaxedOperatorForH:
+    """A relaxed operator specifically for h_add and h_max."""
+    def __init__(self, name, preconditions, add_effects):
+        self.name = name
+        self.preconditions = preconditions
+        self.add_effects = add_effects
+        self.cost = 1
+        self.counter = len(preconditions)
+
+
+class _PyperplanRelaxationHeuristicBase(Heuristic):
+    """
+    This is a port of Pyperplan's _RelaxationHeuristic base class.
+    It implements the core Dijkstra-style search for h_add and h_max.
+    """
+    def __init__(self, task: _PyperplanTask):
+        self.facts = {fact: _RelaxedFactForH(fact) for fact in task.facts}
+        self.operators = []
+        self.goals = task.goals
+        self.init = task.initial_state
+        self.tie_breaker = 0
+        self.start_state = _RelaxedFactForH("start")
+        self.eval = sum  # Default to h_add
+
+        for op in task.operators:
+            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects)
+            self.operators.append(ro)
+            for var in op.preconditions:
+                self.facts[var].precondition_of.append(ro)
+            if not op.preconditions:
+                self.start_state.precondition_of.append(ro)
+
+    def __call__(self, node):
+        state = set(node.state)
+        self._init_distance(state)
+        heap = []
+        heappush(heap, (0, self.tie_breaker, self.start_state))
+        self.tie_breaker += 1
+
+        for fact in state:
+            heappush(
+                heap, (self.facts[fact].distance, self.tie_breaker, self.facts[fact])
+            )
+            self.tie_breaker += 1
+        
+        self._dijkstra(heap)
+        h_value = self._calc_goal_h()
+        return h_value
+
+    def _init_distance(self, state):
+        def reset_fact(fact):
+            fact.expanded = False
+            fact.cheapest_achiever = None
+            if fact.name in state:
+                fact.distance = 0
+            else:
+                fact.distance = float("inf")
+        reset_fact(self.start_state)
+        for fact in self.facts.values():
+            reset_fact(fact)
+        for operator in self.operators:
+            operator.counter = len(operator.preconditions)
+
+    def _get_cost(self, operator):
+        if operator.preconditions:
+            cost = self.eval(
+                [self.facts[pre].distance for pre in operator.preconditions]
+            )
+        else:
+            cost = 0
+        return cost + operator.cost
+
+    def _calc_goal_h(self):
+        if not self.goals:
+            return 0
+        # If any goal is unreachable, the value is infinity.
+        goal_distances = [self.facts[fact].distance for fact in self.goals]
+        if float("inf") in goal_distances:
+            return float("inf")
+        return self.eval(goal_distances)
+
+    def _dijkstra(self, queue):
+        achieved_goals = set()
+        while queue:
+            _dist, _tie, fact = heappop(queue)
+            if fact.name in self.goals:
+                achieved_goals.add(fact.name)
+            
+            # For h_max, we can stop if all goals are reached.
+            if self.eval == max and achieved_goals == self.goals:
+                break
+            
+            if not fact.expanded:
+                fact.expanded = True
+                for operator in fact.precondition_of:
+                    operator.counter -= 1
+                    if operator.counter <= 0:
+                        for n in operator.add_effects:
+                            neighbor = self.facts[n]
+                            tmp_dist = self._get_cost(operator)
+                            if tmp_dist < neighbor.distance:
+                                neighbor.distance = tmp_dist
+                                heappush(
+                                    queue, (tmp_dist, self.tie_breaker, neighbor)
+                                )
+                                self.tie_breaker += 1
+
+
+# Now, the H_max and H_add heuristics are mere wrappers around the _PyperplanRelaxationHeuristicBase.
+
+class HAddHeuristic(_PyperplanRelaxationHeuristicBase):
+    """
+    An implementation of the h_add heuristic that conforms to the
+    Pyperplan task interface. It is a subclass of the main relaxation
+    heuristic implementation.
+    """
+    def __init__(self, task: _PyperplanTask):
+        super().__init__(task)
+        self.eval = sum
+
+
+class HMaxHeuristic(_PyperplanRelaxationHeuristicBase):
+    """
+    An implementation of the h_max heuristic that conforms to the
+    Pyperplan task interface. It is a subclass of the main relaxation
+    heuristic implementation.
+    """
+    def __init__(self, task: _PyperplanTask):
+        super().__init__(task)
+        self.eval = max
+

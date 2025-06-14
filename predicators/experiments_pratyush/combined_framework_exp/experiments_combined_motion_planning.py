@@ -188,6 +188,10 @@ def main_test_script():
         # Iterate through each Action object in the provided list.
         for act_idx, act in enumerate(actions):
             logging.debug(f" Executing action {act_idx+1}/{len(actions)}")
+
+            #Debug prints before the taking action:
+            base_pos, base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+            print(f"[DEBUG] Before action {act_idx}: base_pos = {base_pos}")
             #-----Handle base motion if present in the action
             #----TODO: NEED TO REMOVE ALL OTHER MOTION MODES AND ONLY KEEP SMOOTH MOTION(linear interpolation).
             #1.Check if the current Action object contains a base movement command.
@@ -209,7 +213,19 @@ def main_test_script():
             if len(act.arr) > 0 :
                 logging.debug(f"    Arm joints (first 3 of {len(act.arr)}): {act.arr.tolist()[:3]}")
                 #Commands motors to move arm joints
-                robot.set_motors(act.arr.tolist()) 
+                #print(f"[DEBUG] Action idx {act_idx}: len(act.arr) = {len(act.arr)}, expected = {len(robot.arm_joints)}")
+                #print(f"[DEBUG] act.arr = {act.arr}")
+
+                arr = act.arr.tolist()
+
+                if len(arr) > len(robot.arm_joints):
+                    #print(f"[DEBUG] Truncating action array from {len(arr)} to {len(robot.arm_joints)}")
+                    arr = arr[:len(robot.arm_joints)]
+
+                # for idx, (name, val) in enumerate(zip(robot.arm_joint_names, arr)):
+                #     print(f"Joint {idx}: {name}, Value: {val}")
+
+                robot.set_motors(arr) 
 
             #------- Handle gripper commands
             if act.has_gripper_command:
@@ -237,6 +253,13 @@ def main_test_script():
             for _ in range(CFG.pybullet_sim_steps_per_action):
                  p.stepSimulation(physicsClientId=physics_client_id)
             time.sleep(0.05) # Pause briefly for smoother viewing
+
+            #Debug prints after taking action
+            base_pos, base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+            #print(f"[DEBUG] After action {act_idx}: base_pos = {base_pos}")
+            fixed_z = 0.05
+            fixed_base_pos = (base_pos[0], base_pos[1], fixed_z)
+            p.resetBasePositionAndOrientation(robot.robot_id, fixed_base_pos, base_orn, physicsClientId=physics_client_id)
         logging.info(f"{test_name} visualization complete.")
 
 
@@ -380,7 +403,9 @@ def main_test_script():
 
     # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
     # A point on the table 1.35, 0.6, 0.2
-    target_ee_pose_4 = Pose(position=(1.20, 0.6, 0.2), 
+    z = env.table_height + CFG.blocks_block_size/2 + 0.10
+    orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
+    target_ee_pose_4 = Pose(position=(1.35, 0.75, z), 
                              orientation=robot._ee_home_pose.orientation)
 
     logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
@@ -401,6 +426,8 @@ def main_test_script():
         visualize_action_sequence(actions_4, "Test 4 Coordinated (Base+Arm)")
     else:
         logging.warning("Coordinated motion (base+arm) planning failed for Test 4.")
+
+
     input("Test 4 Finished. Press Enter to continue...")
 
     #-----------------------------------------------------------

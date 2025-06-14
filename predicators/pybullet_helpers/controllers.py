@@ -116,7 +116,7 @@ def create_move_end_effector_to_pose_option(
         finger_position = state.joint_positions[robot.left_finger_joint_idx]
         # The finger action is an absolute joint position for the fingers.
         f_action = finger_position + finger_delta
-        # Override the meaningless finger values in joint_action.
+        # Override the meaningless finger values in joint_position.
         # This is required because IK is only responsible for joints and would have 
         # given random values for fingers. Hence, they are controlled/assigned manually.
         joint_positions[robot.left_finger_joint_idx] = f_action
@@ -261,6 +261,8 @@ def execute_coordinated_path(
                 
                 action_arr[:num_controllable_arm_joints] = current_arm_joint_positions
 
+                print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")
+
                 action = Action(action_arr.copy())
                 action.set_base_motion((target_x, target_y, target_theta), mode="smooth_position") 
                 actions.append(action)
@@ -279,6 +281,8 @@ def execute_coordinated_path(
 
             action_arr = np.zeros_like(robot.action_space.low)
             action_arr[:num_controllable_arm_joints] = target_arm_joint_positions_waypoint
+
+            print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")            
 
             action = Action(action_arr.copy())
             # If there's a final_finger_state implied by this option (e.g., Pick or Place),
@@ -328,6 +332,8 @@ def create_coordinated_motion_option(
                 current_final_finger_state = final_finger_state_fn(state, objects, params)
 
             #Get collision bodies (all bodies except robot)
+            # - get all body ids first,
+            # - then remove the robot's id to get body id of objects that robot can collide with
             all_body_ids = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
                             for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
 
@@ -338,16 +344,14 @@ def create_coordinated_motion_option(
             # for planning.
 
             # 1) Remember where the simulator really was before we overwrite it:
-            current_sim_base_pose_before_sync = robot.get_base_pose(
-                physics_client_id, mode="position"
-            )
-            # 2. Remember joint state too, if you want to restore that exactly:
+            current_sim_base_pose_before_sync = robot.get_base_pose(physics_client_id)
             current_sim_joint_positions_before_sync = robot.get_joints()
 
             assert isinstance(state, utils.PyBulletState)
             #Set robot base pose from state if it's a PyBulletState with base_pose
             if hasattr(state, 'base_pose') and state.base_pose is not None:
                 #Assuming state.base_pose is (x,y, theta)
+                #Note that move_base_to transports the robot to the given position directly.
                 robot.move_base_to(state.base_pose, physics_client_id)
             robot.set_joints(state.joint_positions)
 

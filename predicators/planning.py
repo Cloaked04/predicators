@@ -36,8 +36,7 @@ _NOT_CAUSES_FAILURE = "NotCausesFailure"
 
 # Importing the newly defined heuristic.py
 
-from .heuristics import HAddHeuristic, LMCutHeuristic
-
+from .heuristics import CombinedHeuristic, HAddHeuristic
 
 
 @dataclass(repr=False, eq=False)
@@ -207,6 +206,14 @@ def _sesame_plan_with_astar(
         #     task_planning_heuristic, init_atoms, task.goal, reachable_nsrts,
         #     predicates, objects)
 
+        #DEBUG CODE FOR LMCUT IN heuristics.py:
+        # print("=== Ground NSRTs and their add effects ===")
+        # for nsrt in reachable_nsrts:
+        #     print(f"NSRT: {nsrt}")
+        #     print(f"  Preconditions: {nsrt.preconditions}")
+        #     print(f"  Add effects: {nsrt.add_effects}")
+        #     print(f"  Delete effects: {nsrt.delete_effects}")
+
         '''
         Using the Pyperplan heurisitc as default; using the local heuristic if 
         required as such.
@@ -216,10 +223,20 @@ def _sesame_plan_with_astar(
             heuristic = utils.create_task_planning_heuristic(
                 task_planning_heuristic, init_atoms, task.goal, reachable_nsrts,
                 predicates, objects)
-        elif heuristic_method == "hadd":
-            heuristic = HAddHeuristic(init_atoms, task.goal, reachable_nsrts)
+            #print("LM-Cut heuristic value for initial state via pyperplan:", heuristic(init_atoms))
+            # print("Number of facts via pyperplan:", len(heuristic.relaxed_facts))
+            # print("Number of operators via pyperplan:", len(heuristic.relaxed_ops))
+            #print("Goal atoms via pyperplan:", task.goal)
+            #print("Initial atoms via pyperplan:", init_atoms)
+        # elif heuristic_method == "hadd":
+        #     heuristic = HAddHeuristic(init_atoms, task.goal, reachable_nsrts)
         elif heuristic_method == "lmcut":
-            heuristic = LMCutHeuristic(init_atoms, task.goal, reachable_nsrts)
+             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="lmcut")
+        elif heuristic_method == "hmax":
+             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hmax")
+        elif heuristic_method == "hadd":
+             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hadd")
+
         else:
             raise ValueError(f"Unrecognized heuristic_method: {heuristic_method}")
 
@@ -609,6 +626,8 @@ def _skeleton_generator(
         raise _MaxSkeletonsFailure("Planning ran out of skeletons!")
     assert time.perf_counter() - start_time >= timeout
     #print("Unfortunately, control is here.")
+    print("Nodes expanded:", metrics["num_nodes_expanded"])
+    print("Nodes created:", metrics["num_nodes_created"])
     raise _SkeletonSearchTimeout
 
 

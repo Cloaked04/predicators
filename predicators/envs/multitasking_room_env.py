@@ -24,9 +24,9 @@ class FixedTasksMyDomainEnv(_FixedTasksPDDLEnv):
     def _train_problem_indices(self) -> List[int]:
         # List the indices for training tasks.
         # For example, if you have one fixed problem file:
-        return [0]
+        return [2]
 
     @property
     def _test_problem_indices(self) -> List[int]:
         # Similarly, list indices for testing.
-        return [0]
+        return [2]

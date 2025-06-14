@@ -1475,19 +1475,16 @@ class Action:
 
         Args:
         params: Parameters depending on mode
-        mode: "position" for (x,y,theta), "smooth_position", "velocity" for (v,omega)
+        mode: "position" for (x,y,theta), "smooth_position"
         
         """
         if self.extra_info is None:
             self.extra_info = {}
 
-        assert mode in ["position", "smooth_position", "velocity"]
+        assert mode in ["position", "smooth_position"]
 
-        if mode in ["position", "smooth_position"]:
-            assert len(params) == 3, "Position based motion requiere (x,y, thetea)"
+        assert len(params) == 3, "Position based motion requiere (x,y, thetea)"
 
-        else:
-            assert len(params) == 2, "Velocity mode requires (v, omega)"
 
         self.extra_info = {
             "base_motion": {

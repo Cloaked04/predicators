@@ -2611,7 +2611,7 @@ def get_static_atoms(ground_ops: Collection[GroundNSRTOrSTRIPSOperator],
     """
     static_atoms = set()
     for atom in atoms:
-        # This atom is not static if it appears in any op's effects.
+        # This atom is not static if it appears in any op's add or delete effects.
         if any(
                 any(atom == eff for eff in op.add_effects) or any(
                     atom == eff for eff in op.delete_effects)
@@ -2892,7 +2892,7 @@ def _create_pyperplan_task(
     Once we have the wrappers, we need to construct a Pyperplan task from the given problem.
     This converts the planning problem into Pyperplan's format, making it ready for heuristic computation.
     Basically, need to convert all the atoms, inital state, goal state, and options/actions into
-    Pyperplan format.
+    the format that Pyperplan's LMCut implementation or other heuristics expect.
 
     Overview:
 

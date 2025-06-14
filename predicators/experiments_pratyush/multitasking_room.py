@@ -4,6 +4,9 @@ from predicators.planning import sesame_plan
 from predicators.ground_truth_models import get_gt_options
 from predicators.settings import GlobalSettings,CFG
 
+import traceback
+import random
+
 #print("CFG settings:", CFG.__dict__)
 
 #hack for the CFG.sesame_max_skeletons_optimized:
@@ -25,7 +28,7 @@ def setup_and_plan_with_astar():
     # set here becuase of the error; this is a hack until I figure out what exactly is it that I am doing wrong
     # since this error is being thrown by an internal function which is inherently being called by the code.
     # It might be that I am not initializing somethings/ function/ classes in the correct manner.
-    CFG.seed = 0
+    CFG.seed = random.randint(0,10000)
     env = get_or_create_env(env_name)
     
     predicates = env.predicates
@@ -85,8 +88,8 @@ def setup_and_plan_with_astar():
             approach._nsrts,        # Use the NSRTs from the approach
             predicates,
             env.types,
-            timeout=10,
-            seed=0,
+            timeout=10000,
+            seed=CFG.seed,
             task_planning_heuristic=CFG.sesame_task_planning_heuristic,
             max_skeletons_optimized=CFG.sesame_max_skeletons_optimized,
             max_horizon=CFG.horizon,
@@ -104,6 +107,7 @@ def setup_and_plan_with_astar():
         
     except Exception as e:
         print(f"Planning failed: {e}")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     setup_and_plan_with_astar()

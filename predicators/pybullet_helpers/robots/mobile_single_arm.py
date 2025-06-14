@@ -9,11 +9,11 @@ from predicators import utils
 import time
 
 """
-This code extends the Single Arm Pybullet Robot implementation from single_arm.py to support fetch (and maybe others later) robots with
-mobile base. Implements differential-drive kinematics for the robot using velocity v
-and yaw omega.
+This code extends the Single Arm Pybullet Robot implementation from single_arm.py to support fetch 
+(and maybe others later) robots with mobile base. Implements differential-drive kinematics for the
+robot using velocity v and yaw omega.
 
-Explanation of concepts:
+Explanation of concepts: TODO!!!
 """
 
 class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
@@ -80,6 +80,11 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         Names of the wheel joints. To be overridden in specific mobile robot class.
         """
         raise NotImplementedError("Override Me!!!!")
+    @property
+    def wheel_ids(self) -> List[int]:
+        "Return pybullet joint ids for wheels."
+        return [self.joint_from_name(name) for  name in self.wheel_joint_names]
+    
 
     @property
     def action_space(self) -> Box:
@@ -118,7 +123,7 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
 
 
 
-    def get_base_pose(self, physics_client_id: int, mode: str="velocity") -> Tuple[float, float, float]:
+    def get_base_pose(self, physics_client_id: int):
         """
         Get the current pose of the robot base.
 
@@ -133,8 +138,8 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
             self.robot_id, physicsClientId=physics_client_id
         )
 
-        if mode == "position":
-            return (pos[0], pos[1], pos[2])
+        # if mode == "position":
+        #     return (pos[0], pos[1], pos[2])
 
         euler = p.getEulerFromQuaternion(orn)
         return (pos[0], pos[1], euler[2])
