@@ -354,8 +354,15 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
             state_dict[block] = np.array([bx, by, bz, held, r, g, b],
                                          dtype=np.float32)
 
+        # Get base pose for mobile robots.
+        if isinstance(self._pybullet_robot, MobileSingleArmPyBulletRobot):
+            base_pose = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        else:
+            base_pose = None
+
         state = utils.PyBulletState(state_dict,
-                                    simulator_state=joint_positions)
+                                    simulator_state=joint_positions, base_pose=base_pose)
+
         assert set(state) == set(self._current_state), \
             (f"Reconstructed state has objects {set(state)}, but "
              f"self._current_state has objects {set(self._current_state)}.")

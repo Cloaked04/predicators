@@ -277,6 +277,7 @@ class PyBulletCoverEnv(PyBulletEnv, CoverEnv):
 
         state = utils.PyBulletState(state_dict,
                                     simulator_state=joint_positions)
+        
         assert set(state) == set(self._current_state), \
             (f"Reconstructed state has objects {set(state)}, but "
              f"self._current_state has objects {set(self._current_state)}.")

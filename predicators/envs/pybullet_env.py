@@ -49,7 +49,8 @@ class PyBulletEnv(BaseEnv):
     _default_orn: ClassVar[Sequence[float]] = [0.0, 0.0, 0.0, 1.0]
 
     # Camera parameters.
-    _camera_distance: ClassVar[float] = 0.8
+    #_camera_distance: ClassVar[float] = 0.8
+    _camera_distance: ClassVar[float] = 1.2
     _camera_yaw: ClassVar[float] = 90.0
     _camera_pitch: ClassVar[float] = -24
     _camera_target: ClassVar[Pose3D] = (1.65, 0.75, 0.42)
@@ -100,6 +101,9 @@ class PyBulletEnv(BaseEnv):
 
         # Load robot.
         pybullet_robot = cls._create_pybullet_robot(physics_client_id)
+
+        pybullet_robot.go_home()
+
 
         # Set gravity.
         p.setGravity(0., 0., -10., physicsClientId=physics_client_id)

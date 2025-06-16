@@ -4,6 +4,7 @@ import pybullet as p
 import time
 import logging
 from typing import List, Tuple, Optional, Sequence, Collection, Dict, Any
+import random
 
 from predicators.structs import Action, Array, GroundAtom, Object, State, Type, ParameterizedOption
 from predicators import utils
@@ -34,13 +35,14 @@ CFG.pybullet_robot = "fetch_mobile"
 CFG.use_gui = True
 #Draws helpful debug lines in the workspace.
 #NOT SURE WHETHER TO USE THIS. WILL DECIDE AFTER A COUPLE RUNS.
-CFG.pybullet_draw_debug = True
+#CFG.pybullet_draw_debug = True
 #Initializing with standard size of blocks.
 CFG.blocks_block_size = 0.05
 CFG.pybullet_birrt_num_iters = 50
 CFG.pybullet_birrt_num_attempts = 10
 CFG.pybullet_birrt_smooth_amt = 20
-CFG.seed = 123
+CFG.seed = random.randint(0,10000)
+#CFG.seed = 12
 #Num of PyBullet physics steps per high-level Action in visualize_action_sequence
 CFG.pybullet_sim_steps_per_action = 10
 
@@ -123,6 +125,11 @@ def main_test_script():
     """
     Define tests cases for testing different methods/cases.
     """
+
+    # Temporarily set the number of blocks to 0 for a clean test environment.
+    # logging.info("Disabling default block creation for focused testing.")
+    # CFG.blocks_num_blocks_train = [0]
+    # CFG.blocks_num_blocks_test = [0]
 
     #Setup Env.
     #Initialize the PyBulletBlocksEnv which sets up PyBullet,
@@ -252,14 +259,22 @@ def main_test_script():
             # Step simulation to see the effect of the motors/teleport
             for _ in range(CFG.pybullet_sim_steps_per_action):
                  p.stepSimulation(physicsClientId=physics_client_id)
-            time.sleep(0.05) # Pause briefly for smoother viewing
+            time.sleep(0.08) # Pause briefly for smoother viewing
 
             #Debug prints after taking action
             base_pos, base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+            # Extract only the x, y, and yaw, discarding unstable roll/pitch/z.
+            x, y, _ = base_pos
+            _, _, yaw = p.getEulerFromQuaternion(base_orn)
+
+            # Define a stable pose with a fixed z-height and zero roll/pitch.
+            stable_pos = (x, y, 0.01) # Keep robot on the floor (z=0). Adjust if your floor is different.
+            stable_orn = p.getQuaternionFromEuler([0, 0, yaw])
+
             #print(f"[DEBUG] After action {act_idx}: base_pos = {base_pos}")
-            fixed_z = 0.05
-            fixed_base_pos = (base_pos[0], base_pos[1], fixed_z)
-            p.resetBasePositionAndOrientation(robot.robot_id, fixed_base_pos, base_orn, physicsClientId=physics_client_id)
+            # fixed_z = 0.05
+            # fixed_base_pos = (base_pos[0], base_pos[1], fixed_z)
+            p.resetBasePositionAndOrientation(robot.robot_id, stable_pos, stable_orn, physicsClientId=physics_client_id)
         logging.info(f"{test_name} visualization complete.")
 
 
@@ -268,180 +283,213 @@ def main_test_script():
     ##### Test 1: test the run_motion_planning function in motion_planning.py (arm only).
     #-----------------------------------------------------------
 
-    logging.info("\n----Test 1: run_motion_planning (Arm Only)---")
+    # logging.info("\n----Test 1: run_motion_planning (Arm Only)---")
 
-    #Reset robot to known starting place
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=(0.80, 0.70, 0.0), arm_joint_angle=home_arm_joints)
+    # #Reset robot to known starting place
+    # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=(0.80, 0.70, 0.0), arm_joint_angle=home_arm_joints)
 
-    # Create an obstacle for the arm to navigate around.
-    obstacle_block_id_1 = create_test_block(env, pose=(1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.1))
-    current_collision_bodies_1 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
+    # # Create an obstacle for the arm to navigate around.
+    # obstacle_block_id_1 = create_test_block(env, pose=(1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.1))
+    # current_collision_bodies_1 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
-    # Define a target arm joint configuration (slightly different from home).
-    target_arm_joints_1 = list(home_arm_joints)
-    # Ensure there are arm joints to modify
-    if len(target_arm_joints_1) > 0: 
-        #change the first arm joint
-        target_arm_joints_1[0] += 0.5 
-        # Clip to ensure target is within valid joint limits (excluding base control parts of action_space)
-        arm_low = robot.action_space.low[:-2] if isinstance(robot, MobileSingleArmPyBulletRobot) else robot.action_space.low
-        arm_high = robot.action_space.high[:-2] if isinstance(robot, MobileSingleArmPyBulletRobot) else robot.action_space.high
-        target_arm_joints_1 = np.clip(target_arm_joints_1, arm_low, arm_high).tolist()
-    else:
-        target_arm_joints_1 = [] # Should not happen for fetch
+    # # Define a target arm joint configuration (slightly different from home).
+    # target_arm_joints_1 = list(home_arm_joints)
+    # # Ensure there are arm joints to modify
+    # if len(target_arm_joints_1) > 0: 
+    #     #change the first arm joint
+    #     target_arm_joints_1[0] += 0.5 
+    #     # Clip to ensure target is within valid joint limits (excluding base control parts of action_space)
+    #     arm_low = robot.action_space.low[:-2] if isinstance(robot, MobileSingleArmPyBulletRobot) else robot.action_space.low
+    #     arm_high = robot.action_space.high[:-2] if isinstance(robot, MobileSingleArmPyBulletRobot) else robot.action_space.high
+    #     target_arm_joints_1 = np.clip(target_arm_joints_1, arm_low, arm_high).tolist()
+    # else:
+    #     target_arm_joints_1 = [] # Should not happen for fetch
 
-    # Proceed if target is valid
-    if target_arm_joints_1: 
-        logging.info("Testing arm-only motion to a new joint configuration...")
-        # Call the arm motion planner.
-        # initial_positions and target_positions are for arm+finger joints.
-        arm_path_1 = run_motion_planning(
-            robot,
-            initial_positions=home_arm_joints, # Starting arm joint values
-            target_positions=target_arm_joints_1, # Target arm joint values
-            collision_bodies=current_collision_bodies_1, # Obstacles to avoid
-            seed=CFG.seed,
-            physics_client_id=physics_client_id
-        )
+    # # Proceed if target is valid
+    # if target_arm_joints_1: 
+    #     logging.info("Testing arm-only motion to a new joint configuration...")
+    #     # Call the arm motion planner.
+    #     # initial_positions and target_positions are for arm+finger joints.
+    #     arm_path_1 = run_motion_planning(
+    #         robot,
+    #         initial_positions=home_arm_joints, # Starting arm joint values
+    #         target_positions=target_arm_joints_1, # Target arm joint values
+    #         collision_bodies=current_collision_bodies_1, # Obstacles to avoid
+    #         seed=CFG.seed,
+    #         physics_client_id=physics_client_id
+    #     )
 
-        if arm_path_1:
-            logging.info(f"Arm-only path found with {len(arm_path_1)} waypoints. Visualizing...")
-            # Visualize the path by setting joint states directly.
-            for joints_waypoint in arm_path_1:
-                robot.set_joints(joints_waypoint)
-                time.sleep(0.05)
-        else:
-            logging.warning("Arm-only path planning failed for Test 1.")
+    #     if arm_path_1:
+    #         logging.info(f"Arm-only path found with {len(arm_path_1)} waypoints. Visualizing...")
+    #         # Visualize the path by setting joint states directly.
+    #         for joints_waypoint in arm_path_1:
+    #             robot.set_joints(joints_waypoint)
+    #             time.sleep(0.05)
+    #     else:
+    #         logging.warning("Arm-only path planning failed for Test 1.")
 
-    p.removeBody(obstacle_block_id_1) # Clean up the obstacle
-    input("Test 1 Finished. Press Enter to continue...")
-
-
-    #-----------------------------------------------------------
-    ##### Test 2: test the run_base_motion_planning function in motion_planning.py (base only).
-    #-----------------------------------------------------------
-
-    logging.info("\n--- Test 2: run_base_motion_planning (Base Only) ---")
-    initial_base_pose_2 = (-2.40, 0.30, 0.0) # Starting base pose
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_2, arm_joint_angle=home_arm_joints)
-
-    # Create an obstacle for the base to navigate around.
-    obstacle_block_id_2 = create_test_block(env, pose=(1.4, 0.7, CFG.blocks_block_size / 2 + env.table_height))
-    current_collision_bodies_2 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
-
-    target_base_pose_2 = (0.75, 0.7441, np.pi / 4) # Target base pose
-    logging.info(f"Testing base-only motion from {initial_base_pose_2} to {target_base_pose_2}...")
-
-    # Call the base motion planner.
-    base_path_2 = run_base_motion_planning(
-        robot,
-        target_pose=target_base_pose_2,
-        collision_bodies=current_collision_bodies_2,
-        current_arm_positions=home_arm_joints, # Arm joints to maintain during base planning collision checks
-        seed=CFG.seed,
-        physics_client_id=physics_client_id,
-        workspace_bounds=workspace_bounds
-    )
-
-    if base_path_2:
-        logging.info(f"Base-only path found with {len(base_path_2)} waypoints. Visualizing...")
-        # Visualize by teleporting base and resetting arm.
-        for pose_waypoint in base_path_2:
-            robot.move_base_to(pose_waypoint, physics_client_id)
-            robot.set_joints(home_arm_joints) # Keep arm static
-            time.sleep(0.05)
-    else:
-        logging.warning("Base-only path planning failed for Test 2.")
-    p.removeBody(obstacle_block_id_2) # Clean up
-    input("Test 2 Finished. Press Enter to continue...")
+    # p.removeBody(obstacle_block_id_1) # Clean up the obstacle
+    # input("Test 1 Finished. Press Enter to continue...")
 
 
-    #-----------------------------------------------------------
-    ##### Test 3: test the run_coordinated_motion_planning function in motion_planning.py (arm only).
-    #-----------------------------------------------------------
+    # #-----------------------------------------------------------
+    # ##### Test 2: test the run_base_motion_planning function in motion_planning.py (base only).
+    # #-----------------------------------------------------------
 
-    logging.info("\n--- Test 3: Coordinated Motion (Arm-Only) ---")
-    initial_base_pose_3 = (-1.40, 0.60, 0.0) # Robot is well-positioned
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_3, arm_joint_angle=home_arm_joints)
+    # logging.info("\n--- Test 2: run_base_motion_planning (Base Only) ---")
+    # initial_base_pose_2 = (-2.40, 0.30, 0.0) # Starting base pose
+    # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_2, arm_joint_angle=home_arm_joints)
 
-    current_ee_pose_3 = robot.forward_kinematics(home_arm_joints)
-    target_ee_pos_3_list = list(current_ee_pose_3.position)
-    target_ee_pos_3_list[0] += 0.2 # Small EE movement in x, likely reachable by arm
-    target_ee_pose_3 = Pose(tuple(target_ee_pos_3_list), current_ee_pose_3.orientation) # Keep orientation same
+    # # Create an obstacle for the base to navigate around.
+    # obstacle_block_id_2 = create_test_block(env, pose=(1.4, 0.7, CFG.blocks_block_size / 2 + env.table_height))
+    # current_collision_bodies_2 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
-    logging.info(f"Testing coordinated motion (expect arm-only success) to EE pose: {target_ee_pose_3}")
-    # Call coordinated planner with try_arm_only_first=True.
-    coord_path_3_result = run_coordinated_motion_planning(
-        robot,
-        target_ee_pose=target_ee_pose_3,
-        collision_bodies=static_collision_bodies,
-        seed=CFG.seed,
-        physics_client_id=physics_client_id,
-        try_arm_only_first=True # This is key for this test case as we only move the EE slightly.
-    )
+    # target_base_pose_2 = (0.75, 0.7441, np.pi / 4) # Target base pose
+    # logging.info(f"Testing base-only motion from {initial_base_pose_2} to {target_base_pose_2}...")
 
-    if coord_path_3_result:
-        base_path_3, arm_path_3 = coord_path_3_result
-        logging.info(f"Coordinated path (arm-only) found: Base waypoints: {len(base_path_3)}, Arm waypoints: {len(arm_path_3)}")
-        # Expect base_path_3 to contain only the initial_base_pose_3.
-        # Convert planned paths to executable actions.
-        actions_3 = execute_coordinated_path(robot, base_path_3, arm_path_3, physics_client_id)
-        visualize_action_sequence(actions_3, "Test 3 Coordinated (Arm-Only)")
-    else:
-        logging.warning("Coordinated motion (arm-only) planning failed for Test 3.")
-    input("Test 3 Finished. Press Enter to continue...")
+    # # Call the base motion planner.
+    # base_path_2 = run_base_motion_planning(
+    #     robot,
+    #     target_pose=target_base_pose_2,
+    #     collision_bodies=current_collision_bodies_2,
+    #     current_arm_positions=home_arm_joints, # Arm joints to maintain during base planning collision checks
+    #     seed=CFG.seed,
+    #     physics_client_id=physics_client_id,
+    #     workspace_bounds=workspace_bounds
+    # )
 
-
-    #-----------------------------------------------------------
-    ##### Test 4: test the run_coordinated_motion_planning function in motion_planning.py (base+arm only).
-    #-----------------------------------------------------------
-
-    logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
-    # Start further away and rotated, likely needing base movement
-    initial_base_pose_4 = (0.4, 0.6, -np.pi/2) 
-    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angle=home_arm_joints)
-
-    # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
-    # A point on the table 1.35, 0.6, 0.2
-    z = env.table_height + CFG.blocks_block_size/2 + 0.10
-    orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
-    target_ee_pose_4 = Pose(position=(1.35, 0.75, z), 
-                             orientation=robot._ee_home_pose.orientation)
-
-    logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
-    coord_path_4_result = run_coordinated_motion_planning(
-        robot,
-        target_ee_pose=target_ee_pose_4,
-        collision_bodies=static_collision_bodies,
-        seed=CFG.seed,
-        physics_client_id=physics_client_id,
-        try_arm_only_first=True # Planner will try arm-only, fail, then try base+arm
-    )
-
-    if coord_path_4_result:
-        base_path_4, arm_path_4 = coord_path_4_result
-        logging.info(f"Coordinated path (base+arm) found: Base waypoints: {len(base_path_4)}, Arm waypoints: {len(arm_path_4)}")
-        # Expect base_path_4 to have multiple waypoints.
-        actions_4 = execute_coordinated_path(robot, base_path_4, arm_path_4, physics_client_id)
-        visualize_action_sequence(actions_4, "Test 4 Coordinated (Base+Arm)")
-    else:
-        logging.warning("Coordinated motion (base+arm) planning failed for Test 4.")
+    # if base_path_2:
+    #     logging.info(f"Base-only path found with {len(base_path_2)} waypoints. Visualizing...")
+    #     # Visualize by teleporting base and resetting arm.
+    #     for pose_waypoint in base_path_2:
+    #         robot.move_base_to(pose_waypoint, physics_client_id)
+    #         robot.set_joints(home_arm_joints) # Keep arm static
+    #         time.sleep(0.05)
+    # else:
+    #     logging.warning("Base-only path planning failed for Test 2.")
+    # p.removeBody(obstacle_block_id_2) # Clean up
+    # input("Test 2 Finished. Press Enter to continue...")
 
 
-    input("Test 4 Finished. Press Enter to continue...")
+    # #-----------------------------------------------------------
+    # ##### Test 3: test the run_coordinated_motion_planning function in motion_planning.py (arm only).
+    # #-----------------------------------------------------------
+
+    # logging.info("\n--- Test 3: Coordinated Motion (Arm-Only) ---")
+    # initial_base_pose_3 = (-1.40, 0.60, 0.0) # Robot is well-positioned
+    # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_3, arm_joint_angle=home_arm_joints)
+
+    # current_ee_pose_3 = robot.forward_kinematics(home_arm_joints)
+    # target_ee_pos_3_list = list(current_ee_pose_3.position)
+    # target_ee_pos_3_list[0] += 0.2 # Small EE movement in x, likely reachable by arm
+    # target_ee_pose_3 = Pose(tuple(target_ee_pos_3_list), current_ee_pose_3.orientation) # Keep orientation same
+
+    # logging.info(f"Testing coordinated motion (expect arm-only success) to EE pose: {target_ee_pose_3}")
+    # # Call coordinated planner with try_arm_only_first=True.
+    # coord_path_3_result = run_coordinated_motion_planning(
+    #     robot,
+    #     target_ee_pose=target_ee_pose_3,
+    #     collision_bodies=static_collision_bodies,
+    #     seed=CFG.seed,
+    #     physics_client_id=physics_client_id,
+    #     try_arm_only_first=True # This is key for this test case as we only move the EE slightly.
+    # )
+
+    # if coord_path_3_result:
+    #     base_path_3, arm_path_3 = coord_path_3_result
+    #     logging.info(f"Coordinated path (arm-only) found: Base waypoints: {len(base_path_3)}, Arm waypoints: {len(arm_path_3)}")
+    #     # Expect base_path_3 to contain only the initial_base_pose_3.
+    #     # Convert planned paths to executable actions.
+    #     actions_3 = execute_coordinated_path(robot, base_path_3, arm_path_3, physics_client_id)
+    #     visualize_action_sequence(actions_3, "Test 3 Coordinated (Arm-Only)")
+    # else:
+    #     logging.warning("Coordinated motion (arm-only) planning failed for Test 3.")
+    # input("Test 3 Finished. Press Enter to continue...")
+
+
+    # #-----------------------------------------------------------
+    # ##### Test 4: test the run_coordinated_motion_planning function in motion_planning.py (base+arm only).
+    # #-----------------------------------------------------------
+
+    # logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
+    # # Start further away and rotated, likely needing base movement
+    # initial_base_pose_4 = (0.4, 0.6, -np.pi/2) 
+    # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angle=home_arm_joints)
+    # print(f"[DEBUG] Home arm joints:{home_arm_joints}.")
+    # print(f"[DEBUG] Robot's joints after reset in test 4:{robot.get_joints()}.")
+    # print(f"[DEBUG] Symbolic state joints (STALE):    {env._current_state.simulator_state}")
+    # #sys.exit(0)
+
+    # # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
+    # # A point on the table 1.35, 0.6, 0.2
+    # z = env.table_height + CFG.blocks_block_size/2 + 0.10
+    # orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
+    # target_ee_pose_4 = Pose(position=(1.5, 0.75, 0.3), 
+    #                          orientation=robot._ee_home_pose.orientation)
+
+    # logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
+    # coord_path_4_result = run_coordinated_motion_planning(
+    #     robot,
+    #     target_ee_pose=target_ee_pose_4,
+    #     collision_bodies=static_collision_bodies,
+    #     seed=CFG.seed,
+    #     physics_client_id=physics_client_id,
+    #     try_arm_only_first=True # Planner will try arm-only, fail, then try base+arm
+    # )
+
+    # if coord_path_4_result:
+    #     base_path_4, arm_path_4 = coord_path_4_result
+    #     logging.info(f"Coordinated path (base+arm) found: Base waypoints: {len(base_path_4)}, Arm waypoints: {len(arm_path_4)}")
+    #     # Expect base_path_4 to have multiple waypoints.
+    #     actions_4 = execute_coordinated_path(robot, base_path_4, arm_path_4, physics_client_id)
+    #     visualize_action_sequence(actions_4, "Test 4 Coordinated (Base+Arm)")
+    # else:
+    #     logging.warning("Coordinated motion (base+arm) planning failed for Test 4.")
+
+
+    # input("Test 4 Finished. Press Enter to continue...")
 
     #-----------------------------------------------------------
     ##### Test 5: test PickObject option
     #-----------------------------------------------------------
+
     # Test the high-level PickObject option. This involves planning to a pre-grasp pose
     # (potentially moving base and arm), then closing fingers. 
 
     logging.info("\n--- Test 5: PickObject Option ---")
-    initial_base_pose_5 = (0.4, 0.6, -np.pi/2) # Base pose from which block should be reachable
+    initial_base_pose_5 = (0.4, 0.6, -np.pi/2)
     reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5, arm_joint_angle=home_arm_joints)
+    #reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5)
+
+    #Try lowering torso
+    try:
+        torso_joint_id = robot.joint_from_name("torso_lift_joint")
+        # Get joint limits for the torso
+        torso_joint_info = p.getJointInfo(robot.robot_id, torso_joint_id, physics_client_id)
+        torso_lower_limit = torso_joint_info[8]
+        # Set the torso to its lowest position.
+        p.resetJointState(robot.robot_id,
+                          torso_joint_id,
+                          targetValue=torso_lower_limit,
+                          physicsClientId=physics_client_id)
+        logging.info(f"Torso lowered to {torso_lower_limit:.3f}m.")
+    except ValueError:
+        logging.warning("Could not find torso_lift_joint. Proceeding without lowering torso.")
+
+
+    # ADD THIS DEBUG BLOCK
+    print("\n[DEBUG] --- Right after Test 5 reset ---")
+    print(f"\n[DEBUG] Home arm joints:{home_arm_joints}.")
+    print(f"[DEBUG] Actual robot joints from PyBullet: {robot.get_joints()}")
+    print(f"[DEBUG] Symbolic state joints:    {env._current_state.simulator_state}")
+    # END DEBUG BLOCK
+
+    #sys.exit(0)
 
     # Create a block to be picked.
-    block_to_pick_pose_world = (1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height)
+    block_to_pick_pose_world = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height)
+    print(f"[DEBUG] World coords of block to pick:{block_to_pick_pose_world}.")
+    #sys.exit(0)
     block_to_pick_id = create_test_block(env, pose=block_to_pick_pose_world, name_suffix="pick_target")
 
 
@@ -453,59 +501,37 @@ def main_test_script():
     symbolic_block_name = f"block{block_to_pick_id}" 
     block_to_pick_obj_sym = Object(symbolic_block_name, env._block_type)
 
-    # 1. Update the environment's internal tracking
+    # Step 1: Update the environment's physical-to-symbolic map.
+    # This tells _get_state() that the new physical block ID now corresponds
+    # to a new symbolic object.
     env._block_id_to_block[block_to_pick_id] = block_to_pick_obj_sym
 
-    # 2. CRITICAL: Update env._current_state to include the new symbolic object
-    #    and its features BEFORE calling env._get_state().
-    #    We'll copy the existing _current_state and add to it.
-    #    If _current_state is None (e.g., before first reset), initialize it.
-    if env._current_state is None:
-        # This case might not happen if reset_robot_fetch_mobile calls env.reset indirectly
-        # or if tests always start with a reset. But good to be robust.
-        # We'd need to fully initialize _current_state here, perhaps by calling _get_state
-        # for existing objects first, then adding. For simplicity in this test,
-        # assume env.reset or similar has been called once to populate _current_state.
-        # If not, the first call to env._get_state() below would handle existing objects.
-        # For this specific test flow, resetting ensures _current_state is populated.
-        # Let's assume env.reset() has been called, or reset_robot_fetch_mobile ensures
-        # _current_state is set via env's mechanisms.
-        # A more robust way if _current_state could be None here is more complex.
-        # Given the test structure, env.reset() at the start of main_test_script
-        # should mean _current_state is not None.
-        pass # Assuming _current_state is populated from env initialization
-
-    # CRITICAL: Update symbolic state as well before _get_state() is called internally by option
-    # Get the current simulator state (joint positions) to preserve it
-    current_simulator_state = env._current_state.simulator_state # Access before modifying
-    updated_state_data = env._current_state.data.copy()
-    # Add the new block with its features
-    # Features: "pose_x", "pose_y", "pose_z", "held", "color_r", "color_g", "color_b"
-    updated_state_data[block_to_pick_obj_sym] = np.array(
-        [block_to_pick_pose_world[0], block_to_pick_pose_world[1], block_to_pick_pose_world[2],
-         0.0,  # not held
-         0.8, 0.2, 0.2], # color (r,g,b)
-        dtype=np.float32
-    )
-
-    # Modify the existing State object (_current_observation) directly
+    # Step 2: Get a handle to the official state object, which is mutable.
     state_obj_to_modify = env._current_observation
-    assert isinstance(state_obj_to_modify, State), \
-        f"Expected env._current_observation to be a State, got {type(state_obj_to_modify)}"
-    
-    state_obj_to_modify.data = updated_state_data
-    # current_simulator_state was extracted from the original state object before data modification
-    state_obj_to_modify.simulator_state = current_simulator_state 
-    
-    # Keep BaseEnv's _simulator_state attribute consistent
-    env._simulator_state = current_simulator_state
+    assert isinstance(state_obj_to_modify, utils.PyBulletState), \
+        f"Expected env._current_observation to be a PyBulletState, got {type(state_obj_to_modify)}"
 
-    logging.info(f"Test 5: Symbolic state updated for new block {block_to_pick_obj_sym.name}.")
-    logging.info(f"Test 5: Current objects in state: {list(env._current_state.data.keys())}")
+    # Step 3: "Prime" the state object with a placeholder for the new block.
+    # This is ONLY to satisfy the assertion inside _get_state().
+    state_obj_to_modify.data[block_to_pick_obj_sym] = np.zeros(len(env._block_type.feature_names))
 
+    # Step 4: Now, create a fresh state. The assertion will pass because the object
+    # returned by the _current_state property (which is state_obj_to_modify)
+    # now has the same objects as the newly created state.
+    fresh_state = env._get_state()
 
-    env._held_obj_id = None # Crucial: ensure robot starts not holding anything. PyBulletEnv uses this.
-    robot_obj_sym = env._robot # The symbolic robot object, already in env.types and env._get_state()
+    # Step 5: Update the official state object IN-PLACE with the fresh data.
+    # We are not assigning to _current_state; we are modifying the object it points to.
+    #print(f"[DEBUG] Attributes of state_obj_to_modify: {dir(state_obj_to_modify)}")
+    state_obj_to_modify.data = fresh_state.data
+    state_obj_to_modify.simulator_state = fresh_state.simulator_state 
+    state_obj_to_modify.base_pose = fresh_state.base_pose
+    #sys.exit(0)
+
+    # Crucial: ensure robot starts not holding anything. PyBulletEnv uses this.
+    env._held_obj_id = None
+    # The symbolic robot object, already in env.types and env._get_state()
+    robot_obj_sym = env._robot 
 
     logging.info(f"Testing PickObject option for block ID {block_to_pick_id} ('{block_to_pick_obj_sym.name}') at {block_to_pick_pose_world}")
     pick_option = env._pick_block_option # Get the option instance from the environment

@@ -232,6 +232,7 @@ def _sesame_plan_with_astar(
         #     heuristic = HAddHeuristic(init_atoms, task.goal, reachable_nsrts)
         elif heuristic_method == "lmcut":
              heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="lmcut")
+        #Some bug in the search process; very slow.
         elif heuristic_method == "hmax":
              heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hmax")
         elif heuristic_method == "hadd":

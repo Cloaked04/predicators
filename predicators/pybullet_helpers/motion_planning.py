@@ -130,13 +130,16 @@ def run_motion_planning(
         to_ee = robot.forward_kinematics(to_pt).position
         return sum(np.subtract(from_ee, to_ee)**2)
 
-    print("run_motion_planning: Checking collisions for start and goal")
-    print("  Start:", initial_positions, "Collision:", _collision_fn(initial_positions))
-    print("  Goal:", target_positions, "Collision:", _collision_fn(target_positions))
-    print("  Joint limits low:", current_arm_joint_space.low)
-    print("  Joint limits high:", current_arm_joint_space.high)
-    print("  Start in limits:", np.all(initial_positions >= current_arm_joint_space.low) and np.all(initial_positions <= current_arm_joint_space.high))
-    print("  Goal in limits:", np.all(target_positions >= current_arm_joint_space.low) and np.all(target_positions <= current_arm_joint_space.high))
+    print("\n[DEBUG] run_motion_planning: Checking collisions for start and goal")
+    print("\n[DEBUG] Start:", initial_positions, "Collision:", _collision_fn(initial_positions))
+    print("\n[DEBUG] Goal:", target_positions, "Collision:", _collision_fn(target_positions))
+    print("\n[DEBUG] Joint limits low:", current_arm_joint_space.low)
+    print("\n[DEBUG] Joint limits high:", current_arm_joint_space.high)
+    print("\n[DEBUG] Start in limits:", np.all(initial_positions >= current_arm_joint_space.low) and np.all(initial_positions <= current_arm_joint_space.high))
+    print("\n[DEBUG] Goal in limits:", np.all(target_positions >= current_arm_joint_space.low) and np.all(target_positions <= current_arm_joint_space.high))
+    if _collision_fn(target_positions):
+        print("\n[DEBUG] Goal is in COLLISION, thus planning fails.")
+        #sys.exit(0)
 
     birrt = utils.BiRRT(_sample_fn,
                         _extend_fn,
@@ -485,6 +488,8 @@ def run_coordinated_motion_planning(
         try:
             target_joint_solution = robot.inverse_kinematics(
                 target_ee_pose, validate=True, set_joints=False)
+
+            print(f"\n[DEBUG] IK SUCCESSFUL!! Found solution:{target_joint_solution}.")
             
             if final_finger_state is not None and target_joint_solution is not None:
                 mutable_joint_solution = list(target_joint_solution)
@@ -659,281 +664,297 @@ def run_coordinated_motion_planning(
 
     #Define parameters for the ring/circle to sample within:
     rad_min = 0.0
-    rad_limit = 3.0
-    #rad_max = 1.0
+    #rad_limit = 3.0
+    rad_max = 1.0
 
     # target x,y
     target_pos = np.array(target_ee_pose.position[:2])
 
     # rad_delta = -0.2
 
-    success_stats_dict = {}
+    # success_stats_dict = {}
 
-    #Loop over rings/circle of various sizes to determine the best radius to sample within:
+    # #Loop over rings/circle of various sizes to determine the best radius to sample within:
 
-    #Pause physics rendering:
-    print("Disabling rendering for Monte Carlo experiment...")
-    p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0, physicsClientId=physics_client_id)
+    # #Pause physics rendering:
+    # print("Disabling rendering for Monte Carlo experiment...")
+    # p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0, physicsClientId=physics_client_id)
 
-    for _ in range(1000):
+    # for _ in range(1000):
 
-        #Sample the maximum radius to sample within:
-        rad_max = rng.uniform(rad_min, rad_limit)
+    #     #Sample the maximum radius to sample within:
+    #     rad_max = rng.uniform(rad_min, rad_limit)
 
-        successful_sample_count = 0
+    #     successful_sample_count = 0
 
-        success_stats_dict[rad_max] = []
+    #     success_stats_dict[rad_max] = []
 
-        for attempt in range(1000):
+    #     for attempt in range(1000):
 
-            #sample distance, position on the circumference from target:
-            rad_test = rng.uniform(rad_min, rad_max)
-            theta = rng.uniform(0.0, 2*np.pi)
+    #         #sample distance, position on the circumference from target:
+    #         rad_test = rng.uniform(rad_min, rad_max)
+    #         theta = rng.uniform(0.0, 2*np.pi)
 
-            #Compute the exact base coordinates for sampled (radius, theta):
+    #         #Compute the exact base coordinates for sampled (radius, theta):
             
-            test_x = target_pos[0]+rad_test*np.cos(theta)
-            test_y = target_pos[1]+rad_test*np.sin(theta)
+    #         test_x = target_pos[0]+rad_test*np.cos(theta)
+    #         test_y = target_pos[1]+rad_test*np.sin(theta)
 
-            #Compute robot's orientation such that robot faces the target
-            test_orn = _compute_facing_theta([test_x, test_y], target_pos)
+    #         #Compute robot's orientation such that robot faces the target
+    #         test_orn = _compute_facing_theta([test_x, test_y], target_pos)
 
-            #candidate pose:
+    #         #candidate pose:
 
-            test_pose = (test_x, test_y, test_orn)
+    #         test_pose = (test_x, test_y, test_orn)
             
-            # Check if target is reachable from this base pose
-            try:
+    #         # Check if target is reachable from this base pose
+    #         try:
 
-                #Temporarily move base to candidate position
-                robot.move_base_to(test_pose, physics_client_id)
+    #             #Temporarily move base to candidate position
+    #             robot.move_base_to(test_pose, physics_client_id)
 
-                # Check IK reachability without validating collisons
-                # validate = False skips checking for collisions for now.
-                candidate_joint_solution = robot.inverse_kinematics(
-                    target_ee_pose, validate=False, set_joints=False)
+    #             # Check IK reachability without validating collisons
+    #             # validate = False skips checking for collisions for now.
+    #             candidate_joint_solution = robot.inverse_kinematics(
+    #                 target_ee_pose, validate=False, set_joints=False)
 
-                if candidate_joint_solution is not None:
+    #             if candidate_joint_solution is not None:
 
-                    successful_sample_count+=1
-                    #success_stats_dict[rad_max].append(rad_test)
-                    print(f"Found a sample inside radius {rad_max} at attempt {attempt}.")
+    #                 successful_sample_count+=1
+    #                 #success_stats_dict[rad_max].append(rad_test)
+    #                 print(f"Found a sample inside radius {rad_max} at attempt {attempt}.")
 
-                    #Restore robot to initial position
-                    robot.move_base_to(current_base_pose, physics_client_id)
-                    robot.set_joints(current_joint_positions)
-                    continue
+    #                 #Restore robot to initial position
+    #                 robot.move_base_to(current_base_pose, physics_client_id)
+    #                 robot.set_joints(current_joint_positions)
+    #                 continue
 
-                #Restore robot to initial position in case IK returned None:
-                robot.move_base_to(current_base_pose, physics_client_id)
-                robot.set_joints(current_joint_positions)
+    #             #Restore robot to initial position in case IK returned None:
+    #             robot.move_base_to(current_base_pose, physics_client_id)
+    #             robot.set_joints(current_joint_positions)
 
-            except InverseKinematicsError:
-                print(f"Bad sample inside radius {rad_max} at attempt {attempt}. Continuing...")
-                #Restore robot to initial position
-                robot.move_base_to(current_base_pose, physics_client_id)
-                robot.set_joints(current_joint_positions)
-
-
-        success_stats_dict[rad_max] = successful_sample_count
-
-    # Resume physics rendering
-    print("Re-enabling rendering.")
-    p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1, physicsClientId=physics_client_id)
+    #         except InverseKinematicsError:
+    #             print(f"Bad sample inside radius {rad_max} at attempt {attempt}. Continuing...")
+    #             #Restore robot to initial position
+    #             robot.move_base_to(current_base_pose, physics_client_id)
+    #             robot.set_joints(current_joint_positions)
 
 
-    #Compute stats for each radius value:
+    #     success_stats_dict[rad_max] = successful_sample_count
 
-    for rad in success_stats_dict:
-        print(f"Prob. of finding a successful sample inside radius {rad}: {success_stats_dict[rad]/1000}.")
+    # # Resume physics rendering
+    # print("Re-enabling rendering.")
+    # p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1, physicsClientId=physics_client_id)
 
-    sys.exit(0)
+
+    # #Compute stats for each radius value:
+
+    # for rad in success_stats_dict:
+    #     print(f"Prob. of finding a successful sample inside radius {rad}: {success_stats_dict[rad]/1000}.")
+
+    # sys.exit(0)
 
     ###################################################################################################
     ########################-----FULL BODY IK CODE TO BE USED DURING EXECUTION----#####################
     ###################################################################################################
 
-    # candidate_base_poses = []
-    # #candidate_joint_solutions = {}
+    candidate_base_poses = []
+    #candidate_joint_solutions = {}
 
-    # #Get a bunch of base positions that allow reaching the target
-    # for _ in range(base_path_planner_max_tries):
+    #Get a bunch of base positions that allow reaching the target
+    for _ in range(base_path_planner_max_tries):
 
-    #     #sample distance, position on the circumference from target:
-    #     rad_test = 0.0
+        #sample distance, position on the circumference from target:
+        rad_test = 0.0
 
-    #     while rad_test<=cutoff_distance:
-    #         rad_test = rng.uniform(rad_min, rad_max)
-    #     theta = wrap_to_pi(rng.uniform(0.0, 2*np.pi))
+        while rad_test<=cutoff_distance:
+            rad_test = rng.uniform(rad_min, rad_max)
+        #rad_test = rng.uniform(rad_min, rad_max)
+        theta = wrap_to_pi(rng.uniform(0.0, 2*np.pi))
 
-    #     #Compute the exact base coordinates for sampled (radius, theta):
+        #Compute the exact base coordinates for sampled (radius, theta):
             
-    #     test_x = target_pos[0]+rad_test*np.cos(theta)
-    #     test_y = target_pos[1]+rad_test*np.sin(theta)
+        test_x = target_pos[0]+rad_test*np.cos(theta)
+        test_y = target_pos[1]+rad_test*np.sin(theta)
 
-    #     #Compute robot's orientation such that robot faces the target
-    #     test_orn = _compute_facing_theta([test_x, test_y], target_pos)
+        #Compute robot's orientation such that robot faces the target
+        test_orn = _compute_facing_theta([test_x, test_y], target_pos)
 
-    #     #candidate pose:
+        #candidate pose:
 
-    #     test_pose = (test_x, test_y, test_orn)
+        test_pose = (test_x, test_y, test_orn)
 
-    #     # Check if target is reachable from this base pose
-    #     try:
+        print(f"\n[DEBUG]: Sample attempt {_+1}/{base_path_planner_max_tries}.")
+        print(f"[DEBUG]: Sampled base pose -- {test_pose}.")
 
-    #         #Temporarily move base to candidate position
-    #         robot.move_base_to(test_pose, physics_client_id)
+        # Check if target is reachable from this base pose
+        try:
 
-    #         # Check IK reachability
-    #         candidate_joint_solution = robot.inverse_kinematics(
-    #             target_ee_pose, validate=True, set_joints=False)
+            #Temporarily move base to candidate position
+            robot.move_base_to(test_pose, physics_client_id)
 
-    #         if candidate_joint_solution is not None:
+            # Check IK reachability
+            candidate_joint_solution = robot.inverse_kinematics(
+                target_ee_pose, validate=True, set_joints=False)
 
-    #             candidate_base_poses.append(test_pose)
-    #             #candidate_joint_solutions[test_pose] = candidate_joint_solution
+            if candidate_joint_solution is not None:
 
-    #             #Restore robot to initial position
-    #             robot.move_base_to(current_base_pose, physics_client_id)
-    #             robot.set_joints(current_joint_positions)
-    #             continue
+                print(f"[DEBUG]: IK SUCCESSFUL.")
 
-    #         #Restore robot to initial position in case IK returned None:
-    #         robot.move_base_to(current_base_pose, physics_client_id)
-    #         robot.set_joints(current_joint_positions)
+                candidate_base_poses.append(test_pose)
+                #candidate_joint_solutions[test_pose] = candidate_joint_solution
 
-    #     except InverseKinematicsError:
-    #         robot.move_base_to(current_base_pose, physics_client_id)
-    #         robot.set_joints(current_joint_positions)
-    #         continue
+                #Restore robot to initial position
+                robot.move_base_to(current_base_pose, physics_client_id)
+                robot.set_joints(current_joint_positions)
+                continue
 
-    # #Sort the list of sampled base poses:
-    # candidate_base_poses.sort(
-    # key=lambda pose: (pose[0] - target_pos[0])**2 + (pose[1] - target_pos[1])**2)
+            #Restore robot to initial position in case IK returned None:
+            robot.move_base_to(current_base_pose, physics_client_id)
+            robot.set_joints(current_joint_positions)
 
-    # #Find the sampled base pose that doesn't collide with anything, get a collision free
-    # #path and return:
+        except InverseKinematicsError:
+            print(f"[DEBUG]: IK FAILED.")
+            robot.move_base_to(current_base_pose, physics_client_id)
+            robot.set_joints(current_joint_positions)
+            continue
 
-    # base_path: Optional[List[Tuple[float, float, float]]] = None 
+    #Sort the list of sampled base poses:
+    candidate_base_poses.sort(
+    key=lambda pose: (pose[0] - target_pos[0])**2 + (pose[1] - target_pos[1])**2)
 
-    # for candidate_base_pose in candidate_base_poses:
+    #Find the sampled base pose that doesn't collide with anything, get a collision free
+    #path and return:
 
-    #     if not _base_collision_fn(candidate_base_pose):
+    base_path: Optional[List[Tuple[float, float, float]]] = None
 
-    #         base_path = run_base_motion_planning(
-    #             robot,
-    #             candidate_base_pose,
-    #             collision_bodies,
-    #             current_joint_positions,
-    #             seed,
-    #             physics_client_id,
-    #             workspace_bounds=workspace_bounds,
-    #             held_object_id=held_object_id_at_start,
-    #             ee_to_held_object_transform=ee_to_held_object_transform_at_start,
-    #         )
+    print(f"[DEBUG] Found {len(candidate_base_poses)} candidate base positions with valid IK.") 
+    print(f"[DEBUG] Now checking for collision.")
 
-    #         if base_path is None:
-    #             print("Coordinated planning: Base path planning failed.")
-    #             # Restore initial state
-    #             robot.move_base_to(current_base_pose, physics_client_id)
-    #             robot.set_joints(current_joint_positions)
-    #             continue
+    for i, candidate_base_pose in enumerate(candidate_base_poses):
+        print(f"\n[DEBUG]: Checking candidate {i+1}/{len(candidate_base_poses)}:{candidate_base_pose}.")
 
-    #         print(f"Coordinated planning: Base path found with {len(base_path)} waypoints.")
-    #         #return base_path
-    #         break
+        is_colliding = _base_collision_fn(candidate_base_pose)
+        print(f"[DEBUG] Collsion check:{'COLLIDES :-(' if is_colliding else 'OK!!'}")
 
-    # if base_path is not None:
-    #     print(f"Coordinated planning: Base path found with {len(base_path)} waypoints.")
-    #     print(f"Returning base path for candidate base pose:{candidate_base_pose}.")
-    # else:
-    #     print(f"Base path planning failed for all IK valid positions. FIX THIS CASE!!!!")
-    #     sys.exit(0)
+        if not is_colliding:
 
-    # print("Done with base planning. Moving to arm...")
-    # print(f"Base path:{base_path}.")
-    # #sys.exit(0)
+            print(f"[DEBUG] Attempting base path planning:")
+
+            base_path = run_base_motion_planning(
+                robot,
+                candidate_base_pose,
+                collision_bodies,
+                current_joint_positions,
+                seed,
+                physics_client_id,
+                workspace_bounds=workspace_bounds,
+                held_object_id=held_object_id_at_start,
+                ee_to_held_object_transform=ee_to_held_object_transform_at_start,
+            )
+
+            if base_path is None:
+                print("[DEBUG] Coordinated planning: Base path planning failed.")
+                # Restore initial state
+                robot.move_base_to(current_base_pose, physics_client_id)
+                robot.set_joints(current_joint_positions)
+                continue
+
+            print(f"[DEBUG] Coordinated planning: Base path found with {len(base_path)} waypoints.")
+            #return base_path
+            break
+
+    if base_path is not None:
+        print(f"Coordinated planning: Base path found with {len(base_path)} waypoints.")
+        print(f"Returning base path for candidate base pose:{candidate_base_pose}.")
+    else:
+        print(f"Base path planning failed for all IK valid positions. FIX THIS CASE!!!!")
+        sys.exit(0)
+
+    print("Done with base planning. Moving to arm...")
+    print(f"Base path:{base_path}.")
+    #sys.exit(0)
 
 
-    # # Plan Arm Path
-    # # Temporarily move the robot to the end of the planned base path
-    # final_base_pose = base_path[-1]
-    # print(f"Fnial base pose:{final_base_pose}.")
-    # robot.move_base_to(final_base_pose, physics_client_id)
+    # Plan Arm Path
+    # Temporarily move the robot to the end of the planned base path
+    final_base_pose = base_path[-1]
+    print(f"Fnial base pose:{final_base_pose}.")
+    robot.move_base_to(final_base_pose, physics_client_id)
 
-    # start_joint_positions = robot.get_joints()
+    start_joint_positions = robot.get_joints()
 
-    # print(f"Initial joint positions:{current_joint_positions}.")
-    # print(f"New joint positions after moving base:{start_joint_positions}.")
+    print(f"Initial joint positions:{current_joint_positions}.")
+    print(f"New joint positions after moving base:{start_joint_positions}.")
 
-    # target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=True, set_joints=False)
+    target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=True, set_joints=False)
 
-    # if target_joint_positions is not None:
-    #     print("Found IK from final base pose during arm motion planning. Proceeding...")
-    #     print(f"Target joint positions are: {target_joint_positions}.")
+    if target_joint_positions is not None:
+        print("Found IK from final base pose during arm motion planning. Proceeding...")
+        print(f"Target joint positions are: {target_joint_positions}.")
 
     
-    # # Ensure target_joint_position has the correct final_finger_state if it was determined.
-    # if final_finger_state is not None and target_joint_positions is not None:
-    #     mutable_bjs = list(target_joint_positions)
-    #     # Check if finger indices are valid for the length of best_joint_solution
-    #     if robot.left_finger_joint_idx < len(mutable_bjs) and \
-    #        robot.right_finger_joint_idx < len(mutable_bjs):
-    #         mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
-    #         mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
-    #         target_joint_positions = tuple(mutable_bjs)
-    #     else:
-    #         # This case should be rare if IK solution was valid
-    #         print(f"Warning: Finger joint indices out of bounds for best_joint_solution. Length: {len(mutable_bjs)}")
+    # Ensure target_joint_position has the correct final_finger_state if it was determined.
+    if final_finger_state is not None and target_joint_positions is not None:
+        mutable_bjs = list(target_joint_positions)
+        # Check if finger indices are valid for the length of best_joint_solution
+        if robot.left_finger_joint_idx < len(mutable_bjs) and \
+           robot.right_finger_joint_idx < len(mutable_bjs):
+            mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
+            mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
+            target_joint_positions = tuple(mutable_bjs)
+        else:
+            # This case should be rare if IK solution was valid
+            print(f"Warning: Finger joint indices out of bounds for best_joint_solution. Length: {len(mutable_bjs)}")
 
 
-    # arm_path = run_motion_planning(
-    #     robot,
-    #     start_joint_positions,  # Joints before any movement starts
-    #     target_joint_positions,      # Target joints from IK at final base pose (with fingers updated)
-    #     collision_bodies,
-    #     seed,
-    #     physics_client_id,
-    #     held_object=held_object_id_at_start,
-    #     ee_to_held_object_transform=ee_to_held_object_transform_at_start,
-    # )
+    arm_path = run_motion_planning(
+        robot,
+        start_joint_positions,  # Joints before any movement starts
+        target_joint_positions,      # Target joints from IK at final base pose (with fingers updated)
+        collision_bodies,
+        seed,
+        physics_client_id,
+        held_object=held_object_id_at_start,
+        ee_to_held_object_transform=ee_to_held_object_transform_at_start,
+    )
 
-    # # Restore initial state after planning is complete
-    # robot.move_base_to(current_base_pose, physics_client_id)
-    # robot.set_joints(current_joint_positions)
+    # Restore initial state after planning is complete
+    robot.move_base_to(current_base_pose, physics_client_id)
+    robot.set_joints(current_joint_positions)
 
-    # if arm_path is None:
-    #     print("Coordinated planning: Arm path planning failed after base movement.")
+    if arm_path is None:
+        print("Coordinated planning: Arm path planning failed after base movement.")
         
-    #     return None
+        return None
 
-    # if arm_path is not None:
-    #     print("Coordinated planning: Succeeded with arm-only movement after base motion.")
+    if arm_path is not None:
+        print("Coordinated planning: Succeeded with arm-only movement after base motion.")
 
-    #     padded_arm_path: List[JointPositions] = []
+        padded_arm_path: List[JointPositions] = []
 
-    #     expected_len = len(robot.arm_joints)
-    #     left_idx = robot.left_finger_joint_idx
-    #     right_idx = robot.right_finger_joint_idx
+        expected_len = len(robot.arm_joints)
+        left_idx = robot.left_finger_joint_idx
+        right_idx = robot.right_finger_joint_idx
 
-    #     for arm_wp in arm_path:
-    #         wp = list(arm_wp)
-    #         if len(wp) == expected_len:
-    #             padded_arm_path.append(wp)
-    #         elif len(wp) == expected_len - 2:
-    #             # Insert finger joints at the correct indices
-    #             wf = robot.open_fingers
-    #             # Insert the higher index first to not affect the lower index
-    #             for idx in sorted([left_idx, right_idx], reverse=True):
-    #                 wp.insert(idx, wf)
-    #             padded_arm_path.append(wp)
-    #         else:
-    #             raise ValueError(f"Arm path waypoint has length {len(wp)}, expected {expected_len} (arm/finger joints). Waypoint: {wp}")
+        for arm_wp in arm_path:
+            wp = list(arm_wp)
+            if len(wp) == expected_len:
+                padded_arm_path.append(wp)
+            elif len(wp) == expected_len - 2:
+                # Insert finger joints at the correct indices
+                wf = robot.open_fingers
+                # Insert the higher index first to not affect the lower index
+                for idx in sorted([left_idx, right_idx], reverse=True):
+                    wp.insert(idx, wf)
+                padded_arm_path.append(wp)
+            else:
+                raise ValueError(f"Arm path waypoint has length {len(wp)}, expected {expected_len} (arm/finger joints). Waypoint: {wp}")
 
 
-    # print(f"Coordinated planning: Arm path found with {len(arm_path)} waypoints.")
-    # print("Coordinated planning: Succeeded.")
-    # return (base_path, padded_arm_path)
+    print(f"Coordinated planning: Arm path found with {len(arm_path)} waypoints.")
+    print("Coordinated planning: Succeeded.")
+    return (base_path, padded_arm_path)
 
 ###############################################################################################################
 ############################-------END OF FULL BODY IK CODE------##############################################

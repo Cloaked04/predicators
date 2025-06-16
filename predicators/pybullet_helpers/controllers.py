@@ -1,6 +1,6 @@
 """Generic controllers for the robots."""
 #from typing import Callable, Dict, Sequence, Set, Tuple, cast, Optional, Any
-
+import sys
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
     List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 
@@ -27,7 +27,7 @@ _SUPPORTED_ROBOTS: Set[str] = {"fetch", "panda", "fetch_mobile"}
 
 #Constants for grasp/place offsets:
 #Meters above object center for pre-grasp/ finsh grasp
-PICK_PRE_GRASP_Z_OFFSET = 0.1
+PICK_PRE_GRASP_Z_OFFSET = 0.15
 #Meters above target surface for release
 PLACE_RELEASE_Z_OFFSET = 0.1
 
@@ -58,6 +58,7 @@ def create_move_end_effector_to_pose_option(
         del memory  # unused
         # Sync the joints.
         assert isinstance(state, utils.PyBulletState)
+        
         robot.set_joints(state.joint_positions)
         # First handle the main arm joints.
         # This gives the current and desired end-effector pose and
@@ -113,6 +114,7 @@ def create_move_end_effector_to_pose_option(
             finger_delta = -finger_action_nudge_magnitude
         # Extract the current finger state.
         state = cast(utils.PyBulletState, state)
+        
         finger_position = state.joint_positions[robot.left_finger_joint_idx]
         # The finger action is an absolute joint position for the fingers.
         f_action = finger_position + finger_delta
@@ -177,6 +179,7 @@ def create_change_fingers_option(
         f_action = current_val + f_delta
         # Don't change the rest of the joints.
         state = cast(utils.PyBulletState, state)
+        
         target = np.array(state.joint_positions, dtype=np.float32)
         target[robot.left_finger_joint_idx] = f_action
         target[robot.right_finger_joint_idx] = f_action
@@ -229,9 +232,13 @@ def execute_coordinated_path(
     
     # num_arm_finger_joints = len(robot.joint_lower_limits[:-2]) # This was arm joints only, excluding fingers.
 
-    # Correctly get the number of arm + finger joints, which is the length of robot.get_joints()
-    # robot.get_joints() returns positions for robot.arm_joints which *includes* fingers.
-    num_controllable_arm_joints = len(robot.get_joints())
+    # Get the number of arm + finger joints from robot.arm_joints.
+    # robot.get_joints() returns positions for robot.arm_joints which includes fingers.
+    # Note that there are two get_joints function in the repo: one defined in joints.py
+    # and the other defined in single_arm.py. Here, we use the one defined for the robot
+    # which calls get_joint_positions in joint.py and arm_joints calls get_joints() function
+    # in joints.py.
+    num_controllable_arm_joints = len(robot.arm_joints)
 
 
     #Get initial arm joint positions
@@ -245,8 +252,10 @@ def execute_coordinated_path(
     ####### TODO: Remove all calls/cases for velocity based base motion. These are in files controller.py,###################
     ####### mobile_single_arm.py and inside class Action in structs.py. Remove this comment when done.#######################
 
-    if base_path and len(base_path) > 0: # Ensure base_path is not empty
-        current_robot_base_pose_xytheta = robot.get_base_pose(physics_client_id) # Gets (x,y,theta)
+    # Ensure base_path is not empty
+    if base_path and len(base_path) > 0: 
+        # Gets (x,y,theta)
+        current_robot_base_pose_xytheta = robot.get_base_pose(physics_client_id)
         # If base_path has only one point and it's effectively the current pose, no base actions needed.
         if len(base_path) == 1 and np.allclose(base_path[0], current_robot_base_pose_xytheta, atol=1e-3):
              print("Base path is just the current pose, no base movement actions generated.")
@@ -255,10 +264,12 @@ def execute_coordinated_path(
             # We generate actions to move from base_path[i] to base_path[i+1].
             # So, we iterate up to len(base_path) - 1, using base_path[i+1] as the target.
             print(f"Generating {len(base_path) -1 } base movement actions from path of length {len(base_path)}...")
-            for i in range(len(base_path) -1): # Iterate through segments
-                target_x, target_y, target_theta = base_path[i+1] # Target the next waypoint
+            for i in range(len(base_path) -1):
+                # Target is the next waypoint
+                target_x, target_y, target_theta = base_path[i+1]
                 action_arr = np.zeros_like(robot.action_space.low) 
                 
+                #Arm position stays fixed during base motion
                 action_arr[:num_controllable_arm_joints] = current_arm_joint_positions
 
                 print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")
@@ -292,8 +303,9 @@ def execute_coordinated_path(
             # For now, assuming finger state is part of target_arm_joint_positions_waypoint.
             actions.append(action)
 
-            # This update is mostly for conceptual clarity, as current_arm_joint_positions
-            # is not used further in this loop for generating subsequent arm actions.
+            # This update is mostly for conceptual clarity/ keeping the variable from going state,
+            # as current_arm_joint_positions is not used further in this loop for generating
+            # subsequent arm actions.
             current_arm_joint_positions = target_arm_joint_positions_waypoint
 
     print(f"Generated total {len(actions)} low-level actions.")
@@ -343,11 +355,12 @@ def create_coordinated_motion_option(
             # Reset the PyBullet robot to reflect the joint positions and base pose in the symbolic state
             # for planning.
 
-            # 1) Remember where the simulator really was before we overwrite it:
+            # Save robot's current base pose and orientation
             current_sim_base_pose_before_sync = robot.get_base_pose(physics_client_id)
             current_sim_joint_positions_before_sync = robot.get_joints()
 
             assert isinstance(state, utils.PyBulletState)
+            
             #Set robot base pose from state if it's a PyBulletState with base_pose
             if hasattr(state, 'base_pose') and state.base_pose is not None:
                 #Assuming state.base_pose is (x,y, theta)
@@ -376,14 +389,12 @@ def create_coordinated_motion_option(
             
             # Now, try to get the pybullet ID using the robot's internal _held_obj_id,
             # which should be managed by the PyBulletEnv grasping logic.
-            # We use the symbolic_held_object as a confirmation.
             if symbolic_held_object is not None:
                 if hasattr(robot, '_held_obj_id') and isinstance(robot, PyBulletEnv) and robot._held_obj_id is not None:
                     # We have a symbolic held object, and the PyBulletEnv robot instance also reports a held_obj_id.
                     # So we have it for future motion planning use.
                     held_object_id_at_start = robot._held_obj_id 
-                    # We trust and assume that if symbolic says held, and pybullet env says held, they are the same.
-                    # We log this information.
+                    # We assume that if symbolic says held, and pybullet env says held, they are the same.
                     print(f"Option '{name}': Symbolic state indicates '{symbolic_held_object.name}' is held. "
                           f"Using PyBullet ID {held_object_id_at_start} from robot instance (PyBulletEnv._held_obj_id).")
 
@@ -407,11 +418,13 @@ def create_coordinated_motion_option(
                         np.array(ee_T_obj.orientation, dtype=np.float32)
                     )
                 else:
-                    print(f"Warning: Option '{name}': Symbolic state says '{symbolic_held_object.name}' is held, "
+                    print(f"[DEBUG] Warning: Option '{name}': Symbolic state says '{symbolic_held_object.name}' is held, "
                           "but robot instance (PyBulletEnv) does not report a _held_obj_id or is not a PyBulletEnv. "
                           "Cannot get PyBullet ID for held object planning.")
+                    sys.exit(0)
             elif name == "PlaceObject": # If it's a place action, something should ideally be held.
-                 print(f"Warning: Option '{name}' called, but no symbolically held grabbable object found in state.")
+                 print(f"[DEBUG] Warning: Option '{name}' called, but no symbolically held grabbable object found in state.")
+                 sys.exit(0)
 
 
             # Remove the identified held_object_id_at_start from the set of collision bodies.
@@ -485,7 +498,7 @@ def create_coordinated_motion_option(
     def _terminal(state:State, memory:Dict, objects: Sequence[Object], params: Array) -> bool:
         if "current_action_idx" not in memory or "actions" not in memory:
             #Not started or planning failed before populating memory
-            return False # Should continue until planning is attempted or policy sets these
+            return False
         # Terminal if all planned actions have been executed
         return memory["current_action_idx"] >= len(memory["actions"])
 

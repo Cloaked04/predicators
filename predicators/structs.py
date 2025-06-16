@@ -171,8 +171,13 @@ class Object(_TypedEntity):
     
     Example: 
 
-            # Define a type "Block" with two features and no parent
+            Define a type "Block" with two features and no parent:
+
             block_type = Type(name="Block", feature_names=["color", "size"])
+
+            When actually defining a block, you will generally use self._block_type
+            or env._block_type for block_type which uses the general block description
+            defined in BlocksEnv inside its init function.
 
             # Create an object of type "Block"
             block_obj = Object(name="block1", type=block_type)
@@ -226,8 +231,8 @@ class Variable(_TypedEntity):
 class State:
     """Struct defining the low-level state of the world. simulator_states could be anything 
     like random number generators, link to physics engines etc. It is considered immutable and
-    taken into account when copying states and comparing states them (last two methods in thie class).
-    That is why two states are cannot be comapared if their simulator_states are not None.
+    taken into account when copying states and comparing states them (last two methods in the class).
+    That is why two states cannot be comapared if their simulator_states are not None.
     """
     data: Dict[Object, Array]
     # Some environments will need to store additional simulator state, so
@@ -331,6 +336,50 @@ class State:
                                                           4) + "\n"
         suffix = "\n" + "#" * ll + "\n"
         return prefix + "\n\n".join(table_strs) + suffix
+
+###########################################
+# @dataclass
+# class PyBulletState(State):
+#     """
+#     A state that also includes robot's base position for mobile robots.
+#     Only used when the the robot is an instance of the
+#     MobileSingleArmPybulletRobot.
+
+#     Inherits from state defined above and only adds the attribute base_
+#     pose and overrides the copy function defined inside class State so
+#     that when a PyBulletState is being copied, the base_pose does not 
+#     get cleared.
+#     """
+#     base_pose: Optional[Tuple[float, float, float]] = None
+
+#     @property
+#     def joint_positions(self) -> "JointPositions":
+#         """Convenience property for accessing simulator_state, which holds
+#         the robot's joint positions."""
+#         assert self.simulator_state is not None, "Simulator state not set"
+#         return cast(JointPositions, self.simulator_state)
+
+#     def copy(self) -> PyBulletState:
+#         """Return a copy of this state, including the PyBullet-specific
+#         attributes.
+#         """
+#         # Call the parent's copy method to handle the base data dictionary
+#         new_data = super().copy().data
+#         # Return a new instance of PyBulletState, preserving all attributes
+#         return PyBulletState(new_data,
+#                              simulator_state=self.simulator_state,
+#                              base_pose=self.base_pose)
+
+#     def allclose(self, other: State) -> bool:
+#         """Compares object data dictionaries ONLY.
+
+#         This method explicitly ignores the simulator_state (joint positions)
+#         and the base_pose. It creates temporary base State objects to use the
+#         parent's allclose() logic, which only compares the .data dictionary.
+#         """
+#         return State(self.data).allclose(State(other.data))
+
+#############################################
 
 
 DefaultState = State({})

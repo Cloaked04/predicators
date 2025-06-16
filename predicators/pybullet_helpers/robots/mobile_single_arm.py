@@ -2,6 +2,7 @@ import numpy as np
 import pybullet as p
 from gym.spaces import Box
 from typing import Sequence, Tuple, Optional, Union, Iterator, Callable
+from functools import cached_property
 
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.robots.single_arm import SingleArmPyBulletRobot
@@ -33,10 +34,10 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         super().__init__(ee_home_pose, physics_client_id, base_pose=base_pose, use_fixed_base = False)
 
         # Cache wheel joint IDs
-        self.wheel_ids = [
-            self.joint_from_name(name)
-            for name in self.wheel_joint_names
-        ]
+        # self.wheel_ids = [
+        #     self.joint_from_name(name)
+        #     for name in self.wheel_joint_names
+        # ]
 
         # Initialize wheel parameters with default values (unit: meters)
         self._wheel_radius = 0.065
@@ -80,8 +81,8 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         Names of the wheel joints. To be overridden in specific mobile robot class.
         """
         raise NotImplementedError("Override Me!!!!")
-    @property
-    def wheel_ids(self) -> List[int]:
+    @cached_property
+    def wheel_ids(self) -> list[int]:
         "Return pybullet joint ids for wheels."
         return [self.joint_from_name(name) for  name in self.wheel_joint_names]
     

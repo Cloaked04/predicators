@@ -52,7 +52,7 @@ class SingleArmPyBulletRobot(abc.ABC):
         )
 
         # Robot initially at home pose.
-        self.go_home()
+        #self.go_home()
 
     @classmethod
     @abc.abstractmethod
@@ -327,14 +327,14 @@ class SingleArmPyBulletRobot(abc.ABC):
         when there is no base motion so that they can hold 
         position.
         """
-        from predicators.pybullet_helpers.mobile_single_arm import MobileSingleArmPyBulletRobot
+        from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 
         if isinstance(self, MobileSingleArmPyBulletRobot):
 
             base_motor_force = 10.0
             p.setJointMotorControlArray(
                 bodyUniqueId=self.robot_id,
-                jointIndices=self.arm_joints,
+                jointIndices=self.wheel_ids,
                 controlMode=p.VELOCITY_CONTROL,
                 targetVelocities=[0.0]*len(self.wheel_ids),
                 forces=[base_motor_force]*len(self.wheel_ids),
@@ -344,17 +344,21 @@ class SingleArmPyBulletRobot(abc.ABC):
         # Prepare arm joint positions, handling potential truncation.
         #arm_joint_positions = list(joint_positions)
         # Should be 9 for Fetch
-        num_arm_joints = len(self.arm_joints)
+        num_expected_arm_joints = len(self.arm_joints)
 
-        if len(joint_positions) == 11:
-            joint_positions = joint_positions[:len(self.arm_joints)]
-        else:
-            print("Joint positions inconsistent with robot.")
-            sys.exit(0)
+        if len(joint_positions) > num_expected_arm_joints:
+            joint_positions = joint_positions[:num_expected_arm_joints]
+        # else:
+        #     print("Joint positions inconsistent with robot.")
+        #     sys.exit(0)
 
 
         #print(f"Print the arm_joints for debugging:{self.arm_joints}")
-        assert len(joint_positions) == len(self.arm_joints)
+        #assert len(joint_positions) == len(self.arm_joints)
+
+        if len(joint_positions) != num_expected_arm_joints:
+            raise ValueError(f"Incorrect number of joint positions for arm."
+                            f"Expected {num_expected_arm_joints}, but got {len(joint_positions)}.")
 
         # Set arm joint motors.
         if CFG.pybullet_control_mode == "position":

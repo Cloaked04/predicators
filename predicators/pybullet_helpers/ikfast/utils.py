@@ -302,9 +302,6 @@ def ikfast_inverse_kinematics(
             logging.warning("Max time reached. No IKFast solution found.")
             break
 
-        # ADD FUNCTIONALITY TO USE IKFAST BASED ON ROBOT NAMES AS THE IKFAST COMPILATION
-        # FOR PANDAS AND FETCH ARE DIFFERENT.
-
         # Call IKFast to compute candidates for sampled free joint positions
         # ik_candidates: Optional[
         #     List[JointPositions]] = ikfast.get_ik(  # type: ignore

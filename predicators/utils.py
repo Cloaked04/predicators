@@ -1021,24 +1021,64 @@ class SingletonParameterizedOption(ParameterizedOption):
                          initiable=_initiable,
                          terminal=_terminal)
 
+# This class is moved to structs.py
+# class PyBulletState(State):
+#     """A PyBullet state that stores the robot joint positions in addition to
+#     the features that are exposed in the object-centric state."""
 
+#     @property
+#     def joint_positions(self) -> JointPositions:
+#         """Expose the current joints state in the simulator_state."""
+#         return cast(JointPositions, self.simulator_state)
+
+#     def allclose(self, other: State) -> bool:
+#         # Ignores the simulator state.
+#         return State(self.data).allclose(State(other.data))
+
+#     def copy(self) -> State:
+#         state_dict_copy = super().copy().data
+#         simulator_state_copy = list(self.joint_positions)
+#         return PyBulletState(state_dict_copy, simulator_state_copy)
+@dataclass
 class PyBulletState(State):
-    """A PyBullet state that stores the robot joint positions in addition to
-    the features that are exposed in the object-centric state."""
+    """
+    A state that also includes robot's base position for mobile robots.
+    Only used when the the robot is an instance of the
+    MobileSingleArmPybulletRobot.
+
+    Inherits from state defined above and only adds the attribute base_
+    pose and overrides the copy function defined inside class State so
+    that when a PyBulletState is being copied, the base_pose does not 
+    get cleared.
+    """
+    base_pose: Optional[Tuple[float, float, float]] = None
 
     @property
-    def joint_positions(self) -> JointPositions:
-        """Expose the current joints state in the simulator_state."""
+    def joint_positions(self) -> "JointPositions":
+        """Convenience property for accessing simulator_state, which holds
+        the robot's joint positions."""
+        assert self.simulator_state is not None, "Simulator state not set"
         return cast(JointPositions, self.simulator_state)
 
-    def allclose(self, other: State) -> bool:
-        # Ignores the simulator state.
-        return State(self.data).allclose(State(other.data))
+    def copy(self) -> PyBulletState:
+        """Return a copy of this state, including the PyBullet-specific
+        attributes.
+        """
+        # Call the parent's copy method to handle the base data dictionary
+        new_data = super().copy().data
+        # Return a new instance of PyBulletState, preserving all attributes
+        return PyBulletState(new_data,
+                             simulator_state=self.simulator_state,
+                             base_pose=self.base_pose)
 
-    def copy(self) -> State:
-        state_dict_copy = super().copy().data
-        simulator_state_copy = list(self.joint_positions)
-        return PyBulletState(state_dict_copy, simulator_state_copy)
+    def allclose(self, other: State) -> bool:
+        """Compares object data dictionaries ONLY.
+
+        This method explicitly ignores the simulator_state (joint positions)
+        and the base_pose. It creates temporary base State objects to use the
+        parent's allclose() logic, which only compares the .data dictionary.
+        """
+        return State(self.data).allclose(State(other.data))
 
 
 class StateWithCache(State):
