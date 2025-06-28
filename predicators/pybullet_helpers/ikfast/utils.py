@@ -310,8 +310,14 @@ def ikfast_inverse_kinematics(
         ik_candidates: Optional[
         List[JointPositions]] = ikfast.inverse(position, rot_list, free_positions[0])
 
-        if ik_candidates is None:
+        #logging.debug(f"\nNumber of IK candidates returned by IKFast:{len(ik_candidates)}.")
+
+        if ik_candidates is None or len(ik_candidates) == 0:
+            #logging.info(f"\nNo joint solutions given by IKFast. Trying again.")
             continue
+
+        # if len(ik_candidates) > 0:
+        #     logging.info(f"\nFound solutions..")
 
         # Shuffle the candidates to avoid any biases. This may not be
         # completely necessary, but keeping as Caelan did it and it's cheap.
@@ -324,7 +330,9 @@ def ikfast_inverse_kinematics(
                                              joint_positions)
             if not violates_joint_limits(ik_joint_infos, joint_positions) and (
                     np.linalg.norm(difference, ord=norm) <= max_distance):
+                #logging.info(f"\nJoint limit checks passed. Returning IK joint positions.")
                 yield joint_positions
+
 
 
 def ikfast_closest_inverse_kinematics(

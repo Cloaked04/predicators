@@ -307,6 +307,7 @@ class BlocksEnv(BaseEnv):
             tasks.append(EnvironmentTask(init_state, goal))
         return tasks
 
+
     def _sample_initial_piles(self, num_blocks: int,
                               rng: np.random.Generator) -> List[List[Object]]:
         """

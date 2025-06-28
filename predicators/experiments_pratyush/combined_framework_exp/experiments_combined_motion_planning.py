@@ -28,7 +28,13 @@ from predicators.pybullet_helpers.motion_planning import run_motion_planning, ru
 from predicators.pybullet_helpers.controllers import execute_coordinated_path
 
 #Configure logging for better debugging outputs:
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging.basicConfig(
+    level=logging.DEBUG,                    
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 #Defining test configuration, and overriding some default ones:
 CFG.pybullet_robot = "fetch_mobile"
@@ -45,6 +51,8 @@ CFG.seed = random.randint(0,10000)
 #CFG.seed = 12
 #Num of PyBullet physics steps per high-level Action in visualize_action_sequence
 CFG.pybullet_sim_steps_per_action = 10
+
+#TODO: Add color to types of logging.
 
 #***************************************************************#
 
@@ -95,6 +103,8 @@ def create_test_block(env: PyBulletEnv,
 
 
 #Get the list of all bodies except the robot.
+#TODO: Need to add logic that saves object/body name
+#      which can be used for better debugging with collision.
 def get_all_non_robot_bodies(robot_id: int, physics_client_id:int) -> List[int]:
     """
     Gets all PyBullet body IDs in the simulation except for the robot itself.
@@ -102,6 +112,7 @@ def get_all_non_robot_bodies(robot_id: int, physics_client_id:int) -> List[int]:
     """
     all_bodies = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
                     for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
+
 
     return [b for b in all_bodies if b!=robot_id]
 
@@ -277,6 +288,13 @@ def main_test_script():
             p.resetBasePositionAndOrientation(robot.robot_id, stable_pos, stable_orn, physicsClientId=physics_client_id)
         logging.info(f"{test_name} visualization complete.")
 
+        tool_pose = get_link_state(robot.robot_id, robot.tool_link_id, physics_client_id).pose
+
+        logging.debug(f"\nFinal EE position is: {tool_pose}.")
+        logging.debug(f"\nEE should around:{block_to_pick_pose_world}.")
+
+        #sys.exit(0)
+
 
 
     #-----------------------------------------------------------
@@ -407,9 +425,9 @@ def main_test_script():
     # input("Test 3 Finished. Press Enter to continue...")
 
 
-    # #-----------------------------------------------------------
-    # ##### Test 4: test the run_coordinated_motion_planning function in motion_planning.py (base+arm only).
-    # #-----------------------------------------------------------
+    #-----------------------------------------------------------
+    ##### Test 4: test the run_coordinated_motion_planning function in motion_planning.py (base+arm only).
+    #-----------------------------------------------------------
 
     # logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
     # # Start further away and rotated, likely needing base movement
@@ -424,7 +442,7 @@ def main_test_script():
     # # A point on the table 1.35, 0.6, 0.2
     # z = env.table_height + CFG.blocks_block_size/2 + 0.10
     # orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
-    # target_ee_pose_4 = Pose(position=(1.5, 0.75, 0.3), 
+    # target_ee_pose_4 = Pose(position=(1.5, 0.75, z), 
     #                          orientation=robot._ee_home_pose.orientation)
 
     # logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
@@ -462,35 +480,37 @@ def main_test_script():
     #reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5)
 
     #Try lowering torso
-    try:
-        torso_joint_id = robot.joint_from_name("torso_lift_joint")
-        # Get joint limits for the torso
-        torso_joint_info = p.getJointInfo(robot.robot_id, torso_joint_id, physics_client_id)
-        torso_lower_limit = torso_joint_info[8]
-        # Set the torso to its lowest position.
-        p.resetJointState(robot.robot_id,
-                          torso_joint_id,
-                          targetValue=torso_lower_limit,
-                          physicsClientId=physics_client_id)
-        logging.info(f"Torso lowered to {torso_lower_limit:.3f}m.")
-    except ValueError:
-        logging.warning("Could not find torso_lift_joint. Proceeding without lowering torso.")
+    # try:
+    #     torso_joint_id = robot.joint_from_name("torso_lift_joint")
+    #     # Get joint limits for the torso
+    #     torso_joint_info = p.getJointInfo(robot.robot_id, torso_joint_id, physics_client_id)
+    #     torso_lower_limit = torso_joint_info[8]
+    #     # Set the torso to its lowest position.
+    #     p.resetJointState(robot.robot_id,
+    #                       torso_joint_id,
+    #                       targetValue=torso_lower_limit,
+    #                       physicsClientId=physics_client_id)
+    #     logging.info(f"Torso lowered to {torso_lower_limit:.3f}m.")
+    # except ValueError:
+    #     logging.warning("Could not find torso_lift_joint. Proceeding without lowering torso.")
 
 
     # ADD THIS DEBUG BLOCK
-    print("\n[DEBUG] --- Right after Test 5 reset ---")
-    print(f"\n[DEBUG] Home arm joints:{home_arm_joints}.")
-    print(f"[DEBUG] Actual robot joints from PyBullet: {robot.get_joints()}")
-    print(f"[DEBUG] Symbolic state joints:    {env._current_state.simulator_state}")
+    # print("\n[DEBUG] --- Right after Test 5 reset ---")
+    # print(f"\n[DEBUG] Home arm joints:{home_arm_joints}.")
+    # print(f"[DEBUG] Actual robot joints from PyBullet: {robot.get_joints()}")
+    # print(f"[DEBUG] Symbolic state joints:    {env._current_state.simulator_state}")
     # END DEBUG BLOCK
 
     #sys.exit(0)
 
     # Create a block to be picked.
     block_to_pick_pose_world = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height)
-    print(f"[DEBUG] World coords of block to pick:{block_to_pick_pose_world}.")
+    logging.debug(f"World coords of block to pick:{block_to_pick_pose_world}.")
     #sys.exit(0)
     block_to_pick_id = create_test_block(env, pose=block_to_pick_pose_world, name_suffix="pick_target")
+
+    #logging.debug(f"Block id for block to pick:{block_to_pick_id}.")
 
 
     # --- Symbolic State Setup for Option ---
@@ -501,15 +521,29 @@ def main_test_script():
     symbolic_block_name = f"block{block_to_pick_id}" 
     block_to_pick_obj_sym = Object(symbolic_block_name, env._block_type)
 
+    #logging.debug(f"Block to pick object:{block_to_pick_obj_sym}.")
+
     # Step 1: Update the environment's physical-to-symbolic map.
     # This tells _get_state() that the new physical block ID now corresponds
     # to a new symbolic object.
     env._block_id_to_block[block_to_pick_id] = block_to_pick_obj_sym
 
+    #logging.debug(f"\nBlocks in the env:{env._block_id_to_block}.")
+
     # Step 2: Get a handle to the official state object, which is mutable.
     state_obj_to_modify = env._current_observation
+    #logging.debug(f"\nCurrent environment: {state_obj_to_modify}.")
     assert isinstance(state_obj_to_modify, utils.PyBulletState), \
         f"Expected env._current_observation to be a PyBulletState, got {type(state_obj_to_modify)}"
+
+
+    """
+    NEED TO UNDERSTAND WHY EXACTLY THIS WHOLE BLOCK OF CODE IS NECESSARY.
+
+    I know that it is used to add the env with the new block to the state.
+    But what exactly is the difference between env._current_observation and 
+    env._get_state().
+    """
 
     # Step 3: "Prime" the state object with a placeholder for the new block.
     # This is ONLY to satisfy the assertion inside _get_state().
@@ -519,6 +553,7 @@ def main_test_script():
     # returned by the _current_state property (which is state_obj_to_modify)
     # now has the same objects as the newly created state.
     fresh_state = env._get_state()
+    #logging.debug(f"\nFresh state returned by env._get_state: {fresh_state}.")
 
     # Step 5: Update the official state object IN-PLACE with the fresh data.
     # We are not assigning to _current_state; we are modifying the object it points to.
@@ -526,12 +561,20 @@ def main_test_script():
     state_obj_to_modify.data = fresh_state.data
     state_obj_to_modify.simulator_state = fresh_state.simulator_state 
     state_obj_to_modify.base_pose = fresh_state.base_pose
-    #sys.exit(0)
+
+    # logging.debug(f"\nAfter updating state_obj_to_modify: {state_obj_to_modify}.")
+    # logging.debug(f"\n Actually calling env._current_observation gives:{env._current_observation}.")
+    # sys.exit(0)
 
     # Crucial: ensure robot starts not holding anything. PyBulletEnv uses this.
     env._held_obj_id = None
     # The symbolic robot object, already in env.types and env._get_state()
-    robot_obj_sym = env._robot 
+    robot_obj_sym = env._robot
+
+    #Simple check to affirm that the block is part of the sim/env.
+    bodies_in_sim = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
+    assert block_to_pick_id in bodies_in_sim, f"\n Block to be picked not part of sim."
+
 
     logging.info(f"Testing PickObject option for block ID {block_to_pick_id} ('{block_to_pick_obj_sym.name}') at {block_to_pick_pose_world}")
     pick_option = env._pick_block_option # Get the option instance from the environment

@@ -2,6 +2,7 @@
 functions."""
 import abc
 import sys
+import logging
 from functools import cached_property
 from typing import List, Optional
 
@@ -436,6 +437,7 @@ class SingleArmPyBulletRobot(abc.ABC):
 
         Returns the joint positions.
         """
+        logging.info(f"'\nProceeding with IK. Passing control to pybullet_helpers/ikfast/utils.py")
         ik_solutions = ikfast_closest_inverse_kinematics(
             self,
             world_from_target=end_effector_pose,

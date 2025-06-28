@@ -1,6 +1,7 @@
 """Generic controllers for the robots."""
 #from typing import Callable, Dict, Sequence, Set, Tuple, cast, Optional, Any
 import sys
+import logging
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
     List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 
@@ -23,11 +24,13 @@ from predicators.structs import Action, Array, Object, ParameterizedOption, \
     State, Type
 from predicators.pybullet_helpers.link import get_link_state
 
+logger = logging.getLogger(__name__)
+
 _SUPPORTED_ROBOTS: Set[str] = {"fetch", "panda", "fetch_mobile"}
 
 #Constants for grasp/place offsets:
 #Meters above object center for pre-grasp/ finsh grasp
-PICK_PRE_GRASP_Z_OFFSET = 0.15
+PICK_PRE_GRASP_Z_OFFSET = 0.08
 #Meters above target surface for release
 PLACE_RELEASE_Z_OFFSET = 0.1
 
@@ -312,7 +315,7 @@ def execute_coordinated_path(
     return actions
 
 
-#---------------------------Creating Options for Base motion-------------
+#---------------------------Creating Options for Base motion---------------------------
 
 
 def create_coordinated_motion_option(
@@ -321,6 +324,7 @@ def create_coordinated_motion_option(
     types: Sequence[Type],
     params_space: Box,
     get_target_ee_pose: Callable[[State, Sequence[Object], Array], Pose],
+    #block_to_pick_id: int,
     physics_client_id: int,
     try_arm_only_first: bool = True,
     final_finger_state_fn: Optional[Callable[[State, Sequence[Object], Array], Optional[float]]]=None,
@@ -350,6 +354,10 @@ def create_coordinated_motion_option(
                             for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
 
             collision_bodies = [body_id for body_id in all_body_ids if body_id !=robot.robot_id]
+            #collision_bodies = collision_bodies[:len(collision_bodies)-1]
+
+            logger.debug(f"\n List of collision bodies at pick option: {collision_bodies}.")
+            #sys.exit(0)
 
             # Synchronize robot state with current for planning.
             # Reset the PyBullet robot to reflect the joint positions and base pose in the symbolic state
@@ -378,6 +386,7 @@ def create_coordinated_motion_option(
             # and if so set that as the symbolic_held_object assuming only one object can be held at
             # a time.
             if grabbable_object_type is not None:
+                logger.info("\nLooking for held object.")
                 for obj_in_state in state:
                     if obj_in_state.is_instance(grabbable_object_type):
                         try:
@@ -386,6 +395,8 @@ def create_coordinated_motion_option(
                                 break 
                         except (KeyError, ValueError): # Feature "held" might not exist for all grabbable types
                             pass
+
+            logger.info(f"\nHeld object is:{symbolic_held_object}.")
             
             # Now, try to get the pybullet ID using the robot's internal _held_obj_id,
             # which should be managed by the PyBulletEnv grasping logic.
@@ -395,7 +406,7 @@ def create_coordinated_motion_option(
                     # So we have it for future motion planning use.
                     held_object_id_at_start = robot._held_obj_id 
                     # We assume that if symbolic says held, and pybullet env says held, they are the same.
-                    print(f"Option '{name}': Symbolic state indicates '{symbolic_held_object.name}' is held. "
+                    logger.info(f"Option '{name}': Symbolic state indicates '{symbolic_held_object.name}' is held. "
                           f"Using PyBullet ID {held_object_id_at_start} from robot instance (PyBulletEnv._held_obj_id).")
 
                     # Calculate the transform from end-effector to this held object
@@ -418,12 +429,12 @@ def create_coordinated_motion_option(
                         np.array(ee_T_obj.orientation, dtype=np.float32)
                     )
                 else:
-                    print(f"[DEBUG] Warning: Option '{name}': Symbolic state says '{symbolic_held_object.name}' is held, "
+                    logger.critical(f"Warning: Option '{name}': Symbolic state says '{symbolic_held_object.name}' is held, "
                           "but robot instance (PyBulletEnv) does not report a _held_obj_id or is not a PyBulletEnv. "
                           "Cannot get PyBullet ID for held object planning.")
                     sys.exit(0)
             elif name == "PlaceObject": # If it's a place action, something should ideally be held.
-                 print(f"[DEBUG] Warning: Option '{name}' called, but no symbolically held grabbable object found in state.")
+                 logger.critical(f"Warning: Option '{name}' called, but no symbolically held grabbable object found in state.")
                  sys.exit(0)
 
 
@@ -438,11 +449,13 @@ def create_coordinated_motion_option(
             # We want the robot to be in the `state` specified by the option call before planning.
             # The set_joints and move_base_to above achieve this.
 
+            logger.info(f"Calling run_coordinated_motion_planning to get sequence of actions.")
+
             result = run_coordinated_motion_planning(
                         robot=robot,
                         target_ee_pose=target_ee_pose,
                         collision_bodies=collision_bodies, 
-                        seed=planning_rng.integers(1000000), 
+                        seed=CFG.seed, 
                         physics_client_id=physics_client_id,
                         try_arm_only_first=try_arm_only_first,
                         rng=planning_rng,
@@ -452,7 +465,7 @@ def create_coordinated_motion_option(
                         )
             
             # After planning, restore the robot to the state it was in when the option policy was first called,
-            # as the execution of the *planned path* will occur from this state.
+            # as the execution of the planned path will occur from this state.
             # The planners (run_coordinated_motion_planning, run_motion_planning, run_base_motion_planning)
             # should ideally restore the robot state to what it was before they were called.
             # The `robot.set_joints(state.joint_positions)` and potential `robot.move_base_to(state.base_pose, ...)`
@@ -521,9 +534,10 @@ def create_pick_object_option(
     robot_type: Type,
     object_to_pick_type: Type,
     physics_client_id: int,
+    #block_to_pick_id: int,
     grasp_height_offset: float = PICK_PRE_GRASP_Z_OFFSET,
     #Common grasp orientation: Pointing down -pi/2
-    grasp_euler_orn: Tuple[float, float, float] = (0, -np.pi/2, 0),
+    grasp_euler_orn: Tuple[float, float, float] = None,
     initiable_fn: Optional[Callable[[State, Dict, Sequence[Object], Array], bool]] = None
 ) -> ParameterizedOption:
 
@@ -544,11 +558,25 @@ def create_pick_object_option(
         obj_y = state.get(target_obj, "pose_y")
         obj_z = state.get(target_obj, "pose_z")
 
-        #Target EE position for grasping (e.g.: slightly above the object's center)
-        ee_grasp_pos = [obj_x, obj_y, obj_z + grasp_height_offset]
-        ee_grasp_orn_quat = p.getQuaternionFromEuler(grasp_euler_orn)
+        # tool_offset = np.array([0.0, -0.18, 0.0])
+        # R = np.array(p.getMatrixFromQuaternion(robot._ee_home_pose.orientation)).reshape(3,3)
+        # tool_offset_world = R @ tool_offset
 
-        return Pose(ee_grasp_pos, ee_grasp_orn_quat)
+
+        #Target EE position for grasping (e.g.: slightly above the object's center)
+        # ee_grasp_pos = [obj_x - tool_offset_world[0],
+        #                 obj_y - tool_offset_world[1], 
+        #                 obj_z + grasp_height_offset - tool_offset_world[2]]
+        #ee_grasp_orn_quat = p.getQuaternionFromEuler(grasp_euler_orn)
+
+        #Target EE position for grasping (e.g.: slightly above the object's center)
+        ee_grasp_pos = [obj_x,
+                        obj_y, 
+                        obj_z + grasp_height_offset]
+
+
+        # return Pose(ee_grasp_pos, ee_grasp_orn_quat)
+        return Pose(ee_grasp_pos, robot._ee_home_pose.orientation)
 
 
     def _get_final_finger_state_for_pick(state: State, objects: Sequence[Object], params: Array) -> float:
@@ -562,6 +590,7 @@ def create_pick_object_option(
             types=[robot_type, object_to_pick_type],
             params_space=params_space,
             get_target_ee_pose=_get_target_ee_pose_for_pick,
+            #block_to_pick_id=block_to_pick_id,
             physics_client_id=physics_client_id,
             try_arm_only_first=True,
             final_finger_state_fn=_get_final_finger_state_for_pick,
@@ -585,6 +614,8 @@ def create_place_object_option(
     The location_obj is expected to have 'pose_x', 'pose_y', 'pose_z' feature.
     representing the target placement spot (e.g., center of a region, top of another object.)
     """
+
+    logger.info("Planning Place action.")
 
     params_space = Box(low=np.array([]), high=np.array([]), dtype=np.float32)
 
