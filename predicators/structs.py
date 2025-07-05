@@ -39,7 +39,7 @@ class Type:
     be used as a key in a dictionary. For this, the class must be frozen/immutable.
 
     The function definition of the type def(self, parameters) -> return_type sets the output
-    type of a function that takes in parameters and returns a return_type.
+    type of a function that takes in parameters and returns an output of type = return_type.
 
     The @property decorator is used to define a property that is computed dynamically on access.
     This allows that function to be called like an attribute. Eg: Person.name or Person.age for a 
@@ -103,9 +103,6 @@ class Type:
 
         block_obj = Object(name="block1", type=block_type)
         block_var = Variable(name="?block", type=block_type)
-
-
-
 
     
     """
@@ -231,7 +228,7 @@ class Variable(_TypedEntity):
 class State:
     """Struct defining the low-level state of the world. simulator_states could be anything 
     like random number generators, link to physics engines etc. It is considered immutable and
-    taken into account when copying states and comparing states them (last two methods in the class).
+    taken into account when copying states and comparing states (last two methods in the class).
     That is why two states cannot be comapared if their simulator_states are not None.
     """
     data: Dict[Object, Array]
@@ -248,7 +245,7 @@ class State:
         """An iterator over the state's objects, in sorted order.
          The sorting is based on the order of the objects in the state which 
          is determined lexically by the name of the objects since order=True for
-        Type and Object/Variables.
+         Type and Object/Variables.
         """
         return iter(sorted(self.data))
 

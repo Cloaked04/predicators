@@ -293,6 +293,7 @@ def ikfast_inverse_kinematics(
     joint_difference_fn = get_joint_difference_fn(ik_joint_infos)
     current_joint_positions = get_joint_positions(robot.robot_id, ik_joints,
                                                   robot.physics_client_id)
+    #logging.warning(f"\nCurrent joint positions inside ikfast_inverse_kinematics before calling ikfast:{current_joint_positions}.")
 
     start_time = time.perf_counter()
     for free_positions in generator:
@@ -313,7 +314,7 @@ def ikfast_inverse_kinematics(
         #logging.debug(f"\nNumber of IK candidates returned by IKFast:{len(ik_candidates)}.")
 
         if ik_candidates is None or len(ik_candidates) == 0:
-            #logging.info(f"\nNo joint solutions given by IKFast. Trying again.")
+            #logging.warning(f"\n Ik candidates: {ik_candidates}.Trying again.")
             continue
 
         # if len(ik_candidates) > 0:
@@ -363,6 +364,8 @@ def ikfast_closest_inverse_kinematics(
     ik_joints = [joint_info.jointIndex for joint_info in ik_joint_infos]
     current_joint_positions = get_joint_positions(robot.robot_id, ik_joints,
                                                   robot.physics_client_id)
+
+    #logging.warning(f"\nCurrent joint position before calling ikfast_inverse_kinematics:{current_joint_positions}.")
 
     generator = ikfast_inverse_kinematics(robot,
                                           world_from_target,

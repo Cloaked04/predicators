@@ -42,14 +42,16 @@ def create_move_end_effector_to_pose_option(
     params_space: Box,
     get_current_and_target_pose_and_finger_status: Callable[
         [State, Sequence[Object], Array], Tuple[Pose, Pose, str]],
-        move_to_pose_tol: float,
-        max_vel_norm: float,
-        finger_action_nudge_magnitude: float,
+    move_to_pose_tol: float,
+    max_vel_norm: float,
+    finger_action_nudge_magnitude: float,
 ) -> ParameterizedOption:
     """A generic utility that creates a ParameterizedOption for moving the end
     effector to a target pose, given a function that takes in the current
     state, objects, and parameters, and returns the current pose and target
     pose of the end effector, and the finger status."""
+
+    logger.warning(f"\nStarting with arm motion:")
 
     robot_name = robot.get_name()
     assert robot_name in _SUPPORTED_ROBOTS, (
@@ -69,6 +71,7 @@ def create_move_end_effector_to_pose_option(
         current_pose, target_pose, finger_status = \
             get_current_and_target_pose_and_finger_status(
             state, objects, params)
+
         # This option currently assumes a fixed end effector orientation.
         # Why: The option is only designed to move the end-effector's position — not its orientation.
         # So when it interpolates between the current and target positions, it reuses the same orientation.
@@ -82,6 +85,8 @@ def create_move_end_effector_to_pose_option(
         # Reduce the target to conform to the max velocity constraint.
         #2. Compute the length (Euclidean norm) of that vector — how far you are from the goal right now.
         ee_norm = np.linalg.norm(ee_delta)
+        logger.warning(f"\nEE norm: {ee_norm}.")
+        logger.warning(f"\nMax vel norm: {max_vel_norm}.")
         #3. If the distance is greater than allowed,reduce the step size so that the end-effector
         # moves at most max_vel_norm meters in this time step. Done to keep the motion smooth , 
         # avoiding abrupt jumps.
@@ -89,6 +94,7 @@ def create_move_end_effector_to_pose_option(
             ee_delta = ee_delta * max_vel_norm / ee_norm
         #4. Compute the new intermediate goal by adding the limited motion vector to current
         # position to get the next position.
+        logger.warning(f"\nEE delta: {ee_delta}.")
         dx, dy, dz = np.add(current, ee_delta)
         #5. Make a new Pose object with this new position and original orientation. 
         # This is the next desired pose to be tracked by IK.
@@ -102,8 +108,9 @@ def create_move_end_effector_to_pose_option(
             # a solution from the previous call. The fetch robot does not
             # use IKFast, and in fact gets screwed up if we set joints here.
             joint_positions = robot.inverse_kinematics(ee_action,
-                                                       validate=False,
-                                                       set_joints=True)
+                                                       validate=True,
+                                                       set_joints=False)
+
         except InverseKinematicsError:
             raise utils.OptionExecutionFailure("Inverse kinematics failed.")
         # Handle the fingers. Fingers drift if left alone.
@@ -127,6 +134,7 @@ def create_move_end_effector_to_pose_option(
         joint_positions[robot.left_finger_joint_idx] = f_action
         joint_positions[robot.right_finger_joint_idx] = f_action
         action_arr = np.array(joint_positions, dtype=np.float32)
+        print(f"\nThe retruned joint_positions are of shape:{len(joint_positions)}.")
         # This clipping is needed sometimes for the joint limits.
         action_arr = np.clip(action_arr, robot.action_space.low,
                              robot.action_space.high)
@@ -216,15 +224,14 @@ def execute_coordinated_path(
     
     """
     Generate a sequence of low-level Action objects to execute a coordinated
-    base and arm path, executing the base path first, then the arm path.
-    Intuitively, think of this function as the next step after you have 
+    base path. Intuitively, think of this function as the next step after you have 
     outputs from motion planning functions in motion_planning.py. The path generated in those functions
     are converted to Actions by this function.
 
     Args:
         robot: The mobile robot instance.
         base_path: List of (x,y,theta) waypoints for the base. First element should be current pose.
-        arm_path: List of JointPositions waypoints for the arm.
+        arm_path: List of Joint positions.
         physics_client_id: PyBullet physics client ID.
 
     Returns:
@@ -249,11 +256,8 @@ def execute_coordinated_path(
     assert len(current_arm_joint_positions) == num_controllable_arm_joints, \
                         "Mismatch in current arm joint dimensions."
 
-    #First: Generate base movement actions
+    #Generate base movement actions
     #The arm will be held at its current_arm_joint_positions during base movement.
-
-    ####### TODO: Remove all calls/cases for velocity based base motion. These are in files controller.py,###################
-    ####### mobile_single_arm.py and inside class Action in structs.py. Remove this comment when done.#######################
 
     # Ensure base_path is not empty
     if base_path and len(base_path) > 0: 
@@ -275,7 +279,7 @@ def execute_coordinated_path(
                 #Arm position stays fixed during base motion
                 action_arr[:num_controllable_arm_joints] = current_arm_joint_positions
 
-                print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")
+                #logging.debug(f"Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")
 
                 action = Action(action_arr.copy())
                 action.set_base_motion((target_x, target_y, target_theta), mode="smooth_position") 
@@ -296,26 +300,21 @@ def execute_coordinated_path(
             action_arr = np.zeros_like(robot.action_space.low)
             action_arr[:num_controllable_arm_joints] = target_arm_joint_positions_waypoint
 
-            print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")            
+            #print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")            
 
+            #We don't deal with finger values/states here. It's assumed that the waypoints already have
+            #the appropriate values based on the option that invoked planning.
             action = Action(action_arr.copy())
-            # If there's a final_finger_state implied by this option (e.g., Pick or Place),
-            # it should have been incorporated into the arm_path waypoints by run_coordinated_motion_planning.
-            # If direct finger commands are needed *per action step* (e.g. for continuous gripper control),
-            # that would require changes in how arm_path and options are defined.
-            # For now, assuming finger state is part of target_arm_joint_positions_waypoint.
             actions.append(action)
 
-            # This update is mostly for conceptual clarity/ keeping the variable from going state,
-            # as current_arm_joint_positions is not used further in this loop for generating
-            # subsequent arm actions.
+            #For conceptual clarity so that currenT_arm_joint_positions don't get stale
             current_arm_joint_positions = target_arm_joint_positions_waypoint
 
     print(f"Generated total {len(actions)} low-level actions.")
     return actions
 
 
-#---------------------------Creating Options for Base motion---------------------------
+#---------------------------Creating Options for Pick/Place motion---------------------------
 
 
 def create_coordinated_motion_option(
@@ -558,18 +557,7 @@ def create_pick_object_option(
         obj_y = state.get(target_obj, "pose_y")
         obj_z = state.get(target_obj, "pose_z")
 
-        # tool_offset = np.array([0.0, -0.18, 0.0])
-        # R = np.array(p.getMatrixFromQuaternion(robot._ee_home_pose.orientation)).reshape(3,3)
-        # tool_offset_world = R @ tool_offset
-
-
-        #Target EE position for grasping (e.g.: slightly above the object's center)
-        # ee_grasp_pos = [obj_x - tool_offset_world[0],
-        #                 obj_y - tool_offset_world[1], 
-        #                 obj_z + grasp_height_offset - tool_offset_world[2]]
-        #ee_grasp_orn_quat = p.getQuaternionFromEuler(grasp_euler_orn)
-
-        #Target EE position for grasping (e.g.: slightly above the object's center)
+        
         ee_grasp_pos = [obj_x,
                         obj_y, 
                         obj_z + grasp_height_offset]

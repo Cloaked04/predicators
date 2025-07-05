@@ -9,6 +9,7 @@ import random
 from predicators.structs import Action, Array, GroundAtom, Object, State, Type, ParameterizedOption
 from predicators import utils
 from predicators.settings import CFG
+from gym.spaces import Box
 
 #Import core environment methods, robot function etc.
 
@@ -25,13 +26,13 @@ from predicators.pybullet_helpers.link import get_link_state
 from predicators.pybullet_helpers.motion_planning import run_motion_planning, run_base_motion_planning,\
                                                             run_coordinated_motion_planning
 #The pick/place options to be tested are accessed via the env instance
-from predicators.pybullet_helpers.controllers import execute_coordinated_path
-
+from predicators.pybullet_helpers.controllers import execute_coordinated_path, create_move_end_effector_to_pose_option,\
+                                                    create_change_fingers_option
 #Configure logging for better debugging outputs:
 #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 logging.basicConfig(
-    level=logging.DEBUG,                    
+    level=logging.WARNING,                    
     format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
@@ -209,7 +210,7 @@ def main_test_script():
 
             #Debug prints before the taking action:
             base_pos, base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
-            print(f"[DEBUG] Before action {act_idx}: base_pos = {base_pos}")
+            #print(f"[DEBUG] Before action {act_idx}: base_pos = {base_pos}")
             #-----Handle base motion if present in the action
             #----TODO: NEED TO REMOVE ALL OTHER MOTION MODES AND ONLY KEEP SMOOTH MOTION(linear interpolation).
             #1.Check if the current Action object contains a base movement command.
@@ -290,8 +291,8 @@ def main_test_script():
 
         tool_pose = get_link_state(robot.robot_id, robot.tool_link_id, physics_client_id).pose
 
-        logging.debug(f"\nFinal EE position is: {tool_pose}.")
-        logging.debug(f"\nEE should around:{block_to_pick_pose_world}.")
+        # logging.debug(f"\nFinal EE position is: {tool_pose}.")
+        # logging.debug(f"\nEE should around:{block_to_pick_pose_world}.")
 
         #sys.exit(0)
 
@@ -437,13 +438,14 @@ def main_test_script():
     # print(f"[DEBUG] Robot's joints after reset in test 4:{robot.get_joints()}.")
     # print(f"[DEBUG] Symbolic state joints (STALE):    {env._current_state.simulator_state}")
     # #sys.exit(0)
-
+    # home_orn = env.get_robot_ee_home_orn()
     # # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
     # # A point on the table 1.35, 0.6, 0.2
     # z = env.table_height + CFG.blocks_block_size/2 + 0.10
     # orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
     # target_ee_pose_4 = Pose(position=(1.5, 0.75, z), 
-    #                          orientation=robot._ee_home_pose.orientation)
+    #                          orientation=home_orn)
+
 
     # logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
     # coord_path_4_result = run_coordinated_motion_planning(
@@ -457,15 +459,76 @@ def main_test_script():
 
     # if coord_path_4_result:
     #     base_path_4, arm_path_4 = coord_path_4_result
-    #     logging.info(f"Coordinated path (base+arm) found: Base waypoints: {len(base_path_4)}, Arm waypoints: {len(arm_path_4)}")
-    #     # Expect base_path_4 to have multiple waypoints.
+    #     logging.info(f"Coordinated path (base+arm) found: Base waypoints: {len(base_path_4)}; Arm waypoints:{len(arm_path_4)}.")
     #     actions_4 = execute_coordinated_path(robot, base_path_4, arm_path_4, physics_client_id)
     #     visualize_action_sequence(actions_4, "Test 4 Coordinated (Base+Arm)")
     # else:
-    #     logging.warning("Coordinated motion (base+arm) planning failed for Test 4.")
-
+    #     logging.warning("Coordinated motion base planning failed for Test 4.")
 
     # input("Test 4 Finished. Press Enter to continue...")
+
+
+
+    # def get_current_and_target_pose_and_finger_status(
+    #         state: State, objects: Sequence[Object],
+    #         params: Array) -> Tuple[Pose, Pose, str]:
+    #     assert not params
+    #     robot, block = objects
+    #     current_position = (state.get(robot, "pose_x"),
+    #                         state.get(robot, "pose_y"),
+    #                         state.get(robot, "pose_z"))
+    #     current_pose = Pose(current_position, home_orn)
+    #     target_pose = target_ee_pose_4
+    #     finger_status = "closed"
+    #     return current_pose, target_pose, finger_status
+    # env._current_state.simulator_state = list(robot.get_joints())
+    # # print(f"[DEBUG] Robot's joints after base motion:{robot.get_joints()}.")
+    # # print(f"[DEBUG] Symbolic state joints after base motion:    {env._current_state.simulator_state}")
+    # logging.warning(f"\nDone with base motion. Moving on to arm motion.")
+
+    # #Now combine this with create_end_effector_to_pose_option:
+    # type_dict = {t.name: t for t in env.types} 
+
+    # robot_type = type_dict["robot"]
+    # block_type = type_dict["block"]
+    # robot_obj, = env._current_state.get_objects(robot_type)
+    # block_obj = block_obj  = next(b for b in env._current_state.get_objects(block_type)
+    #               if b.name == "block0")
+    # option_types = [robot_type, block_type]
+    # params_space = Box(0, 1, (0, ))
+    # move_to_pose_tol = 1e-4
+    # finger_action_nudge_magnitude = 1e-3
+
+    # #block = Object("block0", env._block_type)
+
+    # move_arm = create_move_end_effector_to_pose_option(
+    #         robot, "move_arm_test_4", option_types, params_space,
+    #         get_current_and_target_pose_and_finger_status,
+    #         move_to_pose_tol, CFG.pybullet_max_vel_norm,
+    #         finger_action_nudge_magnitude)
+
+    # params = np.array([], dtype=np.float32)
+
+    # move_inst = move_arm.ground([robot_obj, block_obj], params)
+
+    # #move_arm.ground([robot_obj, block_obj], params=np.array([], dtype=np.float32))
+
+    # actions_move_arm = []
+    # memory_move_arm = {}
+
+
+    # try:
+    #     while not move_inst.terminal(env._current_state):
+    #         act = move_inst.policy(env._current_state)
+    #         actions_move_arm.append(act)
+
+    #     logging.info(f"Move arm option {len(actions_move_arm)} actions.")
+    #     visualize_action_sequence(actions_move_arm, "Test 4 move arm")
+
+    # except utils.OptionExecutionFailure as e:
+    #     logging.error(f"Move arm execution failed: {e}")
+
+
 
     #-----------------------------------------------------------
     ##### Test 5: test PickObject option
