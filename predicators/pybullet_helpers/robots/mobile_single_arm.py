@@ -3,9 +3,11 @@ import pybullet as p
 from gym.spaces import Box
 from typing import Sequence, Tuple, Optional, Union, Iterator, Callable
 from functools import cached_property
+from numpy.typing import NDArray
 
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.robots.single_arm import SingleArmPyBulletRobot
+from predicators.pybullet_helpers.link import get_link_state, get_link_pose
 from predicators import utils
 import time
 
@@ -34,14 +36,23 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         super().__init__(ee_home_pose, physics_client_id, base_pose=base_pose, use_fixed_base = False)
 
         # Cache wheel joint IDs
-        # self.wheel_ids = [
-        #     self.joint_from_name(name)
-        #     for name in self.wheel_joint_names
-        # ]
+        self.wheel_ids = [
+            self.joint_from_name(name)
+            for name in self.wheel_joint_names
+        ]
 
         # Initialize wheel parameters with default values (unit: meters)
         self._wheel_radius = 0.065
-        self._wheel_separation = 0.37476
+        self._wheel_separation = 0.3748
+
+        for wid in self.wheel_ids:
+            p.changeDynamics(
+                self.robot_id,
+                wid,
+                lateralFriction=2.0,
+                spinningFriction=0.1,
+                rollingFriction=0.0,
+                physicsClientId=self.physics_client_id)
 
 
     @property
@@ -81,22 +92,23 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         Names of the wheel joints. To be overridden in specific mobile robot class.
         """
         raise NotImplementedError("Override Me!!!!")
+
     @cached_property
     def wheel_ids(self) -> list[int]:
         "Return pybullet joint ids for wheels."
         return [self.joint_from_name(name) for  name in self.wheel_joint_names]
     
 
-    @property
-    def action_space(self) -> Box:
-        """
-        Extend the arm action space by appending linear velocity v
-        and angular velocity ω for differential drive.
-        """
-        arm_box = super().action_space
-        low = np.concatenate((arm_box.low, np.array([-1.0, -3.14])))
-        high = np.concatenate((arm_box.high, np.array([1.0, 3.14])))
-        return Box(low=low, high=high, dtype=np.float32)
+    # @property
+    # def action_space(self) -> Box:
+    #     """
+    #     Extend the arm action space by appending linear velocity v
+    #     and angular velocity ω for differential drive.
+    #     """
+    #     arm_box = super().action_space
+    #     low = np.concatenate((arm_box.low, np.array([-1.0, -3.14])))
+    #     high = np.concatenate((arm_box.high, np.array([1.0, 3.14])))
+    #     return Box(low=low, high=high, dtype=np.float32)
 
 
     # def execute_path(
@@ -148,7 +160,9 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
     def move_base_to(
         self,
         target_pose: Union[Tuple[float, float, float], Pose],
-        physics_client_id: int
+        physics_client_id: int,
+        held_object_id: Optional[int] = None,
+        ee_link_to_held_object: Optional[NDArray] = None,
     ) -> None:
         """
         Move the robot's base to the target pose directly.
@@ -175,13 +189,54 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
             self.robot_id, pos, orn, physicsClientId=physics_client_id
         )
 
+        if held_object_id is not None:
+            assert ee_link_to_held_object is not None
+            world_to_ee_link = get_link_state(
+                self.robot_id,
+                self.end_effector_id,
+                physics_client_id=physics_client_id).com_pose
+            world_to_held_obj = p.multiplyTransforms(world_to_ee_link[0],
+                                                     world_to_ee_link[1],
+                                                     ee_link_to_held_object[0],
+                                                     ee_link_to_held_object[1])
+            p.resetBasePositionAndOrientation(
+                held_object_id,
+                world_to_held_obj[0],
+                world_to_held_obj[1],
+                physicsClientId=physics_client_id)
+
+
+
+    def set_wheel_motors(self, robot: SingleArmPyBulletRobot, vel: float, omega: float, physicsClientId:int) -> None:
+        """Set velocity for both wheels.
+        """
+
+        X, Y, THETA = robot.get_base_pose(physicsClientId)
+        vx, vy = 0.3 * np.cos(THETA), 0.3 * np.sin(THETA)
+        p.resetBaseVelocity(
+            robot.robot_id,
+            linearVelocity  = [vx, vy, 0.0],
+            angularVelocity = [0.0, 0.0, omega],
+            physicsClientId = physicsClientId)
+
+
+        # p.setJointMotorControlArray(
+        #         bodyUniqueId=self.robot_id,
+        #         jointIndices=[self.wheel_ids[0], self.wheel_ids[1]],
+        #         controlMode=p.VELOCITY_CONTROL,
+        #         targetVelocities=[omega_r, omega_l],
+        #         forces=[100.0, 100.0],
+        #         physicsClientId=physicsClientId
+        #     )
+
+
 
     def move_base_smoothly(
         self,
         target_pose: Tuple[float, float, float],
         physics_client_id: int,
         step_size: float = 0.01,
-        time_step: float = 0.01
+        time_step: float = 0.01 
     ) -> None:
         """
         Move the robot's base to the target pose using small incremental steps.
@@ -221,7 +276,7 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
             y = current_y + dy * fraction
             theta = current_theta + angle_diff * fraction
             
-            # Set new position and orientation
+            #Set new position and orientation
             new_pos = [x, y, 0.01]  # Set z to safe height
             new_orn = p.getQuaternionFromEuler([0, 0, theta])
             
@@ -229,7 +284,7 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
                 self.robot_id, new_pos, new_orn, physicsClientId=physics_client_id)
             
             # Step simulation to update visuals and physics
-            for _ in range(5):  # Multiple steps for stability
+            for _ in range(10):  # Multiple steps for stability
                 p.stepSimulation(physicsClientId=physics_client_id)
             
             time.sleep(time_step)  # Sleep for smoother visualization

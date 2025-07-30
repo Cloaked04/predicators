@@ -5,6 +5,7 @@ from typing import Collection, Iterator, Optional, Sequence, List, Tuple, Any
 
 import sys
 import logging
+import ipdb
 
 import numpy as np
 import pybullet as p
@@ -40,7 +41,7 @@ def run_motion_planning(
     should pertain to arm joints only.
     """
     logger.info(f"\n Performing arm motion planning inside FN:run_motion_planning.")
-
+    # ipdb.set_trace()
     rng = np.random.default_rng(seed)
     joint_space = robot.action_space
     joint_space.seed(seed)
@@ -50,12 +51,13 @@ def run_motion_planning(
     if isinstance(robot, MobileSingleArmPyBulletRobot):
         # The arm_joints are defined in SingleArmPyBulletRobot.
         # They can be derived from the robot's full action space.
-        arm_joint_limits_low = joint_space.low[:-2]
-        arm_joint_limits_high = joint_space.high[:-2]
+        # arm_joint_limits_low = joint_space.low[:-2]
+        # arm_joint_limits_high = joint_space.high[:-2]
+        arm_joint_limits_low = joint_space.low[:]
+        arm_joint_limits_high = joint_space.high[:]
 
         # Create a new Box space specifically for arm joints
         current_arm_joint_space = Box(low=arm_joint_limits_low, high=arm_joint_limits_high)
-        
         # Ensure initial_positions and target_positions are arm only
         num_arm_joints_expected = len(current_arm_joint_space.low)
         if len(initial_positions) != num_arm_joints_expected:
@@ -87,15 +89,15 @@ def run_motion_planning(
     def _set_state(pt: JointPositions) -> None:
         robot.set_joints(pt)
         if held_object is not None:
-            assert ee_to_held_object_transform is not None
+            assert base_link_to_held_object is not None
             world_to_base_link = get_link_state(
                 robot.robot_id,
                 robot.end_effector_id,
                 physics_client_id=physics_client_id).com_pose
             world_to_held_obj = p.multiplyTransforms(world_to_base_link[0],
                                                      world_to_base_link[1],
-                                                     ee_to_held_object_transform[0],
-                                                     ee_to_held_object_transform[1])
+                                                     base_link_to_held_object[0],
+                                                     base_link_to_held_object[1])
             p.resetBasePositionAndOrientation(
                 held_object,
                 world_to_held_obj[0],
@@ -122,9 +124,11 @@ def run_motion_planning(
             if p.getContactPoints(robot.robot_id,
                                   body,
                                   physicsClientId=physics_client_id):
+                logging.critical(f"\nCollision with body id:{body}.")
                 return True
             if held_object is not None and p.getContactPoints(
                     held_object, body, physicsClientId=physics_client_id):
+                logging.critical(f"\nHeld object collides with body id {body}.")
                 return True
         return False
 
@@ -135,16 +139,16 @@ def run_motion_planning(
         to_ee = robot.forward_kinematics(to_pt).position
         return sum(np.subtract(from_ee, to_ee)**2)
 
-    logger.info("\nrun_motion_planning: Checking collisions for start and goal")
-    logger.info("\nStart:", initial_positions, "Collision:", _collision_fn(initial_positions))
-    logger.info("\nGoal:", target_positions, "Collision:", _collision_fn(target_positions))
-    if _collision_fn(target_positions):
-        logger.info("\nGoal is in COLLISION, thus planning fails.")
-        sys.exit(0)
-    logger.info("\nJoint limits low:", current_arm_joint_space.low)
-    logger.info("\nJoint limits high:", current_arm_joint_space.high)
-    logger.info("\nStart in limits:", np.all(initial_positions >= current_arm_joint_space.low) and np.all(initial_positions <= current_arm_joint_space.high))
-    logger.info("\nGoal in limits:", np.all(target_positions >= current_arm_joint_space.low) and np.all(target_positions <= current_arm_joint_space.high))
+    # logger.critical(f"\nrun_motion_planning: Checking collisions for start and goal")
+    # logger.critical(f"\nStart: {initial_positions}, Collision: {_collision_fn(initial_positions)}")
+    # logger.critical(f"\nGoal: {target_positions}, Collision: {_collision_fn(target_positions)}")
+    # if _collision_fn(target_positions):
+    #     logger.warning(f"\nGoal is in COLLISION, thus planning fails. GOAL:{target_positions}")
+    #     sys.exit(0)
+    # logger.info("\nJoint limits low:", current_arm_joint_space.low)
+    # logger.info("\nJoint limits high:", current_arm_joint_space.high)
+    # logger.info("\nStart in limits:", np.all(initial_positions >= current_arm_joint_space.low) and np.all(initial_positions <= current_arm_joint_space.high))
+    # logger.info("\nGoal in limits:", np.all(target_positions >= current_arm_joint_space.low) and np.all(target_positions <= current_arm_joint_space.high))
     
 
     birrt = utils.BiRRT(_sample_fn,
@@ -189,7 +193,7 @@ def run_base_motion_planning(
     Returns:
         List of (x,y,theta) waypoints or None if no path is found
     """
-    logger.info("Performing base motion planning inside run_base_motion_planning")
+    logger.info(f"\nPerforming base motion planning inside run_base_motion_planning:")
 
     rng = np.random.default_rng(seed)
 
@@ -505,7 +509,7 @@ def run_coordinated_motion_planning(
             target_joint_solution = robot.inverse_kinematics(
                 target_ee_pose, validate=True, set_joints=False)
 
-            print(f"\n[DEBUG] IK SUCCESSFUL!! Found solution:{target_joint_solution}.")
+            logger.debug(f"\n IK SUCCESSFUL!! Found solution:{target_joint_solution}.")
             
             if final_finger_state is not None and target_joint_solution is not None:
                 mutable_joint_solution = list(target_joint_solution)
@@ -601,8 +605,8 @@ def run_coordinated_motion_planning(
             new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
                 ee_link_world_pose.position,
                 ee_link_world_pose.orientation,
-                ee_to_held_object_transform[0],  # position part of transform
-                ee_to_held_object_transform[1]   # orientation part of transform
+                ee_to_held_object_transform_at_start[0],  # position part of transform
+                ee_to_held_object_transform_at_start[1]   # orientation part of transform
             )
             p.resetBasePositionAndOrientation(
                 held_object_id_at_start,
@@ -787,7 +791,8 @@ def run_coordinated_motion_planning(
 
     # target x,y
     target_pos = np.array(target_ee_pose.position[:2])
-    z = np.array(target_ee_pose.position[2])
+    #z = np.array(target_ee_pose.position[2])
+    z = target_ee_pose.position[2]
     #Position above target
     x_target, y_target = target_pos
     z_above_target = z + 0.5
@@ -833,7 +838,7 @@ def run_coordinated_motion_planning(
         try:
 
             #Temporarily move base to candidate position
-            robot.move_base_to(test_pose, physics_client_id)
+            robot.move_base_to(test_pose,  physics_client_id, held_object_id_at_start, ee_to_held_object_transform_at_start)
 
             # Check IK reachability
             joint_solution_above_target = robot.inverse_kinematics(
@@ -898,7 +903,7 @@ def run_coordinated_motion_planning(
                         final_base_pose = base_path[-1]
                         logger.info(f"Fnial base pose:{final_base_pose}.")
                         robot.move_base_to(final_base_pose, physics_client_id)
-
+                        
                         start_joint_positions = robot.get_joints()
 
                         logger.debug(f"Initial joint positions:{current_joint_positions}.")
@@ -942,8 +947,7 @@ def run_coordinated_motion_planning(
                             continue
 
 
-                        joint_pose_above_target = arm_path[-1]
-                        robot.set_joints(joint_pose_above_target)
+                        robot.set_joints(joint_solution_above_target)
 
                         joint_position_to_move_down = robot.inverse_kinematics(pose_to_move_down,\
                                                                                  validate=True, set_joints=False)
@@ -974,7 +978,7 @@ def run_coordinated_motion_planning(
 
                         logger.warning(f"Planning to move EE down to target.")
                         arm_path_to_move_down = run_motion_planning(robot,
-                                                joint_pose_above_target,    # Joints before any movement starts
+                                                joint_solution_above_target,    # Joints before any movement starts
                                                 joint_position_to_move_down, # Target joints from IK at final base pose (with fingers updated)
                                                 collision_bodies,
                                                 seed,
@@ -1013,9 +1017,23 @@ def run_coordinated_motion_planning(
                                         wp.insert(idx, wf)
                                     padded_arm_path.append(wp)
                                 else:
-                                    raise ValueError(f"Arm path waypoint has length {len(wp)}, expected {expected_len} (arm/finger joints). Waypoint: {wp}")
+                                    raise ValueError(f"Arm path waypoint has length {len(wp)}, expected {expected_len} (arm/finger joints). Waypoint: {wp}")                            
 
 
+
+                        # last_joint_position = padded_arm_path[-1]
+                        # robot.set_joints(last_joint_position)
+                        # final_ee_pose_from_soln = robot.get_state()[:3]
+                        # print(f"\n_______________________________________________________________________________________")
+                        # logging.warning(f"\nTarget EE Position to be reached: {target_ee_pose.position}")
+                        # logging.warning(f"\nEE pose reached by the arm path: {final_ee_pose_from_soln}.")
+                        # print(f"\n_______________________________________________________________________________________")
+                        # input("Enter to continue:")
+                        # robot.move_base_to(current_base_pose, physics_client_id)
+                        # robot.set_joints(current_joint_positions)
+
+
+                        
                         logger.info(f"Coordinated planning: Arm path found with {len(arm_path)} waypoints.")
                         logger.info("Coordinated planning: Succeeded.")
                         return (base_path, padded_arm_path)

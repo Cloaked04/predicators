@@ -101,6 +101,17 @@ class SingleArmPyBulletRobot(abc.ABC):
         """The PyBullet link ID for the tool link."""
         return self.link_from_name(self.tool_link_name)
 
+    @property
+    @abc.abstractmethod
+    def wrist_roll_link_name(self) -> str:
+        """The name of the end effector link (i.e., the tool link)."""
+        raise NotImplementedError("Override me!")
+
+    @cached_property
+    def wrist_roll_link_id(self) -> int:
+        """The PyBullet link ID for the tool link."""
+        return self.link_from_name(self.wrist_roll_link_name)
+
     @cached_property
     def base_link_name(self) -> str:
         """Name of the base link for the robot."""
@@ -328,38 +339,21 @@ class SingleArmPyBulletRobot(abc.ABC):
         when there is no base motion so that they can hold 
         position.
         """
-        from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
+        # from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 
-        if isinstance(self, MobileSingleArmPyBulletRobot):
+        # if isinstance(self, MobileSingleArmPyBulletRobot):
 
-            base_motor_force = 10.0
-            p.setJointMotorControlArray(
-                bodyUniqueId=self.robot_id,
-                jointIndices=self.wheel_ids,
-                controlMode=p.VELOCITY_CONTROL,
-                targetVelocities=[0.0]*len(self.wheel_ids),
-                forces=[base_motor_force]*len(self.wheel_ids),
-                physicsClientId=self.physics_client_id
-                )
+        #     base_motor_force = 10.0
+        #     p.setJointMotorControlArray(
+        #         bodyUniqueId=self.robot_id,
+        #         jointIndices=self.wheel_ids,
+        #         controlMode=p.VELOCITY_CONTROL,
+        #         targetVelocities=[0.0]*len(self.wheel_ids),
+        #         forces=[base_motor_force]*len(self.wheel_ids),
+        #         physicsClientId=self.physics_client_id
+        #         )
 
-        # Prepare arm joint positions, handling potential truncation.
-        #arm_joint_positions = list(joint_positions)
-        # Should be 9 for Fetch
-        num_expected_arm_joints = len(self.arm_joints)
-
-        if len(joint_positions) > num_expected_arm_joints:
-            joint_positions = joint_positions[:num_expected_arm_joints]
-        # else:
-        #     print("Joint positions inconsistent with robot.")
-        #     sys.exit(0)
-
-
-        #print(f"Print the arm_joints for debugging:{self.arm_joints}")
-        #assert len(joint_positions) == len(self.arm_joints)
-
-        if len(joint_positions) != num_expected_arm_joints:
-            raise ValueError(f"Incorrect number of joint positions for arm."
-                            f"Expected {num_expected_arm_joints}, but got {len(joint_positions)}.")
+        assert len(joint_positions) == len(self.arm_joints)
 
         # Set arm joint motors.
         if CFG.pybullet_control_mode == "position":
@@ -411,9 +405,14 @@ class SingleArmPyBulletRobot(abc.ABC):
         self.set_joints(joint_positions)
         ee_pos = self.get_state()[:3]
         target_pos = target_pose.position
+        # print(f"\n_______________________________________________________________________________________")
+        # logging.warning(f"\nInside _validate_joints_state: EE pose achieved via joint solutions given by IKFast:{ee_pos}.")
+        # logging.warning(f"\nInside _validate_joints_state: Target EE pose to be achieved: {target_pos}.")
         pos_is_close = np.allclose(ee_pos,
                                    target_pos,
                                    atol=CFG.pybullet_ik_tol)
+        # logging.warning(f"\n Pos is close: {pos_is_close}.")
+        # print(f"\n_______________________________________________________________________________________")
 
         # Reset joint positions before returning/raising error
         self.set_joints(initial_joint_states)
@@ -485,6 +484,7 @@ class SingleArmPyBulletRobot(abc.ABC):
         should not be used within simulation.
         """
         if self.ikfast_info():
+            #logging.warning(f"\nCalling IKFast for EE Pose: {end_effector_pose}.")
             joint_positions = self._ikfast_inverse_kinematics(
                 end_effector_pose)
             if validate:

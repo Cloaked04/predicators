@@ -1515,7 +1515,7 @@ class Action:
 
     #Adding functions for help with base motion capabilities
 
-    def set_base_motion(self, params: Union[Tuple[float, float, float],Tuple[float, float]], mode: str) -> None:
+    def set_base_motion(self, params: Any, mode: str) -> None:
         """
         Set the base motion component of this action.
 
@@ -1527,9 +1527,12 @@ class Action:
         if self.extra_info is None:
             self.extra_info = {}
 
-        assert mode in ["position", "smooth_position"]
+        assert mode in ["position", "smooth_position", "velocity"]
 
-        assert len(params) == 3, "Position based motion requiere (x,y, thetea)"
+        if mode in ["smooth_position", "position"]:
+            assert len(params) == 3, "Position based motion requires (x,y, theta)"
+        else:
+            assert len(params) == 2, "Differential-wheel drive requires (omega_r, omega_l)."
 
 
         self.extra_info = {
@@ -1577,6 +1580,7 @@ class Action:
         if not self.has_base_motion:
             return None
 
+        # return self.extra_info['base_motion']['params']
         return self.extra_info['base_motion']
 
     @property

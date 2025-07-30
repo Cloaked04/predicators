@@ -695,6 +695,8 @@ def run_low_level_search(
         nsrt = skeleton[cur_idx]
         # Ground the NSRT's ParameterizedOption into an _Option.
         # This invokes the NSRT's sampler.
+        # The NSRT.sample_option method samples params for objects
+        # within their param_space and returns the grounded option.
         option = nsrt.sample_option(state, task.goal, rng_sampler)
         plan[cur_idx] = option
         # Increment num_samples metric by 1
@@ -714,7 +716,8 @@ def run_low_level_search(
                 num_actions_per_option[cur_idx - 1] = num_actions
                 traj[cur_idx] = next_state
                 # Check if objects that were outside the scope had a change
-                # in state.
+                # in state. Static_objects are the ones not affected by NSRT's
+                # option execution.
                 static_obj_changed = False
                 if CFG.sesame_check_static_object_changes:
                     static_objs = set(state) - set(nsrt.objects)

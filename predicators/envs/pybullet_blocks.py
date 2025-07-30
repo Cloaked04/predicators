@@ -227,7 +227,8 @@ class PyBulletBlocksEnv(PyBulletEnv, BlocksEnv):
         ########################################################################
         # Pratyush: Making changes to the ee_home_pose for mobile_fetch robot  #
         # as currently I am spawning it at somewhat the center of the room     #
-        # so the default ee_home_pose is causing issues with IKFast (it seems).#
+        # so the default ee_home_pose is causing issues with IKFast (it seems).
+        # Update: It was not the pose. IKFast joint infos were incorrect.      #
         ########################################################################
 
         if CFG.pybullet_robot == "fetch_mobile":

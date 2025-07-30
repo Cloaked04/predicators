@@ -155,14 +155,14 @@ class GlobalSettings:
     pybullet_camera_height = 900  # for high quality, use 900; default is 180
     pybullet_sim_steps_per_action = 20
     pybullet_max_ik_iters = 100
-    pybullet_ik_tol = 1e-3
+    pybullet_ik_tol = 1e-5
     #pybullet_ik_tol = 0.05
     pybullet_robot = "fetch"
     pybullet_birrt_num_attempts = 10
     pybullet_birrt_num_iters = 100
     pybullet_birrt_smooth_amt = 50
     pybullet_birrt_extend_num_interp = 10
-    pybullet_control_mode = "position"
+    pybullet_control_mode = "reset"
     pybullet_max_vel_norm = 0.05
     # env -> robot -> quaternion
     pybullet_robot_ee_orns = defaultdict(

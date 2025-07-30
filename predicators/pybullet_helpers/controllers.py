@@ -2,6 +2,7 @@
 #from typing import Callable, Dict, Sequence, Set, Tuple, cast, Optional, Any
 import sys
 import logging
+import ipdb
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
     List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 
@@ -30,9 +31,9 @@ _SUPPORTED_ROBOTS: Set[str] = {"fetch", "panda", "fetch_mobile"}
 
 #Constants for grasp/place offsets:
 #Meters above object center for pre-grasp/ finsh grasp
-PICK_PRE_GRASP_Z_OFFSET = 0.08
+PICK_PRE_GRASP_Z_OFFSET = 0.075
 #Meters above target surface for release
-PLACE_RELEASE_Z_OFFSET = 0.1
+PLACE_RELEASE_Z_OFFSET = 0.075
 
 
 def create_move_end_effector_to_pose_option(
@@ -51,7 +52,7 @@ def create_move_end_effector_to_pose_option(
     state, objects, and parameters, and returns the current pose and target
     pose of the end effector, and the finger status."""
 
-    logger.warning(f"\nStarting with arm motion:")
+    logger.info(f"\nStarting with arm motion:")
 
     robot_name = robot.get_name()
     assert robot_name in _SUPPORTED_ROBOTS, (
@@ -190,7 +191,6 @@ def create_change_fingers_option(
         f_action = current_val + f_delta
         # Don't change the rest of the joints.
         state = cast(utils.PyBulletState, state)
-        
         target = np.array(state.joint_positions, dtype=np.float32)
         target[robot.left_finger_joint_idx] = f_action
         target[robot.right_finger_joint_idx] = f_action
@@ -203,6 +203,7 @@ def create_change_fingers_option(
     def _terminal(state: State, memory: Dict, objects: Sequence[Object],
                   params: Array) -> bool:
         del memory  # unused
+        #ipdb.set_trace()
         current_val, target_val = get_current_and_target_val(
             state, objects, params)
         squared_dist = (target_val - current_val)**2
@@ -214,6 +215,221 @@ def create_change_fingers_option(
                                policy=_policy,
                                initiable=lambda _1, _2, _3, _4: True,
                                terminal=_terminal)
+
+
+
+def create_move_base_option(
+    robot: MobileSingleArmPyBulletRobot,
+    name: str,
+    types: Sequence[Type],
+    params_space: Box,
+    get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],
+                                                 Tuple[Pose, JointPositions]],
+    base_path: List[Tuple[float, float, float]],
+    target_base_pose = Tuple[float, float, float],
+    move_to_pose_tol: float = 1e-2,
+    vel: float = 0.4,
+    LOOKAHEAD: float = 0.25,
+    wheel_radius: float = 0.065,
+    track_width: float = 0.3748,
+    force: float = 5.0,
+    omega_max: float = 17.4,
+    ) -> ParameterizedOption:
+    
+    """Returns a Parameterized Option that performs differential wheel drive for fetch 
+    using Pure-Pursuit.
+
+    Default values for wheel_radius, track_width(sep. b/w both wheels), omega taken from fetch.urdf.
+    """
+
+    #Should this receive held_object_id or just determine inside here; the Callable can be used to get it.
+
+    logger.info(f"\nStarting with Differential-wheel drive:")
+
+    robot_name = robot.get_name()
+    assert robot_name in _SUPPORTED_ROBOTS, (
+        "Move base option " +
+        f"not implemented for robot {robot_name}.")
+
+    vel_max = omega_max*wheel_radius
+
+    assert vel <= vel_max
+
+    def _initiable(state: State, memory: dict, objs: Sequence[Object],
+                   params: Array) -> bool:
+        memory["path"] = base_path          
+        memory["path_pointer"] = 0
+        memory["target_base_pose"] = target_base_pose
+        return True
+
+    def _policy(state: State, memory: Dict, objects: Sequence[Object],
+        params: Array) -> Action:
+
+        #del memory
+
+        assert memory['path'] is not None, (f"\nNo base path provided.")
+        assert len(memory['path']) !=0, (f"\nNo waypoints in base path.")
+
+        coarse_thresh = 20*move_to_pose_tol
+        granular_speed = 0.01
+
+        #Determine robot's current location, define params for Pure-pursuit, compute
+        #vars, and IK
+
+        if "path_pointer" not in memory:
+            memory["path_pointer"] = 0
+
+        # ——— STOP‑IF‑DONE: if within tolerance, return zero‑motion ——
+        current_base_pose, current_arm_pose = get_current_base_and_arm_pose(
+            robot, state, objects, params)
+        cur_xy = np.array(current_base_pose[:2])
+        targ_xy = np.array(memory["target_base_pose"][:2])
+        dist = np.linalg.norm(targ_xy - cur_xy)
+        if dist <= move_to_pose_tol:
+            action = Action(np.zeros_like(robot.action_space.low))
+            # freeze arm
+            action._arr[:len(current_arm_pose)] = current_arm_pose
+            # zero both linear and angular motion
+            action.set_base_motion(params=(0.0, 0.0), mode="velocity")
+            return action
+
+        #Note (Pratyush): currently this function is defined takes in the robot because, the state doesn't have
+        #base_pose object/ doesn't define robot's base pose as a its features.
+        #Additionally, I don't know how to get the robot's current arm pose from state.
+        current_base_pose, current_arm_pose = get_current_base_and_arm_pose(robot, state, objects, params)
+
+        x, y, theta = current_base_pose
+
+        #Get coordinates for lookahead
+        path_pointer = memory['path_pointer']
+        base_path_waypoints = memory["path"]
+
+        #Update path pointer to the next closest waypoint:
+        while path_pointer + 1 < len(base_path_waypoints):
+            # squared distance to NEXT point
+            dx_next = x - base_path_waypoints[path_pointer+1][0]
+            dy_next = y - base_path_waypoints[path_pointer+1][1]
+            squared_dist_next = dx_next*dx_next + dy_next*dy_next
+
+            # squared distance to CURRENT point
+            dx_current = x - base_path_waypoints[path_pointer][0]
+            dy_current = y - base_path_waypoints[path_pointer][1]
+            squared_dist_current = dx_current*dx_current + dy_current*dy_current
+
+            if squared_dist_next < squared_dist_current:
+                path_pointer += 1
+            else:
+                break
+
+        memory["path_pointer"] = path_pointer
+
+        lookahead_idx = min(path_pointer+int(LOOKAHEAD/0.01), len(base_path_waypoints)-1)
+        x_L, y_L, _ = base_path_waypoints[lookahead_idx]
+
+        #Transform lookahead coords from World to robot's body frame
+        #Rotation matrix for World to robot frame is: [[cos sin],[-sin cos]]
+        dx_W, dy_W = x_L - x,  y_L - y          # world error
+        cos_theta, sin_theta = np.cos(theta), np.sin(theta)
+        dx_B =  cos_theta*dx_W + sin_theta*dy_W 
+        dy_B = -sin_theta*dx_W + cos_theta*dy_W          
+
+        alpha = np.arctan2(dy_B, dx_B)        # signed heading error
+
+        #dynamic lookahead:
+        la = max(0.05, min(LOOKAHEAD, dist))
+        vel_adapted = vel* min(dist / LOOKAHEAD, 1.0)
+        kappa = 2.0 * np.sin(alpha) / la
+
+        if dist <= coarse_thresh:
+            # fine crawl: constant small speed + P‐yaw
+            # print(f"\n Distance less than coarse_threshold")
+            # input()
+            vel_adapted = granular_speed
+            k_yaw = 0.5
+            omega = np.clip(k_yaw * alpha, -omega_max, omega_max)
+        elif dist < LOOKAHEAD:
+            # final‐stage: simple proportional yaw control for small dist
+            # tune k_yaw as needed
+            # print(f"\n Distance less than LOOKAHEAD")
+            # input()
+            k_yaw = 0.5
+            omega = k_yaw * alpha
+        else:
+            # pure pursuit otherwise
+            omega = kappa * vel_adapted
+
+
+        # kappa = 2.0 * np.sin(alpha) / LOOKAHEAD
+        # omega = kappa * vel
+        #omega = kappa * vel_adapted
+        omega = float(np.clip(omega, -omega_max, omega_max))
+
+        #IK:
+        # omega_r = np.clip((2*vel+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+        # omega_l = np.clip((2*vel-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+
+        action = Action(np.zeros(len(robot.action_space.low), dtype=float))
+        action._arr = np.array(current_arm_pose)
+        # action.set_base_motion(params=(omega_r, omega_l), mode="velocity")
+        action.set_base_motion(params=(vel_adapted,omega), mode="velocity")
+
+        return action
+
+
+    def _terminal(state: State, memory: Dict, objects: Sequence[Object],
+                  params: Array) -> bool:
+
+        #Check whether current and target coords are within tolerance limits:
+        current_base_pose, _ = get_current_base_and_arm_pose(robot, state, objects, params)
+
+        current_coords, target_coords = np.array(current_base_pose[:2]), np.array(memory["target_base_pose"][:2])
+        diff = target_coords - current_coords
+        eucledian_dist = np.linalg.norm(diff)
+        print(f"\nDistance from the target: {eucledian_dist}.")
+
+        return eucledian_dist < move_to_pose_tol
+
+    return ParameterizedOption(name,
+                               types=types,
+                               params_space=params_space,
+                               policy=_policy,
+                               initiable=_initiable,
+                               terminal=_terminal)
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################################################################################
 
 def execute_coordinated_path(
     robot: MobileSingleArmPyBulletRobot,
@@ -264,7 +480,7 @@ def execute_coordinated_path(
         # Gets (x,y,theta)
         current_robot_base_pose_xytheta = robot.get_base_pose(physics_client_id)
         # If base_path has only one point and it's effectively the current pose, no base actions needed.
-        if len(base_path) == 1 and np.allclose(base_path[0], current_robot_base_pose_xytheta, atol=1e-3):
+        if len(base_path) == 1 and np.allclose(base_path[0], current_robot_base_pose_xytheta, atol=1e-5):
              print("Base path is just the current pose, no base movement actions generated.")
         else:
             # The first waypoint in base_path is assumed to be the current/starting pose.
@@ -297,7 +513,7 @@ def execute_coordinated_path(
                         f"expected {num_controllable_arm_joints} (arm/finger joints)."
                         )
 
-            action_arr = np.zeros_like(robot.action_space.low)
+            action_arr = np.zeros_like(robot.arm_joints, dtype=float)
             action_arr[:num_controllable_arm_joints] = target_arm_joint_positions_waypoint
 
             #print(f"[DEBUG] Creating Action: arr length = {len(action_arr)}, arr = {action_arr}")            
@@ -340,6 +556,7 @@ def create_coordinated_motion_option(
         if "actions" not in memory or not memory["actions"] or memory.get("current_action_idx",0)==0:
             #Get target end-effector pose
             target_ee_pose = get_target_ee_pose(state, objects, params)
+            logger.critical(f"\nTarget ee pose: {target_ee_pose}.")
 
             #Determine final finger state for this specific option execution
             current_final_finger_state = None
@@ -557,11 +774,13 @@ def create_pick_object_option(
         obj_y = state.get(target_obj, "pose_y")
         obj_z = state.get(target_obj, "pose_z")
 
+        #logger.critical(f"Position of object given as assessed from state inside pick option definition: \
+        #                                                                                ({obj_x, obj_y, obj_z}).")
+
         
         ee_grasp_pos = [obj_x,
-                        obj_y, 
+                        obj_y , 
                         obj_z + grasp_height_offset]
-
 
         # return Pose(ee_grasp_pos, ee_grasp_orn_quat)
         return Pose(ee_grasp_pos, robot._ee_home_pose.orientation)
@@ -569,7 +788,7 @@ def create_pick_object_option(
 
     def _get_final_finger_state_for_pick(state: State, objects: Sequence[Object], params: Array) -> float:
         del state, objects, params
-        return robot.closed_fingers
+        return robot.open_fingers
 
 
     return create_coordinated_motion_option(

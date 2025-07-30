@@ -28,6 +28,58 @@
         <cylinder length="0.33" radius="0.28"/>
       </geometry>
     </collision>
+    <collision name="pad_fl">
+      <origin xyz=" 0.20  0.15  0.00" rpy="0 0 0"/>
+      <geometry>
+        <!-- 4 cm × 4 cm × 2 cm box -->
+        <box size="0.04 0.04 0.02"/>
+      </geometry>
+      <surface>
+        <friction>
+          <lateral value="1.5"/>
+        </friction>
+      </surface>
+    </collision>
+
+    <!-- front‐right support pad -->
+    <collision name="pad_fr">
+      <origin xyz=" 0.20 -0.15  0.00" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.04 0.02"/>
+      </geometry>
+      <surface>
+        <friction>
+          <lateral value="1.5"/>
+        </friction>
+      </surface>
+    </collision>
+
+    <!-- back‐left support pad -->
+    <collision name="pad_bl">
+      <origin xyz="-0.20  0.15  0.00" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.04 0.02"/>
+      </geometry>
+      <surface>
+        <friction>
+          <lateral value="1.5"/>
+        </friction>
+      </surface>
+    </collision>
+
+    <!-- back‐right support pad -->
+    <collision name="pad_br">
+      <origin xyz="-0.20 -0.15  0.00" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.04 0.02"/>
+      </geometry>
+      <surface>
+        <friction>
+          <lateral value="1.5"/>
+        </friction>
+      </surface>
+    </collision>
+
   </link>
   <link name="r_wheel_link">
     <inertial>

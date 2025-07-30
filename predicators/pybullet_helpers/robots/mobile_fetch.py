@@ -36,6 +36,10 @@ class MobileFetchRobot(MobileSingleArmPyBulletRobot):
 	def tool_link_name(self):
 		return "gripper_link"
 
+	@property
+	def wrist_roll_link_name(self):
+		return "wrist_roll_link"
+
 
 	@property
 	def left_finger_joint_name(self):
@@ -63,7 +67,6 @@ class MobileFetchRobot(MobileSingleArmPyBulletRobot):
 			module_name="pyikfast_fetch",
 			#base_link="base_link",
 			base_link="torso_lift_link",
-			#ee_link="gripper_link",
 			ee_link="wrist_roll_link",
 			# The 7-DOF arm chain for fetch includes shoulder_pan, shoulder_lift, upperarm_roll,
 			# elbow_flex, forearm_roll, wrist_flex, wrist_roll. However since IKFast only computes 

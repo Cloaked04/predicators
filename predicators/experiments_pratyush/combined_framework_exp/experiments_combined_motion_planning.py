@@ -3,8 +3,10 @@ import numpy as np
 import pybullet as p
 import time
 import logging
-from typing import List, Tuple, Optional, Sequence, Collection, Dict, Any
+from typing import List, Tuple, Optional, Sequence, Collection, Dict, Any, cast
 import random
+import json
+import ipdb
 
 from predicators.structs import Action, Array, GroundAtom, Object, State, Type, ParameterizedOption
 from predicators import utils
@@ -19,7 +21,7 @@ from predicators.pybullet_helpers.robots import SingleArmPyBulletRobot
 from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.joint import JointPositions, get_joint_infos, get_joint_positions
-from predicators.pybullet_helpers.link import get_link_state
+from predicators.pybullet_helpers.link import get_link_state, get_link_pose
 
 #Import the functions that are to be tested:
 
@@ -27,7 +29,7 @@ from predicators.pybullet_helpers.motion_planning import run_motion_planning, ru
                                                             run_coordinated_motion_planning
 #The pick/place options to be tested are accessed via the env instance
 from predicators.pybullet_helpers.controllers import execute_coordinated_path, create_move_end_effector_to_pose_option,\
-                                                    create_change_fingers_option
+                                                    create_change_fingers_option, create_move_base_option
 #Configure logging for better debugging outputs:
 #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -51,7 +53,7 @@ CFG.pybullet_birrt_smooth_amt = 20
 CFG.seed = random.randint(0,10000)
 #CFG.seed = 12
 #Num of PyBullet physics steps per high-level Action in visualize_action_sequence
-CFG.pybullet_sim_steps_per_action = 10
+CFG.pybullet_sim_steps_per_action = 200
 
 #TODO: Add color to types of logging.
 
@@ -152,7 +154,7 @@ def main_test_script():
     # Resets the environment to a specific task, getting an initial symbolic state.
     # While initial_state_from_env is fetched, the option tests will create their own
     # more specific symbolic states.
-    initial_state_from_env = env.reset("train", 0)
+    initial_state = env.reset("train", 0)
 
     # The robot instance from the environment
     robot = env._pybullet_robot
@@ -163,24 +165,172 @@ def main_test_script():
         logging.error("This test script is designed for a MobileSingleArmPyBulletRobot.")
         return
 
+    # dyn = p.getDynamicsInfo(robot.robot_id, -1, physicsClientId=env._physics_client_id)
+    # print(f"\nMass, inertialFrame…{dyn}")
+    # input()
+
 
     logging.info(f"Using robot: {robot.get_name()}")
 
-    #Test variables/initial parametrs of the env:
 
     #Store the robot's default arm and finger joint positions.
     home_arm_joints = robot.initial_joint_positions
 
+    robot_obj = initial_state.get_objects(env._robot_type)[0]
+
     #Store permament, fixed bodies
     static_collision_bodies = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
-    print(f"Static_collision_bodies:{static_collision_bodies}")
+    #print(f"Static_collision_bodies:{static_collision_bodies}")
 
     #sys.exit(0)
 
     #Define a rectangular workspace for base motion planning tests.
     #(min_x, min_y, max_x, max_y)
     workspace_bounds = (1.0, 0.2, 1.7, 1.3)
+
+    # initial_base_pose = (0.4, 1.6, -np.pi/2)
+    # target_base_pose = (0.75, 0.7441, np.pi / 4) # Target base pose
+    # logging.info(f"Testing base-only motion from {initial_base_pose} to {target_base_pose}...")
+
+    # #Resetting robot's state:
+    # robot.move_base_to(initial_base_pose, physics_client_id)
+    # robot.set_joints(home_arm_joints)
+
+    # #Step simulation a bit to allow PyBullet to settle the state.
+    # for _ in range(20):
+    #     p.stepSimulation(physicsClientId=physics_client_id)
+
+    # # Call the base motion planner for set of waypoints:
+    # # base_path_waypoints = run_base_motion_planning(
+    # #     robot,
+    # #     target_pose=target_base_pose,
+    # #     collision_bodies=static_collision_bodies,
+    # #     current_arm_positions=home_arm_joints, # Arm joints to maintain during base planning collision checks
+    # #     seed=CFG.seed,
+    # #     physics_client_id=physics_client_id,
+    # #     workspace_bounds=workspace_bounds
+    # # )
+
+    # # assert base_path_waypoints is not None, "No collision free base paths found."
+    # # assert len(base_path_waypoints) != 0, "No waypoints in returned base path."
+
+    # home_orn = env.get_robot_ee_home_orn()
+    # # Keeping the z a bit high to avoid collision:
+    # z = env.table_height + CFG.blocks_block_size/2 + 0.01
+    # #logging.critical(f"Value of z: {z}.")
+    # orn = (0, 0.7071, 0, 0.7071)
+
+    # target_ee_pose = Pose(position=(1.5 , 0.75, z), 
+    #                          orientation=home_orn)
+
+    # coordinated_path = run_coordinated_motion_planning(
+    #     robot,
+    #     target_ee_pose=target_ee_pose,
+    #     collision_bodies=static_collision_bodies,
+    #     seed=CFG.seed,
+    #     physics_client_id=physics_client_id,
+    #     try_arm_only_first=True # Planner will try arm-only, fail, then try base+arm
+    # )
+
+    # base_path_waypoints, arm_path_waypoints = coordinated_path
+
+    # def get_current_base_and_arm_pose(robot, state:State, objects: Sequence[Object], params: Array):
+
+    #     current_base_pose = robot.get_base_pose(physics_client_id)
+    #     current_joint_positions = robot.get_joints()
+
+    #     return current_base_pose, current_joint_positions
+
+
+    # move_option_memory = {}
+    # param_space = Box(low=np.array([], dtype=np.float32),
+    #                   high=np.array([], dtype=np.float32), dtype=np.float32)
+
+    # move_option = create_move_base_option(robot, name="diff-drive",types=[env._robot_type], params_space=param_space,
+    #                                     get_current_base_and_arm_pose=get_current_base_and_arm_pose, base_path=base_path_waypoints,
+    #                                     target_base_pose = target_base_pose)
+
+
+    # #The empty nd array is the empty param space that this option takes in as all
+    # #the values are passed in to the option creation function. If this were to change,
+    # #values will be passed in this array, and assigned to appropricate vars in _initialble
+    # #and the param_space Box size will be changed accordingly.
+    # grounded_move = move_option.ground([robot_obj], np.array([], dtype=np.float32))
+
+    # assert grounded_move.initiable(move_option_memory)
+
+    # print(grounded_move)
+
+    # state = initial_state
+
+    # while not grounded_move.terminal(move_option_memory):
+    #     action = grounded_move.policy(move_option_memory)
+    #     #logging.warning(f"\nNext action to be simulated:{action}.")
+    #     #state = env.simulate(initial_state, action)
+
+    #     #omega_r, omega_l = action.base_motion
+    #     vel, omega = action.base_motion['params']
+
+    #     # print(f"\nWheel velocities: {omega_r, omega_l}.")
+    #     # input()
+
+    #     #robot.set_wheel_motors(omega_r, omega_l, physics_client_id)
+    #     # X, Y, THETA = robot.get_base_pose(physics_client_id)
+    #     # vx, vy = 0.3 * np.cos(THETA), 0.3 * np.sin(THETA)
+    #     # p.resetBaseVelocity(
+    #     #     robot.robot_id,
+    #     #     linearVelocity  = [vx, vy, 0.0],
+    #     #     angularVelocity = [0.0, 0.0, omega],
+    #     #     physicsClientId = physics_client_id)
+
+    #     robot.set_wheel_motors(robot, vel, omega, physics_client_id)
+
+    #     fixed_arm_pos = action.arr
+    #     robot.set_motors(fixed_arm_pos)
+
+    #     for _ in range(30):
+    #         p.stepSimulation(physicsClientId=physics_client_id)
+    #     time.sleep(0.05)
+
+    #     '''
+    #     Now chain arm motion planning with this:
+    #         - convert run_motion_planning to a singleParameterizedOption
+    #         - connect to diff drive
+    #     '''
+
+    #     for waypoint in arm_path_waypoints:
+    #         action = Action(np.zeros(len(robot.action_space.low), dtype=float))
+    #         action._arr = waypoint
+
+    #         robot.set_motors(action.arr)
+    #         robot.set_wheel_motors(robot, 0.0, 0.0, physics_client_id)
+
+
+
+    # print(f"\n Robot at {robot.get_base_pose(physics_client_id)} after executing differential drive.")
+
+
+
+
+    # input()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -203,6 +353,17 @@ def main_test_script():
         """
 
         logging.info(f"Visualizing {len(actions)} actions for {test_name}...")
+
+        mark_pos = (1.5, 0.75, 0.325)
+
+        p.addUserDebugText(
+            "*",                          
+            mark_pos,                     
+            textColorRGB=[0, 0, 0],       
+            textSize=1,                 
+            lifeTime=0,                   
+            physicsClientId=physics_client_id)
+
 
         # Iterate through each Action object in the provided list.
         for act_idx, act in enumerate(actions):
@@ -244,7 +405,7 @@ def main_test_script():
                 # for idx, (name, val) in enumerate(zip(robot.arm_joint_names, arr)):
                 #     print(f"Joint {idx}: {name}, Value: {val}")
 
-                robot.set_motors(arr) 
+                robot.set_motors(arr)
 
             #------- Handle gripper commands
             if act.has_gripper_command:
@@ -263,36 +424,53 @@ def main_test_script():
                    current_arm_js[robot.left_finger_joint_idx] = target_finger_val
                    current_arm_js[robot.right_finger_joint_idx] = target_finger_val
                    # Command motors with updated full joint stte
-                   robot.set_motors(current_arm_js) 
+                   robot.set_joints(current_arm_js) 
                 else:
                     logging.warning("    Finger joint indices out of bounds for gripper command in viz.")
 
 
             # Step simulation to see the effect of the motors/teleport
-            for _ in range(CFG.pybullet_sim_steps_per_action):
+            for _ in range(30):
                  p.stepSimulation(physicsClientId=physics_client_id)
             time.sleep(0.08) # Pause briefly for smoother viewing
 
             #Debug prints after taking action
             base_pos, base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
-            # Extract only the x, y, and yaw, discarding unstable roll/pitch/z.
-            x, y, _ = base_pos
-            _, _, yaw = p.getEulerFromQuaternion(base_orn)
+            last_joint_positions = robot.get_joints()
 
-            # Define a stable pose with a fixed z-height and zero roll/pitch.
-            stable_pos = (x, y, 0.01) # Keep robot on the floor (z=0). Adjust if your floor is different.
-            stable_orn = p.getQuaternionFromEuler([0, 0, yaw])
-
-            #print(f"[DEBUG] After action {act_idx}: base_pos = {base_pos}")
-            # fixed_z = 0.05
-            # fixed_base_pos = (base_pos[0], base_pos[1], fixed_z)
-            p.resetBasePositionAndOrientation(robot.robot_id, stable_pos, stable_orn, physicsClientId=physics_client_id)
+            # print(f"\n***********************************************************************************************")
+            # print(f"\nRobot's Base before reset: {base_pos}.")
+            # print(f"\nRobot's Orientation before reset: {base_orn}.")
+            # print(f"\nRobot's EE position before reset: {robot.get_state()[:3]}.")
+            # print(f"\n-----------------------------------------------------------------------------------------------")
+            # new_base_pos, new_base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+            # print(f"\nRobot's Base after reset: {new_base_pos}.")
+            # print(f"\nRobot's Orientation after reset: {new_base_orn}.")
+            # print(f"\nRobot's EE position after reset: {robot.get_state()[:3]}.")
+            # print(f"\n***********************************************************************************************")
+            # input("Press ENTER to continue...")
         logging.info(f"{test_name} visualization complete.")
 
-        tool_pose = get_link_state(robot.robot_id, robot.tool_link_id, physics_client_id).pose
+        new_base_pos, new_base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+        print(f"\nRobot's Base at the end of simulation: {new_base_pos}.")
+        print(f"\nRobot's Orientation at the end of simulation: {new_base_orn}.")
+        print(f"\nRobot's last joint positions at the end of simulation: {last_joint_positions}.")
+        print(f"\nRobot's EE position at the end of simulation: {robot.get_state()[:3]}.")
 
-        # logging.debug(f"\nFinal EE position is: {tool_pose}.")
+        # link_info = get_link_state(robot.robot_id, robot.wrist_roll_link_id, physics_client_id)
+        # wrist_roll_link_pose: Pose = link_info.com_pose
+
+        #logging.critical(f"\nFinal Wrist roll link position is: {wrist_roll_link_pose}.")
+
+        #logging.critical(f"\n**********************************************")
+
+        # link_info = get_link_state(robot.robot_id, robot.tool_link_id, physics_client_id)
+        # ee_pose: Pose = link_info.com_pose
+
+        #logging.critical(f"\nFinal EE position is: {ee_pose}.")
         # logging.debug(f"\nEE should around:{block_to_pick_pose_world}.")
+
+        return
 
         #sys.exit(0)
 
@@ -308,11 +486,24 @@ def main_test_script():
     # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=(0.80, 0.70, 0.0), arm_joint_angle=home_arm_joints)
 
     # # Create an obstacle for the arm to navigate around.
-    # obstacle_block_id_1 = create_test_block(env, pose=(1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.1))
+    # #obstacle_block_id_1 = create_test_block(env, pose=(1.45, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.1))
     # current_collision_bodies_1 = get_all_non_robot_bodies(robot.robot_id, physics_client_id)
 
     # # Define a target arm joint configuration (slightly different from home).
-    # target_arm_joints_1 = list(home_arm_joints)
+    # # target_arm_joints_1 = list(home_arm_joints)
+    # target_ee_pose_1 = Pose(position=(1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height + 0.08),\
+    #                                                                          orientation=env.get_robot_ee_home_orn())
+
+    # p.addUserDebugText(
+    #         "*",                          
+    #         target_ee_pose_1.position,                     
+    #         textColorRGB=[1, 0, 1],       
+    #         textSize=2,                 
+    #         lifeTime=0,                   
+    #         physicsClientId=physics_client_id)
+
+    # logging.warning(f"\nTarget ee pose for test 1: {target_ee_pose_1}.")
+    # target_arm_joints_1 = robot.inverse_kinematics(target_ee_pose_1, validate=True, set_joints=False)
     # # Ensure there are arm joints to modify
     # if len(target_arm_joints_1) > 0: 
     #     #change the first arm joint
@@ -355,8 +546,8 @@ def main_test_script():
     # ##### Test 2: test the run_base_motion_planning function in motion_planning.py (base only).
     # #-----------------------------------------------------------
 
-    # logging.info("\n--- Test 2: run_base_motion_planning (Base Only) ---")
-    # initial_base_pose_2 = (-2.40, 0.30, 0.0) # Starting base pose
+    # logging.info("\n--- Test 2: Testing differential drive ---")
+    # initial_base_pose_2 = (0.2, 0.6, -np.pi/2) # Starting base pose
     # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_2, arm_joint_angle=home_arm_joints)
 
     # # Create an obstacle for the base to navigate around.
@@ -382,7 +573,7 @@ def main_test_script():
     #     # Visualize by teleporting base and resetting arm.
     #     for pose_waypoint in base_path_2:
     #         robot.move_base_to(pose_waypoint, physics_client_id)
-    #         robot.set_joints(home_arm_joints) # Keep arm static
+    #         robot.set_motors(home_arm_joints) # Keep arm static
     #         time.sleep(0.05)
     # else:
     #     logging.warning("Base-only path planning failed for Test 2.")
@@ -430,24 +621,76 @@ def main_test_script():
     ##### Test 4: test the run_coordinated_motion_planning function in motion_planning.py (base+arm only).
     #-----------------------------------------------------------
 
-    # logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
-    # # Start further away and rotated, likely needing base movement
-    # initial_base_pose_4 = (0.4, 0.6, -np.pi/2) 
-    # reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angle=home_arm_joints)
+    logging.info("\n--- Test 4: Coordinated Motion (Base + Arm) ---")
+    # Start further away and rotated, likely needing base movement
+    initial_base_pose_4 = (0.4, 0.6, -np.pi/2) 
+    reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_4, arm_joint_angle=home_arm_joints)
     # print(f"[DEBUG] Home arm joints:{home_arm_joints}.")
     # print(f"[DEBUG] Robot's joints after reset in test 4:{robot.get_joints()}.")
     # print(f"[DEBUG] Symbolic state joints (STALE):    {env._current_state.simulator_state}")
-    # #sys.exit(0)
-    # home_orn = env.get_robot_ee_home_orn()
-    # # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
-    # # A point on the table 1.35, 0.6, 0.2
-    # z = env.table_height + CFG.blocks_block_size/2 + 0.10
-    # orn = p.getQuaternionFromEuler([0, -np.pi/2, 0])
-    # target_ee_pose_4 = Pose(position=(1.5, 0.75, z), 
-    #                          orientation=home_orn)
+    #sys.exit(0)
+    home_orn = env.get_robot_ee_home_orn()
+    # Define a target EE pose that's likely out of reach for arm-only from initial_base_pose_4.
+    # A point on the table 1.35, 0.6, 0.2
+    z = env.table_height + CFG.blocks_block_size/2 + 0.1
+    #logging.critical(f"Value of z: {z}.")
+    orn = (0, 0.7071, 0, 0.7071)
+
+    target_ee_pose_4 = Pose(position=(1.5 , 0.75, z), 
+                             orientation=home_orn)
+
+    # --- create a tiny sphere once -------------------------------------------
+    # vis_id = p.createVisualShape(
+    #             shapeType=p.GEOM_SPHERE,
+    #             radius=0.05,                 # 1 cm sphere
+    #             rgbaColor=[1, 0, 0, 1])      # bright red
+
+    # sphere_id = p.createMultiBody(
+    #                baseMass=0,               # 0 ⇒ purely visual
+    #                baseVisualShapeIndex=vis_id,
+    #                basePosition=[0,0,0],
+    #                baseOrientation=[0,0,0,1])
+
+    # # --- every sim tick, move it to the gripper_link --------------------------
+
+    # pos, orn = p.getLinkState(robot.robot_id,
+    #                           robot.tool_link_id,
+    #                           computeForwardKinematics=True)[:2]
+    # print(f"\nPose and orientation for tool link, i.e., gripper link: {Pose(pos,orn)}.")
+
+    # # teleport the sphere
+    # p.resetBasePositionAndOrientation(sphere_id, pos, orn)
+    # input()
 
 
-    # logging.info(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
+    # p.addUserDebugText(
+    #     "+",                          
+    #     wrist_in_world.position,                     
+    #     textColorRGB=[0, 0, 0],       
+    #     textSize=1,                 
+    #     lifeTime=0,                   
+    #     physicsClientId=physics_client_id)
+
+    # p.addUserDebugText(
+    #     "*",                          
+    #     (1.5, 0.75, 0.225),                     
+    #     textColorRGB=[0, 1, 1],       
+    #     textSize=1,                 
+    #     lifeTime=0,                   
+    #     physicsClientId=physics_client_id)
+
+    # p.addUserDebugText(
+    #     "*",                          
+    #     (1.5, 0.75, 0.325),                     
+    #     textColorRGB=[1, 0, 1],       
+    #     textSize=1,                 
+    #     lifeTime=0,                   
+    #     physicsClientId=physics_client_id)
+
+
+    # logging.warning(f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    # logging.warning(f"Testing coordinated motion (expect base + arm) to EE pose: {target_ee_pose_4}")
+    # logging.warning(f"\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     # coord_path_4_result = run_coordinated_motion_planning(
     #     robot,
     #     target_ee_pose=target_ee_pose_4,
@@ -461,10 +704,33 @@ def main_test_script():
     #     base_path_4, arm_path_4 = coord_path_4_result
     #     logging.info(f"Coordinated path (base+arm) found: Base waypoints: {len(base_path_4)}; Arm waypoints:{len(arm_path_4)}.")
     #     actions_4 = execute_coordinated_path(robot, base_path_4, arm_path_4, physics_client_id)
+    #     # print(f"\n Last base position in base path: {base_path_4[-1]}")
+    #     # print(f"\n Last full length action in the path: {actions_4[-1].arr}.")
+    #     # print(f"\n Number of arm joints: {len(robot.arm_joints)}.")
+    #     # print(f"\n Length of joint solution in action.arr: {len(actions_4[-1].arr)}")
+    #     current_joint_positions = robot.get_joints()
+    #     robot.move_base_to(base_path_4[-1], physics_client_id=physics_client_id)
+    #     robot.set_joints(actions_4[-1].arr)
+    #     ee_position_from_solution = robot.get_state()[:3]
+    #     print(f"\nFinal EE position from last action returned by controller: {ee_position_from_solution}.")
+    #     robot.move_base_to(initial_base_pose_4, physics_client_id=physics_client_id)
+    #     robot.set_joints(current_joint_positions)
+    #     input("Press Enter to proceed...")
     #     visualize_action_sequence(actions_4, "Test 4 Coordinated (Base+Arm)")
+    #     time.sleep(0.1)
+
+    #     #final_ee_cache.append(new_ee)
     # else:
     #     logging.warning("Coordinated motion base planning failed for Test 4.")
 
+    # print(f"Target EE pose: {target_ee_pose_4}.")
+
+    # input("Test 4 Finished. Press Enter to continue...")
+
+
+    # filename = "ee_cache.json"
+    # with open(filename, "w", encoding="utf-8") as f:
+    #     json.dump(final_ee_cache, f, indent=2) 
     # input("Test 4 Finished. Press Enter to continue...")
 
 
@@ -537,6 +803,8 @@ def main_test_script():
     # Test the high-level PickObject option. This involves planning to a pre-grasp pose
     # (potentially moving base and arm), then closing fingers. 
 
+
+
     logging.info("\n--- Test 5: PickObject Option ---")
     initial_base_pose_5 = (0.4, 0.6, -np.pi/2)
     reset_robot_fetch_mobile(robot, physics_client_id, base_pose=initial_base_pose_5, arm_joint_angle=home_arm_joints)
@@ -569,7 +837,16 @@ def main_test_script():
 
     # Create a block to be picked.
     block_to_pick_pose_world = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height)
-    logging.debug(f"World coords of block to pick:{block_to_pick_pose_world}.")
+    logging.critical(f"World coords of block to pick:{block_to_pick_pose_world}.")
+    mark_pos = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height+0.05)
+
+    p.addUserDebugText(
+        "*",                          
+        mark_pos,                     
+        textColorRGB=[0, 0, 0],       
+        textSize=1,                 
+        lifeTime=0,                   
+        physicsClientId=physics_client_id)
     #sys.exit(0)
     block_to_pick_id = create_test_block(env, pose=block_to_pick_pose_world, name_suffix="pick_target")
 
@@ -650,6 +927,8 @@ def main_test_script():
         option_memory_pick: Dict = {} # Option policies can use memory
         actions_for_pick: List[Action] = []
 
+        sim_state = env._get_state()
+
         try:
             # The option's policy, when called, will:
             # 1. Internally call get_target_ee_pose_for_pick.
@@ -659,29 +938,201 @@ def main_test_script():
             # 4. Store these actions in option_memory_pick["actions"].
             # 5. Return the first action from this list.
             # We simulate multiple calls to the policy to get all actions.
-            while not pick_option.terminal(env._current_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
-                 act = pick_option.policy(env._current_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([]))
-                 actions_for_pick.append(act)
+            while not pick_option.terminal(sim_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([])):
+                 act = pick_option.policy(sim_state, option_memory_pick, [robot_obj_sym, block_to_pick_obj_sym], np.array([]))
+                 # actions_for_pick.append(act)
+                 sim_state = env.simulate(sim_state, act)
                  # In a real scenario, env._current_state would be updated after each env.step(act)
                  # For this test visualization, we execute all planned actions sequentially from the initial state.
                  # The terminal condition checks memory, so it will become true after all planned actions are retrieved.
 
-            logging.info(f"PickOption planned {len(actions_for_pick)} actions.")
-            visualize_action_sequence(actions_for_pick, "Test 5 PickOption")
+            logging.critical(f"PickOption planned {len(actions_for_pick)} actions.")
+            #visualize_action_sequence(actions_for_pick, "Test 5 PickOption")
 
-            # --- Verification of Pick ---
-            # After actions, the environment's internal state (_held_obj_id, constraints)
-            # should reflect the grasp. This is normally handled by PyBulletEnv.step().
-            # For this test, we manually trigger the grasp detection and constraint creation
-            # as if the finger-closing actions were processed by PyBulletEnv.step().
+            type_dict = {t.name: t for t in env.types}
 
-            # Check if fingers are now around the object
-            env._held_obj_id = env._detect_held_object() 
-            if env._held_obj_id == block_to_pick_id:
-                env._create_grasp_constraint() # Create the PyBullet fixed constraint
-                logging.info(f"Pick successful! Robot is now holding block {env._held_obj_id} ('{block_to_pick_obj_sym.name}').")
-            else:
-                logging.error(f"Pick appears to have failed. Detected held PyBullet ID: {env._held_obj_id}, expected {block_to_pick_id}.")
+            robot_type = type_dict["robot"]
+            block_type = type_dict["block"]
+
+            def get_current_fingers(state: State) -> float:
+                robot, = state.get_objects(robot_type)
+                return PyBulletBlocksEnv.fingers_state_to_joint(
+                    env._pybullet_robot, state.get(robot, "fingers"))
+
+            def close_fingers_func(state: State, objects: Sequence[Object],
+                               params: Array) -> Tuple[float, float]:
+                del objects, params  # unused
+                current = get_current_fingers(state)
+                target = env._pybullet_robot.closed_fingers
+                return current, target
+
+            option_types = [robot_type, block_type]
+            params_space = Box(0, 1, (0, ))
+
+            # Close fingers.
+            close_finger_option = create_change_fingers_option(
+                robot, "CloseFingers", option_types, params_space,
+                close_fingers_func, CFG.pybullet_max_vel_norm,
+                PyBulletBlocksEnv._finger_action_tol)
+
+            
+
+            grounded_close_finger_option = close_finger_option.ground([robot_obj_sym, block_to_pick_obj_sym], params=np.array([], dtype=np.float32))
+
+            finger_action_count = 0
+
+            try:
+                while not grounded_close_finger_option.terminal(env._current_state):
+                    finger_action_count+=1
+                    state_1 = cast(utils.PyBulletState, env._current_state)
+                    target_1 = np.array(state_1.joint_positions, dtype=np.float32)
+                    print(f"\n Joint positions from env._current_state before finger action:{target_1}. ")
+                    finger_action = grounded_close_finger_option.policy(env._current_state)
+
+                    sim_state = env.simulate(sim_state, finger_action)
+            except utils.OptionExecutionFailure as e:
+                logging.error(f"\nExecuting close_finger_option failed.")
+
+            # ipdb.set_trace()
+
+            assert env._held_obj_id is not None, "Object is not held."
+            assert env._held_constraint_id is not None, "Held constraint not created."
+
+            logging.critical(f"Arm is now holding object {block_to_pick_obj_sym.name}.")
+
+
+            #Slightly move arm up to check if the arm motion is possible without dropping held obj:
+
+            current_x, current_y, current_z = robot.get_state()[:3]
+            target_z = current_z+0.5
+            ee_position_with_held = (current_x, current_y, target_z)
+            ee_pose_with_held_orn = robot.get_state()[3:-1]
+            ee_pose_with_held = Pose(position=ee_position_with_held, orientation=ee_pose_with_held_orn)
+
+            initial_joint_positions_with_held = robot.get_joints()
+
+            assert len(initial_joint_positions_with_held) == 9, "Initial joint positions must of lenght 9."
+
+            initial_left_finger_val = initial_joint_positions_with_held[robot.left_finger_joint_idx]
+            initial_right_finger_val = initial_joint_positions_with_held[robot.right_finger_joint_idx]
+
+            target_joint_positions_with_held = robot.inverse_kinematics(ee_pose_with_held, validate=True, set_joints=False)
+
+            target_joint_positions_with_held[robot.left_finger_joint_idx] = initial_left_finger_val
+            target_joint_positions_with_held[robot.right_finger_joint_idx] = initial_right_finger_val
+
+            bodies_in_sim = [body for body in bodies_in_sim if body != 9 and body != 0]
+
+            print(f"\n Collision bodies: {bodies_in_sim}.")
+            # ipdb.set_trace()
+
+            # 1. world -> base_link pose | It actually is World -> EE transform
+            world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                                        robot.robot_id,
+                                                        robot.end_effector_id,
+                                                        physics_client_id=physics_client_id
+                                                    )
+            
+            # 2. base_link -> world
+            ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                                        world_to_ee_pos, world_to_ee_orn
+                                                    )
+                                                    
+            # 3. world -> object
+            world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                                        env._held_obj_id, physicsClientId=physics_client_id
+                                                    )
+            
+            # 4. base_link -> object (chain transforms)
+            ee_link_to_held_obj = p.multiplyTransforms(
+                                                        ee_to_world_pos, ee_to_world_orn,
+                                                        world_to_obj_pos, world_to_obj_orn
+                                                        )
+
+            arm_waypoints_with_held = run_motion_planning(robot,
+                                                          initial_joint_positions_with_held,
+                                                          target_joint_positions_with_held,
+                                                          bodies_in_sim,
+                                                          CFG.seed,
+                                                          physics_client_id,
+                                                          held_object=env._held_obj_id,
+                                                          base_link_to_held_object=ee_link_to_held_obj)
+
+
+            assert arm_waypoints_with_held is not None, "Arm planning with obj held failed."
+
+            for waypoint in arm_waypoints_with_held:
+                assert len(waypoint) == 9, "Waypoints must be of length 9."
+
+                action = Action(np.array(waypoint))
+                sim_state = env.simulate(sim_state, action)
+
+            assert env._held_obj_id is not None, "Object is not held after moving arm up."
+            assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving arm up."
+            print(f"\nMoving arm up with object held complete.")
+
+            #Trying full-body IK with held obj:
+
+            home_orn = env.get_robot_ee_home_orn()
+            target_ee_pos_with_held = Pose(position=(-2.5, 0.75, 0.3), orientation=home_orn)
+
+            #Repeating same code again;this needs to be a function:
+            # 1. world -> base_link pose | It actually is World -> EE transform
+            world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                                        robot.robot_id,
+                                                        robot.end_effector_id,
+                                                        physics_client_id=physics_client_id
+                                                    )
+            
+            # 2. base_link -> world
+            ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                                        world_to_ee_pos, world_to_ee_orn
+                                                    )
+                                                    
+            # 3. world -> object
+            world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                                        env._held_obj_id, physicsClientId=physics_client_id
+                                                    )
+            
+            # 4. base_link -> object (chain transforms)
+            ee_link_to_held_obj = p.multiplyTransforms(
+                                                        ee_to_world_pos, ee_to_world_orn,
+                                                        world_to_obj_pos, world_to_obj_orn
+                                                        )
+
+            coordinated_path_with_held = run_coordinated_motion_planning(robot,
+                                                                         target_ee_pos_with_held,
+                                                                         bodies_in_sim,
+                                                                         CFG.seed,
+                                                                         physics_client_id,
+                                                                         try_arm_only_first=False,
+                                                                         final_finger_state=robot.closed_fingers,
+                                                                         held_object_id_at_start=env._held_obj_id,
+                                                                         ee_to_held_object_transform_at_start=ee_link_to_held_obj
+                                                                        )
+
+            #input("Coordinated planning successful. Continue to simulate:")
+
+            base_path_with_held, arm_path_with_held = coordinated_path_with_held
+
+            for waypoint in base_path_with_held:
+                action = Action(np.zeros(shape=len(robot.arm_joints),dtype=float))
+                action.set_base_motion(params=waypoint, mode='smooth_position')
+                sim_state = env.simulate(sim_state, action)
+
+            assert env._held_obj_id is not None, "Object is not held after moving base."
+            assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving base."
+            print(f"\nMoving base with object held complete.")  
+
+            for waypoint in arm_path_with_held:
+                action = Action(np.array(waypoint))
+                sim_state = env.simulate(sim_state, action)
+
+            assert env._held_obj_id is not None, "Object is not held after moving arm after moving base."
+            assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving arm after base."
+            print(f"\nMoving base and arm with object held complete.")            
+
+
 
         except utils.OptionExecutionFailure as e:
             logging.error(f"PickOption execution failed: {e}")
@@ -758,7 +1209,7 @@ def main_test_script():
                     logging.info("Place successful! Robot is no longer holding an object.")
                     # Check if the block is now at the target physical location.
                     final_block_pos, _ = p.getBasePositionAndOrientation(block_to_pick_id, physics_client_id)
-                    if np.allclose(final_block_pos, place_target_world_pos, atol=0.05): # Tolerance for placement
+                    if np.allclose(final_block_pos, place_target_world_pos, atol=1e-5): # Tolerance for placement
                         logging.info(f"Block correctly placed at {final_block_pos}")
                     else:
                         logging.warning(f"Block ended up at {final_block_pos}, expected near {place_target_world_pos}")

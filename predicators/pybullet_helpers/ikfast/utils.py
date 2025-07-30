@@ -275,10 +275,12 @@ def ikfast_inverse_kinematics(
     ik_joints = [joint_info.jointIndex for joint_info in ik_joint_infos]
 
     # Get the desired pose of the end-effector in the base frame
+    # logging.critical(f"\n++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # logging.critical(f"\nTarget pose in WORLD FRAME: {world_from_target}.")
     base_from_ee = get_base_from_ee(robot, world_from_target)
     position = list(base_from_ee.position)
-    # print(f"Position:{position}.")
-    # print(f"Position is of data type:{type(position)}.")
+    # logging.critical(f"\nPose in Torse lift link framefor which IKFast will be called:{base_from_ee}.")
+    # logging.critical(f"\n++++++++++++++++++++++++++++++++++++++++++++++++++++")
     rot_matrix = matrix_from_quat(base_from_ee.orientation).tolist()
     rot_list = [float(x) for row in rot_matrix for x in row]
     # print(f"Rot List:{rot_list}.")
