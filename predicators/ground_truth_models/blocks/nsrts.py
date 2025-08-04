@@ -15,7 +15,7 @@ class BlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
 
     @classmethod
     def get_env_names(cls) -> Set[str]:
-        return {"blocks", "pybullet_blocks", "blocks_clear"}
+        return {"blocks", "pybullet_blocks", "blocks_clear", "pybullet_multi_table_blocks"}
 
     @staticmethod
     def get_nsrts(env_name: str, types: Dict[str, Type],
@@ -24,6 +24,8 @@ class BlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         # Types
         block_type = types["block"]
         robot_type = types["robot"]
+        if env_name == "pybullet_multi_table_blocks":
+            table_type = types["table"]
 
         # Predicates
         On = predicates["On"]
@@ -31,11 +33,15 @@ class BlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         GripperOpen = predicates["GripperOpen"]
         Holding = predicates["Holding"]
         Clear = predicates["Clear"]
+        if env_name == "pybullet_multi_table_blocks":
+            At = predicates["At"]
 
         # Options
         Pick = options["Pick"]
         Stack = options["Stack"]
         PutOnTable = options["PutOnTable"]
+        if env_name == "pybullet_multi_table_blocks":
+            Move = options["Move"]
 
         nsrts = set()
 

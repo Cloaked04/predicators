@@ -352,3 +352,32 @@ class PyBulletBlocksGroundTruthOptionFactory(GroundTruthOptionFactory):
             _get_current_and_target_pose_and_finger_status,
             cls._move_to_pose_tol, CFG.pybullet_max_vel_norm,
             cls._finger_action_nudge_magnitude)
+
+
+class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory):
+    """Ground truth options for Blocks environment with multiple tables.
+    """
+
+    _move_to_pose_tol: ClassVar[float] = 1e-4
+    _finger_action_nudge_magnitude: ClassVar[float] = 1e-3
+    _offset_z: ClassVar[float] = 0.01
+
+    @classmethod
+    def get_env_names(cls) -> Set[str]:
+        return {"pybullet_multi_table_blocks"}
+
+
+    @classmethod
+    def get_options(cls, env_name: str, types: Dict[str, Type],
+                    predicates: Dict[str, Predicate],
+                    action_space: Box) -> Set[ParameterizedOption]:
+
+        _, pybullet_robot, _ = \
+            PyBulletBlocksEnv.initialize_pybullet(using_gui=False)
+
+        robot_type = types["robot"]
+        block_type = types["block"]
+        block_size = CFG.blocks_block_size
+        table_type = types["table"]
+
+

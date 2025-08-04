@@ -353,6 +353,9 @@ class BlocksEnv(BaseEnv):
                 block_to_pile_idx[block] = (i, j)
         # Sample pile (x, y)s
         pile_to_xy: Dict[int, Tuple[float, float]] = {}
+        #Sample (x,y) for each pile within table workspace,
+        #such that they don't overlap and are outside a certain 
+        #tolerance level.
         for i in range(len(piles)):
             pile_to_xy[i] = self._sample_initial_pile_xy(
                 rng, set(pile_to_xy.values()))
@@ -360,6 +363,7 @@ class BlocksEnv(BaseEnv):
         for block, pile_idx in block_to_pile_idx.items():
             pile_i, pile_j = pile_idx
             x, y = pile_to_xy[pile_i]
+            #z corresponds to the center of the block.
             z = self.table_height + self._block_size * (0.5 + pile_j)
             r, g, b = rng.uniform(size=3)
             if "clear" in self._block_type.feature_names:
