@@ -88,12 +88,12 @@ def setup_and_plan_with_astar():
             approach._nsrts,        # Use the NSRTs from the approach
             predicates,
             env.types,
-            timeout=10000,
+            timeout=100000,
             seed=CFG.seed,
             task_planning_heuristic=CFG.sesame_task_planning_heuristic,
             max_skeletons_optimized=CFG.sesame_max_skeletons_optimized,
             max_horizon=CFG.horizon,
-            heuristic_method = "lmcut"
+            heuristic_method = "hmax"
         )
         
         print("\nGenerated Plan:")

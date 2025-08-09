@@ -205,6 +205,10 @@ def run_base_motion_planning(
         workspace_bounds = (0.0, 0.0, 3.0, 3.0)
     min_x, min_y, max_x, max_y = workspace_bounds
 
+    # Use iGibson's resolution parameters  
+    POSITION_RESOLUTION = 0.05  # From iGibson's base_mp_resolutions  
+    ROTATION_RESOLUTION = 0.05  # From iGibson's base_mp_resolutions
+
     def _sample_fn(_: Tuple[float, float, float]) -> Tuple[float, float, float]:
         """Sample a random base pose in the workspace.
            Return a value between the min-max x and y coords and between 0-2pi for theta.
@@ -240,6 +244,7 @@ def run_base_motion_planning(
             # normalize theta just to keep it in the range [0,2pi).
             #theta = theta%(2*np.pi)
             yield (x, y, theta)
+
 
     def _collision_fn(pose_to_check: Tuple[float, float, float]) -> bool:
         """
@@ -341,6 +346,7 @@ def run_base_motion_planning(
 
         # Return Weighted sum:
         return pos_distance+0.3*angle_diff
+
 
     # Use BiRRT for planning
     birrt = utils.BiRRT(

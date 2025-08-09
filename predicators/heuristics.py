@@ -1,10 +1,10 @@
 import numpy as np
-from typing import Set, List, Dict, Any, FrozenSet
 from predicators.structs import GroundAtom, _GroundNSRT
 from heapq import *
 import time
 import logging
 import functools
+import ipdb
 
 from .heuristic_base import Heuristic
 from predicators import utils
@@ -73,6 +73,8 @@ class CombinedHeuristic:
             self.heuristic = HMaxHeuristic(pyperplan_task)
         elif self.heuristic_type == "hadd":
             self.heuristic = HAddHeuristic(pyperplan_task)
+        elif self.heuristic_type == "hadd_geometric":
+            self.heuristic = HAddGeometricHeuristic(pyperplan_task)
         else:
             raise ValueError(f"Unknown or unsupported heuristic type: {self.heuristic_type}")
 
@@ -498,8 +500,13 @@ class _RelaxedFactForH:
         self.precondition_of = []
         self.expanded = False
         self.distance = float("inf")
-        # Attributes for other heuristics like hFF, kept for consistency
         self.cheapest_achiever = None
+
+    def __eq__(self, other):
+        return isinstance(other, _RelaxedFactForH) and self.name == other.name
+
+    def __hash__(self):
+        return hash((_RelaxedFactForH, self.name))
 
 
 class _RelaxedOperatorForH:
@@ -511,6 +518,12 @@ class _RelaxedOperatorForH:
         self.cost = 1
         self.counter = len(preconditions)
 
+    def __eq__(self, other):
+        return isinstance(other, _RelaxedOperatorForH) and self.name == other.name
+
+    def __hash__(self):
+        return hash((_RelaxedOperatorForH, self.name))
+
 
 class _PyperplanRelaxationHeuristicBase(Heuristic):
     """
@@ -520,7 +533,7 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
     def __init__(self, task: _PyperplanTask):
         self.facts = {fact: _RelaxedFactForH(fact) for fact in task.facts}
         self.operators = []
-        self.goals = task.goals
+        self.goals = {pred for pred in task.goals}
         self.init = task.initial_state
         self.tie_breaker = 0
         self.start_state = _RelaxedFactForH("start")
@@ -536,6 +549,7 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
 
     def __call__(self, node):
         state = set(node.state)
+        ipdb.set_trace()
         self._init_distance(state)
         heap = []
         heappush(heap, (0, self.tie_breaker, self.start_state))
@@ -583,31 +597,56 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             return float("inf")
         return self.eval(goal_distances)
 
+    def finished(self, achieved_goals, queue):
+        """
+        This function is used as a stopping criterion for the Dijkstra search,
+        which differs for different heuristics.
+        """
+        return achieved_goals == self.goals or not queue
+
     def _dijkstra(self, queue):
         achieved_goals = set()
-        while queue:
+        while not self.finished(achieved_goals, queue):
+            #Pop last fact from heap, check if it's in goal,
+            #Add to achieved_goals if it is.
             _dist, _tie, fact = heappop(queue)
             if fact.name in self.goals:
                 achieved_goals.add(fact.name)
+                # print(f"\nCurrent set of achieved goals:{achieved_goals}.")
+                # print(f"\nGoals are:{self.goals}")
+                # print(f"\nCurrent queue length: {len(queue)}.")
+                
             
             # For h_max, we can stop if all goals are reached.
-            if self.eval == max and achieved_goals == self.goals:
-                break
+            # if self.eval == max and achieved_goals == self.goals:
+            #     break
             
             if not fact.expanded:
-                fact.expanded = True
                 for operator in fact.precondition_of:
                     operator.counter -= 1
+                    #Process operator if all its pre-conditions are met:
                     if operator.counter <= 0:
                         for n in operator.add_effects:
                             neighbor = self.facts[n]
                             tmp_dist = self._get_cost(operator)
+                            #Update distance/h_max value for facts in
+                            #add effects if new value is less than 
+                            #current value.
                             if tmp_dist < neighbor.distance:
                                 neighbor.distance = tmp_dist
+                                neighbor.cheapest_achiever = operator
                                 heappush(
                                     queue, (tmp_dist, self.tie_breaker, neighbor)
                                 )
+
                                 self.tie_breaker += 1
+
+                fact.expanded = True
+
+            if self.finished(achieved_goals, queue):
+                ipdb.set_trace()
+                print(f"\nAt the end of current loop, Finished returns:\
+                                             {self.finished(achieved_goals, queue)}.")
 
 
 # Now, the H_max and H_add heuristics are mere wrappers around the _PyperplanRelaxationHeuristicBase.
@@ -633,3 +672,13 @@ class HMaxHeuristic(_PyperplanRelaxationHeuristicBase):
         super().__init__(task)
         self.eval = max
 
+
+class HAddGeometricHeuristic(_PyperplanRelaxationHeuristicBase):
+    """
+    An implementation of the h_add heuristic that conforms to the
+    Pyperplan task interface. It is a subclass of the main relaxation
+    heuristic implementation.
+    """
+    def __init__(self, task: _PyperplanTask):
+        super().__init__(task)
+        self.eval = sum
