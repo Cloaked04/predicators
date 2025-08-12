@@ -328,12 +328,6 @@ def main_test_script():
 
 
 
-
-
-
-
-
-
     ##########################
     # Visualization function #---------------------------
     ##########################
@@ -838,7 +832,15 @@ def main_test_script():
     # Create a block to be picked.
     block_to_pick_pose_world = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height)
     logging.critical(f"World coords of block to pick:{block_to_pick_pose_world}.")
-    mark_pos = (1.5, 0.75, CFG.blocks_block_size / 2 + env.table_height+0.05)
+    mark_pos = (1.5, 0.75, (CFG.blocks_block_size / 2) + env.table_height+0.05)
+
+    p.addUserDebugText(
+        "*",                          
+        block_to_pick_pose_world,                     
+        textColorRGB=[1, 0, 1],       
+        textSize=1,                 
+        lifeTime=0,                   
+        physicsClientId=physics_client_id)
 
     p.addUserDebugText(
         "*",                          

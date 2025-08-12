@@ -321,6 +321,11 @@ class SingleArmPyBulletRobot(abc.ABC):
         be used for motion planning, collision checks, etc., in a robot
         that does not maintain state.
         """
+        # print("arm_joints idx:", self.arm_joints)
+        # print("arm_joints names:", [p.getJointInfo(self.robot_id, j, physicsClientId=self.physics_client_id)[1].decode() for j in self.arm_joints])
+        # print("len(arm_joints) =", len(self.arm_joints))
+        # print("len(joint_positions) from IK =", len(joint_positions))
+        # input()
         assert len(joint_positions) == len(self.arm_joints)
         for joint_id, joint_val in zip(self.arm_joints, joint_positions):
             p.resetJointState(

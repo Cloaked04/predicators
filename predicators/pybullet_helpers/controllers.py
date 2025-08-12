@@ -227,7 +227,7 @@ def create_change_fingers_option(
 #                                                  Tuple[Pose, JointPositions]],
 #     base_path: List[Tuple[float, float, float]],
 #     target_base_pose = Tuple[float, float, float],
-#     move_to_pose_tol: float = 1e-2,
+#     move_to_pose_tol: float = 1e-5,
 #     vel: float = 0.4,
 #     LOOKAHEAD: float = 0.25,
 #     wheel_radius: float = 0.065,
@@ -364,14 +364,14 @@ def create_change_fingers_option(
 #         #omega = kappa * vel_adapted
 #         omega = float(np.clip(omega, -omega_max, omega_max))
 
-#         #IK:
-#         # omega_r = np.clip((2*vel+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
-#         # omega_l = np.clip((2*vel-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+#         # IK:
+#         omega_r = np.clip((2*vel+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+#         omega_l = np.clip((2*vel-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
 
 #         action = Action(np.zeros(len(robot.action_space.low), dtype=float))
 #         action._arr = np.array(current_arm_pose)
-#         # action.set_base_motion(params=(omega_r, omega_l), mode="velocity")
-#         action.set_base_motion(params=(vel_adapted,omega), mode="velocity")
+#         action.set_base_motion(params=(omega_r, omega_l), mode="velocity")
+#         #action.set_base_motion(params=(vel_adapted,omega), mode="velocity")
 
 #         return action
 
@@ -554,10 +554,14 @@ def create_change_fingers_option(
 #               f"  look={lookahead_idx}  α_W={alpha_W:.2f}  α_G={alpha_G:.2f}"
 #               f"  dead={in_dead}  v={v_cmd:.2f}  ω={omega:.2f}")
 
+#         # IK:
+#         omega_r = np.clip((2*vel+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+#         omega_l = np.clip((2*vel-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+
 #         # 8) build and return Action
 #         action = Action(np.zeros(len(robot.action_space.low), dtype=float))
 #         action._arr = np.array(current_arm_pose)
-#         action.set_base_motion((v_cmd, omega), "velocity")
+#         action.set_base_motion((omega_r, omega_l), "velocity")
 #         return action
 
 
@@ -581,167 +585,355 @@ def create_change_fingers_option(
 #         terminal=_terminal
 #     )
 
-def create_move_base_option(  
-    robot: MobileSingleArmPyBulletRobot,  
-    name: str,  
-    types: Sequence[Type],  
-    params_space: Box,  
-    get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],  
-                                                 Tuple[Pose, JointPositions]],  
-    base_path: List[Tuple[float, float, float]],  
-    target_base_pose: Tuple[float, float, float],  
-    move_to_pose_tol: float = 0.03,  
-    vel: float = 0.4,  
-    LOOKAHEAD: float = 0.25,  
-    wheel_radius: float = 0.065,  
-    track_width: float = 0.3748,  
-    force: float = 5.0,  
-    omega_max: float = 17.4,  
-    orientation_tol: float = 0.05,  
-    orientation_gain: float = 1.0,  
-    ) -> ParameterizedOption:  
+# def create_move_base_option(  
+#     robot: MobileSingleArmPyBulletRobot,  
+#     name: str,  
+#     types: Sequence[Type],  
+#     params_space: Box,  
+#     get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],  
+#                                                  Tuple[Pose, JointPositions]],  
+#     base_path: List[Tuple[float, float, float]],  
+#     target_base_pose: Tuple[float, float, float],  
+#     move_to_pose_tol: float = 0.05,  
+#     vel: float = 0.4,  
+#     LOOKAHEAD: float = 0.25,  
+#     wheel_radius: float = 0.065,  
+#     track_width: float = 0.3748,  
+#     force: float = 5.0,  
+#     omega_max: float = 17.4,  
+#     orientation_tol: float = 0.1,  
+#     orientation_gain: float = 1.0,  
+#     ) -> ParameterizedOption:  
       
-    # Even more conservative parameters to prevent spinning  
-    ORIENTATION_ONLY_DISTANCE = 0.06  # Smaller distance threshold  
-    MAX_ORIENTATION_VEL = 0.15        # Much slower angular velocity  
-    ORIENTATION_DEADBAND = 0.01       # Tighter deadband  
-    COMPLETE_STOP_DISTANCE = 0.04     # Distance for complete stop  
+#     # Even more conservative parameters to prevent spinning  
+#     ORIENTATION_ONLY_DISTANCE = 0.10  # Smaller distance threshold  
+#     MAX_ORIENTATION_VEL = 0.10        # Much slower angular velocity  
+#     ORIENTATION_DEADBAND = 0.01       # Tighter deadband  
+#     COMPLETE_STOP_DISTANCE = 0.05     # Distance for complete stop  
       
-    def _initiable(state: State, memory: dict, objs: Sequence[Object], params: Array) -> bool:  
-        memory["path"] = base_path            
-        memory["path_pointer"] = 0  
-        memory["target_base_pose"] = target_base_pose  
-        memory["control_phase"] = "NAVIGATION"  
-        memory["step_count"] = 0  
-        return True  
+#     def _initiable(state: State, memory: dict, objs: Sequence[Object], params: Array) -> bool:  
+#         memory["path"] = base_path            
+#         memory["path_pointer"] = 0  
+#         memory["target_base_pose"] = target_base_pose  
+#         memory["control_phase"] = "NAVIGATION"  
+#         memory["step_count"] = 0  
+#         return True  
   
-    def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:  
-        memory["step_count"] += 1  
+#     def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:  
+#         memory["step_count"] += 1  
           
-        # Get current state  
-        current_base_pose, current_arm_pose = get_current_base_and_arm_pose(robot, state, objects, params)  
-        x, y, theta = current_base_pose  
-        goal_xy = np.array(memory["target_base_pose"][:2])  
-        goal_yaw = memory["target_base_pose"][-1]  
-        cur_xy = np.array([x, y])  
-        dist_to_goal = np.linalg.norm(goal_xy - cur_xy)  
-        yaw_error = ((goal_yaw - theta + np.pi) % (2*np.pi)) - np.pi  
+#         # Get current state  
+#         current_base_pose, current_arm_pose = get_current_base_and_arm_pose(robot, state, objects, params)  
+#         x, y, theta = current_base_pose  
+#         goal_xy = np.array(memory["target_base_pose"][:2])  
+#         goal_yaw = memory["target_base_pose"][-1]  
+#         cur_xy = np.array([x, y])  
+#         dist_to_goal = np.linalg.norm(goal_xy - cur_xy)  
+#         yaw_error = ((goal_yaw - theta + np.pi) % (2*np.pi)) - np.pi  
   
-        action = Action(np.zeros_like(robot.action_space.low))  
-        action._arr[:len(current_arm_pose)] = current_arm_pose  
+#         action = Action(np.zeros_like(robot.action_space.low))  
+#         action._arr[:len(current_arm_pose)] = current_arm_pose  
   
-        # Phase 1: Complete stop if very close  
-        if dist_to_goal <= COMPLETE_STOP_DISTANCE:  
-            print(f"[STEP {memory['step_count']}] COMPLETE STOP - d={dist_to_goal:.4f} < {COMPLETE_STOP_DISTANCE}")  
-            action.set_base_motion((0.0, 0.0), "velocity")  
-            memory["control_phase"] = "COMPLETE_STOP"  
-            return action  
+#         # Phase 1: Complete stop if very close  
+#         if dist_to_goal <= COMPLETE_STOP_DISTANCE:  
+#             print(f"[STEP {memory['step_count']}] COMPLETE STOP - d={dist_to_goal:.4f} < {COMPLETE_STOP_DISTANCE}")  
+#             action.set_base_motion((0.0, 0.0), "velocity")  
+#             memory["control_phase"] = "COMPLETE_STOP"  
+#             return action  
   
-        # Phase 2: Check if completely done  
-        if dist_to_goal <= move_to_pose_tol and abs(yaw_error) <= orientation_tol:  
-            print(f"[STEP {memory['step_count']}] GOAL REACHED - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}")  
-            action.set_base_motion((0.0, 0.0), "velocity")  
-            memory["control_phase"] = "COMPLETE"  
-            return action  
+#         # Phase 2: Check if completely done  
+#         if dist_to_goal <= move_to_pose_tol and abs(yaw_error) <= orientation_tol:  
+#             print(f"[STEP {memory['step_count']}] GOAL REACHED - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}")  
+#             action.set_base_motion((0.0, 0.0), "velocity")  
+#             memory["control_phase"] = "COMPLETE"  
+#             return action  
   
-        # Phase 3: Orientation-only mode when position is reached  
-        if dist_to_goal <= ORIENTATION_ONLY_DISTANCE:  
-            memory["control_phase"] = "ORIENTATION_ONLY"  
+#         # Phase 3: Orientation-only mode when position is reached  
+#         if dist_to_goal <= ORIENTATION_ONLY_DISTANCE:  
+#             memory["control_phase"] = "ORIENTATION_ONLY"  
               
-            # Apply deadband to prevent micro-oscillations  
-            if abs(yaw_error) <= ORIENTATION_DEADBAND:  
-                omega = 0.0  
-                print(f"[STEP {memory['step_count']}] ORIENTATION DEADBAND - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}, ω=0.0")  
-            else:  
-                # Very conservative orientation correction  
-                omega = np.clip(0.5 * yaw_error, -MAX_ORIENTATION_VEL, MAX_ORIENTATION_VEL)  
-                print(f"[STEP {memory['step_count']}] ORIENTATION ONLY - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}, ω={omega:.4f}")  
+#             # Apply deadband to prevent micro-oscillations  
+#             if abs(yaw_error) <= ORIENTATION_DEADBAND:  
+#                 omega = 0.0  
+#                 print(f"[STEP {memory['step_count']}] ORIENTATION DEADBAND - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}, ω=0.0")  
+#             else:  
+#                 # Very conservative orientation correction  
+#                 omega = np.clip(0.5 * yaw_error, -MAX_ORIENTATION_VEL, MAX_ORIENTATION_VEL)  
+#                 print(f"[STEP {memory['step_count']}] ORIENTATION ONLY - d={dist_to_goal:.4f}, yaw_err={yaw_error:.4f}, ω={omega:.4f}")
+
+#             # IK:
+#             omega_r = np.clip((2*0.0+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+#             omega_l = np.clip((2*0.0-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)  
               
-            # NO forward motion in orientation-only mode  
-            action.set_base_motion((0.0, omega), "velocity")  
-            return action  
+#             # NO forward motion in orientation-only mode  
+#             #action.set_base_motion((0.0, omega), "velocity")  
+
+#             action.set_base_motion((omega_r, omega_l), "velocity")
+
+#             return action  
   
-        # Phase 4: Normal navigation (your existing logic with debug prints)  
-        memory["control_phase"] = "NAVIGATION"  
+#         # Phase 4: Normal navigation (your existing logic with debug prints)  
+#         memory["control_phase"] = "NAVIGATION"  
           
-        path_pointer = memory.get("path_pointer", 0)  
-        waypoints = memory["path"]  
-        while path_pointer + 1 < len(waypoints):  
-            dxn = x - waypoints[path_pointer+1][0]  
-            dyn = y - waypoints[path_pointer+1][1]  
-            dcur = (x - waypoints[path_pointer][0])**2 + (y - waypoints[path_pointer][1])**2  
-            if dxn*dxn + dyn*dyn < dcur:  
-                path_pointer += 1  
-            else:  
-                break  
+#         path_pointer = memory.get("path_pointer", 0)  
+#         waypoints = memory["path"]  
+#         while path_pointer + 1 < len(waypoints):  
+#             dxn = x - waypoints[path_pointer+1][0]  
+#             dyn = y - waypoints[path_pointer+1][1]  
+#             dcur = (x - waypoints[path_pointer][0])**2 + (y - waypoints[path_pointer][1])**2  
+#             if dxn*dxn + dyn*dyn < dcur:  
+#                 path_pointer += 1  
+#             else:  
+#                 break  
   
-        memory["path_pointer"] = path_pointer  
-        lookahead_idx = min(path_pointer + int(LOOKAHEAD/0.01), len(waypoints)-1)  
-        goal_W = np.array(waypoints[lookahead_idx][:2])  
+#         memory["path_pointer"] = path_pointer  
+#         lookahead_idx = min(path_pointer + int(LOOKAHEAD/0.01), len(waypoints)-1)  
+#         goal_W = np.array(waypoints[lookahead_idx][:2])  
   
-        def angle_to(pt):  
-            return (np.arctan2(pt[1]-y, pt[0]-x) - theta + np.pi) % (2*np.pi) - np.pi  
+#         def angle_to(pt):  
+#             return (np.arctan2(pt[1]-y, pt[0]-x) - theta + np.pi) % (2*np.pi) - np.pi  
   
-        alpha_W = angle_to(goal_W)  
-        alpha_G = angle_to(goal_xy)  
+#         alpha_W = angle_to(goal_W)  
+#         #alpha_G = angle_to(goal_xy)  
   
-        # Your existing branching logic with debug  
-        coarse_thresh = 20 * move_to_pose_tol  
-        alpha_deadband = 0.05  
+         
+#         # coarse_thresh = 20 * move_to_pose_tol  
+#         # alpha_deadband = 0.05  
   
-        if dist_to_goal <= coarse_thresh:  
-            branch = "coarse"  
-            v_cmd = 0.0  
-            in_dead = abs(alpha_G) < alpha_deadband  
-            omega = 0.0 if in_dead else np.clip(0.5 * alpha_G, -omega_max, omega_max)  
-        elif dist_to_goal < LOOKAHEAD:  
-            branch = "middle"  
-            v_cmd = 0.0  
-            in_dead = abs(alpha_G) < alpha_deadband  
-            omega = 0.0 if in_dead else np.clip(0.5 * alpha_G, -omega_max, omega_max)  
-        else:  
-            branch = "far"  
-            v_cmd = vel  
-            la = max(0.05, min(LOOKAHEAD, dist_to_goal))  
-            kappa = 2.0 * np.sin(alpha_W) / la  
-            omega = np.clip(kappa * v_cmd, -omega_max, omega_max)  
-            in_dead = None  
+#         # if dist_to_goal <= coarse_thresh:  
+#         #     branch = "coarse"  
+#         #     v_cmd = 0.0  
+#         #     in_dead = abs(alpha_G) < alpha_deadband  
+#         #     omega = 0.0 if in_dead else np.clip(0.5 * alpha_G, -omega_max, omega_max)  
+#         # elif dist_to_goal < LOOKAHEAD:  
+#         #     branch = "middle"  
+#         #     v_cmd = 0.0  
+#         #     in_dead = abs(alpha_G) < alpha_deadband  
+#         #     omega = 0.0 if in_dead else np.clip(0.5 * alpha_G, -omega_max, omega_max)  
+#         # else:  
+#         #     branch = "far"  
+#         #     v_cmd = vel  
+#         #     la = max(0.05, min(LOOKAHEAD, dist_to_goal))  
+#         #     kappa = 2.0 * np.sin(alpha_W) / la  
+#         #     omega = np.clip(kappa * v_cmd, -omega_max, omega_max)  
+#         #     in_dead = None 
+#         if dist_to_goal > ORIENTATION_ONLY_DISTANCE:  
+#             # Only use the "far" branch logic  
+#             v_cmd = vel  
+#             la = max(0.05, min(LOOKAHEAD, dist_to_goal))  
+#             kappa = 2.0 * np.sin(alpha_W) / la  
+#             omega = np.clip(kappa * v_cmd, -omega_max, omega_max)  
+              
+#             print(f"[STEP {memory['step_count']}] NAVIGATION - d={dist_to_goal:.3f} ptr={path_pointer} "  
+#                                     f"look={lookahead_idx} α_W={alpha_W:.2f} v={v_cmd:.2f} ω={omega:.2f}")  
+#         else:  
+#             # This should never happen due to phase ordering, but safety fallback  
+#             print(f"[STEP {memory['step_count']}] NAVIGATION FALLBACK - switching to orientation mode")  
+#             action.set_base_motion((0.0, 0.0), "velocity")  
+#             return action 
   
-        # Debug print matching your original format  
-        print(f"[STEP {memory['step_count']}] NAVIGATION - d={dist_to_goal:.3f} br={branch} ptr={path_pointer} "  
-              f"look={lookahead_idx} α_W={alpha_W:.2f} α_G={alpha_G:.2f} dead={in_dead} v={v_cmd:.2f} ω={omega:.2f}")  
-  
-        action.set_base_motion((v_cmd, omega), "velocity")  
-        return action  
-  
-    def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:  
-        current_base_pose, _ = get_current_base_and_arm_pose(robot, state, objects, params)  
-        current_coords = np.array(current_base_pose[:2])  
-        target_coords = np.array(memory["target_base_pose"][:2])  
-        curr_dist = np.linalg.norm(target_coords - current_coords)  
+#         # Debug print matching your original format  
+#         # print(f"[STEP {memory['step_count']}] NAVIGATION - d={dist_to_goal:.3f} br={branch} ptr={path_pointer} "  
+#         #       f"look={lookahead_idx} α_W={alpha_W:.2f} α_G={alpha_G:.2f} dead={in_dead} v={v_cmd:.2f} ω={omega:.2f}")
+
+#         # IK:
+#         omega_r = np.clip((2*v_cmd+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+#         omega_l = np.clip((2*v_cmd-omega*track_width)/(2*wheel_radius), -omega_max, omega_max)  
           
-        # Check both position and orientation  
-        current_yaw = current_base_pose[2]  
-        target_yaw = memory["target_base_pose"][2]  
-        curr_yaw_diff = ((target_yaw - current_yaw + np.pi) % (2*np.pi)) - np.pi  
-          
-        is_done = (curr_dist <= move_to_pose_tol) and (abs(curr_yaw_diff) <= orientation_tol)  
-          
-        if is_done:  
-            print(f"[TERMINAL] SUCCESS - Position error: {curr_dist:.4f}, Orientation error: {abs(curr_yaw_diff):.4f}")  
-          
-        return is_done  
+#         # NO forward motion in orientation-only mode  
+#         #action.set_base_motion((0.0, omega), "velocity")  
+#         # action.set_base_motion((v_cmd, omega), "velocity")  
+
+#         action.set_base_motion((omega_r, omega_l), "velocity")  
   
-    return ParameterizedOption(  
-        name=name,  
-        types=types,  
-        params_space=params_space,  
-        policy=_policy,  
-        initiable=_initiable,  
-        terminal=_terminal  
+#         return action  
+  
+#     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:  
+#         current_base_pose, _ = get_current_base_and_arm_pose(robot, state, objects, params)  
+#         current_coords = np.array(current_base_pose[:2])  
+#         target_coords = np.array(memory["target_base_pose"][:2])  
+#         curr_dist = np.linalg.norm(target_coords - current_coords)  
+          
+#         # Check both position and orientation  
+#         current_yaw = current_base_pose[2]  
+#         target_yaw = memory["target_base_pose"][2]  
+#         curr_yaw_diff = ((target_yaw - current_yaw + np.pi) % (2*np.pi)) - np.pi  
+          
+#         is_done = (curr_dist <= move_to_pose_tol) and (abs(curr_yaw_diff) <= orientation_tol)  
+          
+#         if is_done:  
+#             print(f"[TERMINAL] SUCCESS - Position error: {curr_dist:.4f}, Orientation error: {abs(curr_yaw_diff):.4f}")  
+          
+#         return is_done  
+  
+#     return ParameterizedOption(  
+#         name=name,  
+#         types=types,  
+#         params_space=params_space,  
+#         policy=_policy,  
+#         initiable=_initiable,  
+#         terminal=_terminal  
+#     )
+
+def create_move_base_option(
+    robot: MobileSingleArmPyBulletRobot,
+    name: str,
+    types: Sequence[Type],
+    params_space: Box,
+    get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],
+                                            Tuple[Pose, JointPositions]],
+    base_path: List[Tuple[float, float, float]],
+    target_base_pose: Tuple[float, float, float],
+    move_to_pose_tol: float = 0.05,     # 5 cm
+    vel: float = 0.4,                   # nominal cruise speed
+    LOOKAHEAD: float = 0.25,
+    wheel_radius: float = 0.065,
+    track_width: float = 0.3748,
+    force: float = 5.0,                 # (unused here; wheel control path would use it)
+    omega_max: float = 17.4,            # wheel joint limit (rad/s)
+    orientation_tol: float = 0.087,     # ~5°
+    orientation_gain: float = 2.0,      # yaw P gain
+) -> ParameterizedOption:
+
+    # Phase thresholds / gating
+    # ORIENTATION_ONLY_DISTANCE = 0.10    # within 10 cm: rotate in place
+    # e.g., 0.06–0.07 m
+    ORIENTATION_ONLY_DISTANCE = max(0.06, move_to_pose_tol + 0.01)
+    ORIENTATION_DEADBAND      = 0.02    # ~0.6° deadband for micro-oscillation
+    COMPLETE_STOP_DISTANCE    = move_to_pose_tol
+
+    # Convert wheel limits -> base limits (use these for clipping v, ω)
+    v_max = wheel_radius * omega_max
+    w_max = 2.0 * wheel_radius * omega_max / track_width
+
+    def _initiable(state: State, memory: dict, objs: Sequence[Object], params: Array) -> bool:
+        memory["path"] = base_path
+        memory["path_pointer"] = 0
+        memory["target_base_pose"] = target_base_pose
+        memory["control_phase"] = "NAVIGATION"
+        memory["step_count"] = 0
+        return True
+
+    def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
+        memory["step_count"] += 1
+
+        # Pose
+        (x, y, theta), arm_q = get_current_base_and_arm_pose(robot, state, objects, params)
+        goal_xy = np.array(memory["target_base_pose"][:2])
+        goal_yaw = float(memory["target_base_pose"][2])
+
+        cur_xy = np.array([x, y])
+        dist_to_goal = float(np.linalg.norm(goal_xy - cur_xy))
+        yaw_error = float((goal_yaw - theta + np.pi) % (2*np.pi) - np.pi)
+
+        # Build action shell
+        action = Action(np.zeros_like(robot.action_space.low))
+        action._arr[:len(arm_q)] = arm_q
+
+        # 1) Hard stop region
+        if dist_to_goal <= COMPLETE_STOP_DISTANCE and abs(yaw_error) <= orientation_tol:
+            action.set_base_motion((0.0, 0.0), "velocity")
+            memory["control_phase"] = "COMPLETE"
+            print(f"[STEP {memory['step_count']}] GOAL REACHED - d={dist_to_goal:.4f}, yaw={yaw_error:.4f}")
+            return action
+
+        # 2) Orientation-only (rotate in place)
+        if dist_to_goal <= ORIENTATION_ONLY_DISTANCE:
+            memory["control_phase"] = "ORIENTATION_ONLY"
+            if abs(yaw_error) <= ORIENTATION_DEADBAND:
+                #v_cmd, omega = 0.0, 0.0
+                # slow nudge
+                v_cmd = min(0.15, 1.5 * dist_to_goal)
+
+                # small steering toward goal
+                bearing = np.arctan2(goal_xy[1]-y, goal_xy[0]-x)
+                yaw_to_goal = ((bearing - theta + np.pi) % (2*np.pi)) - np.pi
+                omega = np.clip(0.5 * yaw_to_goal, -w_max*0.2, w_max*0.2)
+
+                v_cmd = float(np.clip(v_cmd, 0.0, v_max))
+                omega = float(np.clip(omega, -w_max, w_max))
+
+                print(f"[STEP {memory['step_count']}] ORIENT DEADBAND - d={dist_to_goal:.3f}, yaw={yaw_error:.3f}")
+            else:
+                # proportional yaw control; clip with base yaw limit
+                omega = float(np.clip(orientation_gain * yaw_error, -w_max, w_max))
+                v_cmd = 0.0
+                print(f"[STEP {memory['step_count']}] ORIENT ONLY - d={dist_to_goal:.3f}, yaw={yaw_error:.3f}, ω={omega:.3f}")
+
+            # IK:
+            omega_r = np.clip((2*v_cmd+omega*track_width)/(2*wheel_radius), -w_max, w_max)
+            omega_l = np.clip((2*v_cmd-omega*track_width)/(2*wheel_radius), -w_max, w_max) 
+
+            action.set_base_motion((omega_r, omega_l), "velocity")
+
+            # action.set_base_motion((v_cmd, omega), "velocity")
+            return action
+
+        # 3) Navigation (pure pursuit-like on lookahead, with gating)
+        memory["control_phase"] = "NAVIGATION"
+
+        # advance waypoint pointer if closer to next
+        path_pointer = int(memory.get("path_pointer", 0))
+        waypoints = memory["path"]
+        while path_pointer + 1 < len(waypoints):
+            nx, ny = waypoints[path_pointer + 1][:2]
+            cx, cy = waypoints[path_pointer][:2]
+            if (x - nx)**2 + (y - ny)**2 < (x - cx)**2 + (y - cy)**2:
+                path_pointer += 1
+            else:
+                break
+        memory["path_pointer"] = path_pointer
+
+        # lookahead waypoint
+        lookahead_idx = min(path_pointer + max(1, int(LOOKAHEAD/0.01)), len(waypoints) - 1)
+        wx, wy = waypoints[lookahead_idx][:2]
+
+        # heading to lookahead
+        alpha_W = float((np.arctan2(wy - y, wx - x) - theta + np.pi) % (2*np.pi) - np.pi)
+
+        # curvature -> ω, plus velocity gating by heading and distance
+        la = max(0.05, min(LOOKAHEAD, dist_to_goal))
+        v_cmd = vel
+        v_cmd *= float(np.exp(-0.8 * abs(alpha_W)))       # slow if misaligned
+        v_cmd = float(min(v_cmd, 1.5 * dist_to_goal))     # don’t overdrive when close
+        v_cmd = float(np.clip(v_cmd, 0.0, v_max))
+
+        kappa = 2.0 * np.sin(alpha_W) / la
+        omega = float(np.clip(kappa * v_cmd, -w_max, w_max))
+
+        print(f"[STEP {memory['step_count']}] NAV - d={dist_to_goal:.3f} ptr={path_pointer} look={lookahead_idx} "
+              f"αW={alpha_W:.2f} v={v_cmd:.2f} ω={omega:.2f}")
+
+        # action.set_base_motion((v_cmd, omega), "velocity")
+
+        # IK:
+        omega_r = np.clip((2*v_cmd+omega*track_width)/(2*wheel_radius), -w_max, w_max)
+        omega_l = np.clip((2*v_cmd-omega*track_width)/(2*wheel_radius), -w_max, w_max) 
+
+        action.set_base_motion((omega_r, omega_l), "velocity")
+
+
+
+        return action
+
+    def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
+        (x, y, th), _ = get_current_base_and_arm_pose(robot, state, objects, params)
+        gx, gy, gth = memory["target_base_pose"]
+        pos_ok = (np.hypot(gx - x, gy - y) <= move_to_pose_tol)
+        yaw_ok = (abs((gth - th + np.pi) % (2*np.pi) - np.pi) <= orientation_tol)
+        if pos_ok and yaw_ok:
+            print(f"[TERMINAL] SUCCESS - Position error: {np.hypot(gx - x, gy - y):.4f}, "
+                  f"Orientation error: {abs((gth - th + np.pi) % (2*np.pi) - np.pi):.4f}")
+        return pos_ok and yaw_ok
+
+    return ParameterizedOption(
+        name=name,
+        types=types,
+        params_space=params_space,
+        policy=_policy,
+        initiable=_initiable,
+        terminal=_terminal,
     )
-
-
 
 
 

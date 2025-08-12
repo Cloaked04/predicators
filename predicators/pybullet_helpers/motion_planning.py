@@ -173,6 +173,7 @@ def run_base_motion_planning(
     workspace_bounds: Optional[Tuple[float, float, float, float]] = None,
     held_object_id: Optional[int] = None,
     ee_to_held_object_transform: Optional[Tuple[NDArray, NDArray]] = None,
+    min_goal_dist: float = -0.02,
 ) -> Optional[List[Tuple[float, float, float]]]:
     
     """
@@ -189,6 +190,7 @@ def run_base_motion_planning(
         current_arm_positions: The joint positions of the arm to maintain during checks.
         held_object_id: Optional ID of an object held by the robot.
         ee_to_held_object_transform: Optional transform (pos, orn) from EE to held object.
+        min_goal_dist: distance within which not to perform motion planning.
 
     Returns:
         List of (x,y,theta) waypoints or None if no path is found
@@ -200,14 +202,17 @@ def run_base_motion_planning(
     #Get robot's current pose in simulation.
     current_base_sim_pose = robot.get_base_pose(physics_client_id)
 
+    #Don't perform base motion planning if goal too close to current base pose
+    if np.abs(current_base_sim_pose[0] - target_pose[0]) < min_goal_dist\
+                         and np.abs(current_base_sim_pose[1] - target_pose[1]) < min_goal_dist:
+        log.warning("goal is too close to the initial position. Returning")
+        return None
+
     # Workspace bounds (use default values if not provided)
     if workspace_bounds is None:
         workspace_bounds = (0.0, 0.0, 3.0, 3.0)
     min_x, min_y, max_x, max_y = workspace_bounds
 
-    # Use iGibson's resolution parameters  
-    POSITION_RESOLUTION = 0.05  # From iGibson's base_mp_resolutions  
-    ROTATION_RESOLUTION = 0.05  # From iGibson's base_mp_resolutions
 
     def _sample_fn(_: Tuple[float, float, float]) -> Tuple[float, float, float]:
         """Sample a random base pose in the workspace.
@@ -218,10 +223,16 @@ def run_base_motion_planning(
         theta = rng.uniform(0, 2*np.pi)
         return (x, y, theta)
 
+    def circular_difference(theta2: float, theta1: float) -> float: 
+        """Wraps angle in: [-np.pi, np.pi)
+        """
+        return (((theta2-theta1)+np.pi)%(2*np.pi)) - np.pi
+
     def _extend_fn(pose1: Tuple[float, float, float],
                     pose2: Tuple[float, float, float]) -> Iterator[Tuple[float, float, float]]:
         """
-        Generate interpolated poses between pose1 and pose2
+        Generate interpolated poses between pose1 and pose2: perform Rotate-Translate-Rotate
+        approach for base motion.
         """
         x1, y1, theta1 = pose1
         x2, y2, theta2 = pose2
@@ -244,6 +255,38 @@ def run_base_motion_planning(
             # normalize theta just to keep it in the range [0,2pi).
             #theta = theta%(2*np.pi)
             yield (x, y, theta)
+
+        # x1, y1, theta1 = pose1
+        # x2, y2, theta2 = pose2
+
+        # resolutions = [0.05, 0.05, 0.05]
+
+        # target_theta = np.arctan2(y2-y1, x2-x1)
+
+        # #Num Steps: Rotate from init_orn towards goal pose
+        # n1 = int(np.abs(circular_difference(target_theta, theta1)/resolutions[2]))+1
+        # #Num Steps: Rotate from towards goal pose to goal_orn
+        # n3 = int(np.abs(circular_difference(theta2, target_theta)/resolutions[2]))+1
+        # #Num Steps: Translate from init_position to goal_position
+        # n2 = int(np.max(np.abs(np.divide(np.array([x2, y2, target_theta])-np.array([x1, y1, target_theta]), resolutions))))+1
+
+        # # First interpolate between the initial point with initial orientation, and target orientation
+        # for i in range(n1):
+        #     q = (i/(n1))*np.array(np.array([x1, y1, target_theta])-np.array(pose1)) + np.array(pose1)
+        #     q = tuple(q)
+        #     yield q
+
+        # for i in range(n2):
+        #     q = (i/(n2))*np.array(np.array([x2, y2, target_theta])-np.array([x1, y1, target_theta]))+ np.array([x1, y1, target_theta])
+        #     q = tuple(q)
+        #     yield q
+
+        # for i in range(n3+1):
+        #     q = (i/(n3))*np.array(np.array(pose2)-np.array([x2, y2, target_theta])) + np.array([x2, y2, target_theta])
+        #     q = tuple(q)
+        #     yield q
+
+
 
 
     def _collision_fn(pose_to_check: Tuple[float, float, float]) -> bool:
@@ -330,22 +373,33 @@ def run_base_motion_planning(
             )
         return collides
 
+    # def _distance_fn(pose1: Tuple[float, float, float],
+    #                  pose2: Tuple[float, float, float]) -> float:
+    #     """
+    #     Compute weighted distance between two base poses
+    #     """
+    #     x1, y1, theta1 = pose1
+    #     x2, y2, theta2 = pose2
+
+    #     # Compute position distance
+    #     pos_distance = np.sqrt((x2-x1)**2 + (y2-y1)**2)
+
+    #     # Angular distance (normalized to [-pi, pi])
+    #     angle_diff = abs((theta2-theta1)+np.pi)%(2*np.pi)-np.pi
+
+    #     # Return Weighted sum:
+    #     return pos_distance+0.3*angle_diff
+
     def _distance_fn(pose1: Tuple[float, float, float],
-                     pose2: Tuple[float, float, float]) -> float:
+                        pose2: Tuple[float, float, float]) -> float:
+        """Compute distance b/w two base poses.
+        In order to compute a weighted distance, can just do
+        np.dot(weights, (pose2-pose1)**2); fn. defn. needs to be
+        updated to recieve weights.
         """
-        Compute weighted distance between two base poses
-        """
-        x1, y1, theta1 = pose1
-        x2, y2, theta2 = pose2
+        difference = np.array(pose2)-np.array(pose1)
 
-        # Compute position distance
-        pos_distance = np.sqrt((x2-x1)**2 + (y2-y1)**2)
-
-        # Angular distance (normalized to [-pi, pi])
-        angle_diff = abs((theta2-theta1)+np.pi)%(2*np.pi)-np.pi
-
-        # Return Weighted sum:
-        return pos_distance+0.3*angle_diff
+        return np.sqrt(np.dot(np.array([1.0, 1.0, 1.0]),difference*difference))
 
 
     # Use BiRRT for planning
