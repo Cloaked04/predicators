@@ -12,7 +12,8 @@ from predicators.envs.pybullet_blocks import PyBulletBlocksEnv
 from predicators.envs.pybullet_multitable_blocks import PyBulletMultiTableBlocksEnv
 from predicators.ground_truth_models import GroundTruthOptionFactory
 from predicators.pybullet_helpers.controllers import \
-    create_change_fingers_option, create_move_end_effector_to_pose_option
+    create_change_fingers_option, create_move_end_effector_to_pose_option, 
+    create_arm_motion_planning_option, create_move_base_option
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.robots import SingleArmPyBulletRobot
 from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPybulletRobot

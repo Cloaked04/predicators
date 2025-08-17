@@ -1389,3 +1389,371 @@ def create_place_object_option(
     
 
 
+############################################################################################################
+#------------------New options that perform planning internally as well.-----------------------------------#
+############################################################################################################
+
+def create_arm_motion_planning_option(
+    name: str,
+    robot: SingleArmPyBulletRobot,
+    types: Sequence[Type],
+    params_space: Box,
+    physics_client_id: int,
+    initial_joint_positions: JointPositions,
+    z_func: Union[Callable[[float], float], float]
+    home_orn: Sequence[float],
+    collision_bodies: Collection[int],
+    seed: int,
+    held_obj_id: Optional[int] = None,
+    base_link_to_held_object: Optional[NDArray] = None,
+) -> ParameterizedOption:
+    """
+    Create a ParameterizedOption that allows running arm_motion_planning using
+    run_motion_planning function in the background and the policy returns one
+    waypoint at a time for simulation.
+
+    Flow:
+      - On first policy call, we plan and cache a sequence of arm joint waypoints.
+      - Each subsequent call returns the next Action (arm joints only).
+      - Base is untouched by this option.
+    """
+
+    def _plan_once_and_cache_actions(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object], memory: Dict) -> None:
+
+        filtered_collision_bodies = collision_bodies
+        if held_obj_id is not None:
+            # Exclude the held object from obstacle set
+            filtered_collision_bodies = [b for b in collision_bodies if b != held_obj_id]
+
+        if "Grasp" in name or "Stack" in name:
+
+            _, block = objects
+    
+            block_x, block_y, block_z = (state.get(block, "pose_x"),
+                                         state.get(block, "pose_y"),
+                                         state.get(block, "pose_z"))
+            target_z = z_func(block_z)
+            target_ee_position = (block_x, block_y, target_z)
+            target_ee_pose = Pose(position=target_ee_position, orientation=home_orn)
+    
+            target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=True, set_joints=False)
+
+        elif "OnTable" in name:
+
+            _, table = objects
+
+            table_x, table_y = (state.get(table, "pose_x"),
+                                state.get(table, "pose_y"))
+
+            target_z = z_func
+            x_workspace = (table_x-0.125, table_x+0.125)
+            y_workspace = (table_y-0.2, table_y+0.2)
+
+            x_sample = np.random.uniform(*x_workspace, n=1)
+            y_sample = np.random.uniform(*y_workspace, n=1)
+
+            target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
+            target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=True, set_joints=False)
+
+
+        waypoints: Optional[Sequence[JointPositions]] = run_motion_planning(
+            robot=robot,
+            initial_positions=initial_joint_positions,
+            target_positions=target_joint_positions,
+            collision_bodies=filtered_collision_bodies,
+            seed=seed,
+            physics_client_id=physics_client_id,
+            held_object=held_obj_id,
+            base_link_to_held_object=base_link_to_held_object, 
+        )
+
+        if waypoints is None or len(waypoints) == 0:
+            raise utils.OptionExecutionFailure(f"{name}: motion planning failed or returned empty path.")
+
+        # 6) Convert waypoints -> Actions
+        actions: List[Action] = []
+        for q in waypoints:
+            # Build a full-size action array and set arm joints. Fingers included in q if you put them there.
+            arr = np.zeros_like(robot.action_space.low, dtype=np.float32)
+            # Place the planned arm (and fingers, if present) into arr:
+            # Assuming run_motion_planning used the same ordering/dim as robot.get_joints()
+            arr[:len(q)] = np.array(q, dtype=np.float32)
+            # Clip to action space just in case
+            arr = np.clip(arr, robot.action_space.low, robot.action_space.high)
+            assert robot.action_space.contains(arr)
+            action = Action(arr)
+            action.set_base_motion((0.0,0.0), "velocity")
+            actions.append(action)
+
+        memory["actions"] = actions
+        memory["idx"] = 0
+
+
+    def _initiable(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
+        # Reset cache each new initiation
+        memory.clear()
+        return True
+
+    def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
+        # plan on first call
+        if "actions" not in memory or "idx" not in memory:
+            _plan_once_and_cache_actions(state, objects, memory)
+
+        i = memory["idx"]
+        actions: List[Action] = memory["actions"]
+        if i >= len(actions):
+            # If the caller kept invoking after terminal, treat as failure (like your other options)
+            raise utils.OptionExecutionFailure(f"{name}: policy called after completion.")
+
+        act = actions[i]
+        memory["idx"] = i + 1
+        return act
+
+    def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
+        return ("actions" in memory and "idx" in memory and memory["idx"] >= len(memory["actions"]))
+
+    return ParameterizedOption(
+        name=name,
+        types=types,
+        params_space=params_space,
+        policy=_policy,
+        initiable=_initiable,
+        terminal=_terminal,
+    )
+
+
+
+
+def create_move_base_option(
+    name: str,
+    robot: MobileSingleArmPyBulletRobot,
+    types: Sequence[Type],
+    params_space: Box,
+    get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],
+                                            Tuple[Pose, JointPositions]],
+    target_ee_pose: Pose,
+    collision_bodies: Collection[int],
+    seed: int,
+    physics_client_id: int,
+    held_object_id_at_start: Optional[int] = None,
+    ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
+    rng: Optional[np.random.Generator] = None,
+    try_arm_only_first: bool = False,
+    base_path_planner_max_tries: int = 30,
+    workspace_bounds: Optional[Tuple[float, float, float, float]] = None,
+    final_finger_state: Optional[float] = None,
+    move_to_pose_tol: float = 0.05,     # 5 cm
+    vel: float = 0.2,                   # nominal cruise speed
+    LOOKAHEAD: float = 0.25,
+    wheel_radius: float = 0.065,
+    track_width: float = 0.3748,
+    force: float = 5.0,                 # (unused here; wheel control path would use it)
+    omega_max: float = 17.4,            # wheel joint limit (rad/s)
+    orientation_tol: float = 0.06,     # ~5°
+    orientation_gain: float = 2.0,      # yaw P gain
+) -> ParameterizedOption:
+
+    # Phase thresholds / gating
+    # ORIENTATION_ONLY_DISTANCE = 0.10    # within 10 cm: rotate in place
+    # e.g., 0.06–0.07 m
+    ORIENTATION_ONLY_DISTANCE = max(0.06, move_to_pose_tol + 0.01)
+    ORIENTATION_DEADBAND      = 0.02    # ~1.15° deadband for micro-oscillation
+    COMPLETE_STOP_DISTANCE    = move_to_pose_tol
+
+    # Convert wheel limits -> base limits (use these for clipping v, ω)
+    v_max = wheel_radius * omega_max
+    w_max = 2.0 * wheel_radius * omega_max / track_width
+
+
+    def _plan_and_cache_base_motion(robot: MobileSingleArmPybulletRobot, state: State, objects: Sequence[Object],
+                                   memory: Dict) -> None:
+        
+        filtered_collision_bodies = list(collision_bodies)
+        if held_object_id_at_start is not None:
+            # Exclude the held object from obstacle set
+            filtered_collision_bodies = [b for b in filtered_collision_bodies if b != held_object_id_at_start]
+
+        if "Grasp" in name or "Stack" in name:
+
+            _, block = objects
+    
+            block_x, block_y, block_z = (state.get(block, "pose_x"),
+                                         state.get(block, "pose_y"),
+                                         state.get(block, "pose_z"))
+            target_z = z_func(block_z)
+            target_ee_position = (block_x, block_y, target_z)
+            target_ee_pose = Pose(position=target_ee_position, orientation=home_orn)
+
+        elif "OnTable" in name:
+            _, table = objects
+
+            table_x, table_y = (state.get(table, "pose_x"),
+                                state.get(table, "pose_y"))
+
+            target_z = z_func
+            x_workspace = (table_x-0.125, table_x+0.125)
+            y_workspace = (table_y-0.2, table_y+0.2)
+
+            x_sample = np.random.uniform(*x_workspace, n=1)
+            y_sample = np.random.uniform(*y_workspace, n=1)
+
+            target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
+            
+
+        base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
+                                                                        robot=robot,
+                                                                        target_ee_pose=target_ee_pose,
+                                                                        collision_bodies=filtered_collision_bodies,
+                                                                        seed=seed,
+                                                                        physics_client_id=physics_client_id,
+                                                                        try_arm_only_first=try_arm_only_first,
+                                                                        base_path_planner_max_tries=base_path_planner_max_tries,
+                                                                        workspace_bounds=workspace_bounds,
+                                                                        rng=np.random.default_rng(seed),
+                                                                        final_finger_state=final_finger_state,
+                                                                        held_object_id_at_start=held_object_id_at_start,
+                                                                        ee_to_held_object_transform_at_start=ee_to_held_object_transform_at_start,
+                                                                    )
+
+        if base_path_waypoints is None or len(base_path_waypoints) == 0:
+            raise utils.OptionExecutionFailure(f"{name}: Base path planning failed or returned empty path.")
+
+        target_base_pose = base_path_waypoints[-1]
+        memory["path"] = base_path_waypoints
+        memory["target_base_pose"] = target_base_pose
+        memory["path_pointer"] = 0
+
+        return
+
+        
+
+    def _initiable(state: State, memory: dict, objs: Sequence[Object], params: Array) -> bool:
+        memory["control_phase"] = "NAVIGATION"
+        memory["step_count"] = 0
+        return True
+
+    def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
+        if "path" not in memory or "target_base_pose" not int memory or "path_pointer" not in memory:
+            _plan_and_create_base_motion(state, objects, memory)
+        
+        
+        memory["step_count"] += 1
+
+        # Pose
+        # ipdb.set_trace()
+        (x, y, theta), arm_q = get_current_base_and_arm_pose(robot, state, objects, params)
+        goal_xy = np.array(memory["target_base_pose"][:2])
+        goal_yaw = float(memory["target_base_pose"][2])
+
+        cur_xy = np.array([x, y])
+        dist_to_goal = float(np.linalg.norm(goal_xy - cur_xy))
+        yaw_error = float((goal_yaw - theta + np.pi) % (2*np.pi) - np.pi)
+
+        # Build action shell
+        action = Action(np.zeros_like(robot.action_space.low))
+        action._arr[:len(arm_q)] = arm_q
+
+        # 1) Hard stop region
+        if dist_to_goal <= COMPLETE_STOP_DISTANCE and abs(yaw_error) <= orientation_tol:
+            action.set_base_motion((0.0, 0.0), "velocity")
+            memory["control_phase"] = "COMPLETE"
+            print(f"[STEP {memory['step_count']}] GOAL REACHED - d={dist_to_goal:.4f}, yaw={yaw_error:.4f}")
+            return action
+
+        # 2) Orientation-only (rotate in place)
+        if dist_to_goal <= ORIENTATION_ONLY_DISTANCE:
+            memory["control_phase"] = "ORIENTATION_ONLY"
+            if abs(yaw_error) <= ORIENTATION_DEADBAND:
+                #v_cmd, omega = 0.0, 0.0
+                # slow nudge
+                v_cmd = min(0.15, 1.5 * dist_to_goal)
+
+                # small steering toward goal
+                bearing = np.arctan2(goal_xy[1]-y, goal_xy[0]-x)
+                yaw_to_goal = ((bearing - theta + np.pi) % (2*np.pi)) - np.pi
+                omega = np.clip(0.5 * yaw_to_goal, -w_max*0.2, w_max*0.2)
+
+                v_cmd = float(np.clip(v_cmd, 0.0, v_max))
+                omega = float(np.clip(omega, -w_max, w_max))
+
+                print(f"[STEP {memory['step_count']}] ORIENT DEADBAND - d={dist_to_goal:.3f}, yaw={yaw_error:.3f}")
+            else:
+                # proportional yaw control; clip with base yaw limit
+                omega = float(np.clip(orientation_gain * yaw_error, -w_max, w_max))
+                v_cmd = 0.0
+                print(f"[STEP {memory['step_count']}] ORIENT ONLY - d={dist_to_goal:.3f}, yaw={yaw_error:.3f}, ω={omega:.3f}")
+
+            # IK:
+            omega_r = np.clip((2*v_cmd+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+            omega_l = np.clip((2*v_cmd-omega*track_width)/(2*wheel_radius), -omega_max, omega_max) 
+
+            action.set_base_motion((omega_r, omega_l), "velocity")
+
+            # action.set_base_motion((v_cmd, omega), "velocity")
+            return action
+
+        # 3) Navigation (pure pursuit-like on lookahead, with gating)
+        memory["control_phase"] = "NAVIGATION"
+
+        # advance waypoint pointer if closer to next
+        path_pointer = int(memory.get("path_pointer", 0))
+        waypoints = memory["path"]
+        while path_pointer + 1 < len(waypoints):
+            nx, ny = waypoints[path_pointer + 1][:2]
+            cx, cy = waypoints[path_pointer][:2]
+            if (x - nx)**2 + (y - ny)**2 < (x - cx)**2 + (y - cy)**2:
+                path_pointer += 1
+            else:
+                break
+        memory["path_pointer"] = path_pointer
+
+        # lookahead waypoint
+        lookahead_idx = min(path_pointer + max(1, int(LOOKAHEAD/0.01)), len(waypoints) - 1)
+        wx, wy = waypoints[lookahead_idx][:2]
+
+        # heading to lookahead
+        alpha_W = float((np.arctan2(wy - y, wx - x) - theta + np.pi) % (2*np.pi) - np.pi)
+
+        # curvature -> ω, plus velocity gating by heading and distance
+        la = max(0.05, min(LOOKAHEAD, dist_to_goal))
+        v_cmd = vel
+        v_cmd *= float(np.exp(-0.8 * abs(alpha_W)))       # slow if misaligned
+        v_cmd = float(min(v_cmd, 1.5 * dist_to_goal))     # don’t overdrive when close
+        v_cmd = float(np.clip(v_cmd, 0.0, v_max))
+
+        kappa = 2.0 * np.sin(alpha_W) / la
+        omega = float(np.clip(kappa * v_cmd, -w_max, w_max))
+
+        print(f"[STEP {memory['step_count']}] NAV - d={dist_to_goal:.3f} ptr={path_pointer} look={lookahead_idx} "
+              f"αW={alpha_W:.2f} v={v_cmd:.2f} ω={omega:.2f}")
+
+        # action.set_base_motion((v_cmd, omega), "velocity")
+
+        # IK:
+        omega_r = np.clip((2*v_cmd+omega*track_width)/(2*wheel_radius), -omega_max, omega_max)
+        omega_l = np.clip((2*v_cmd-omega*track_width)/(2*wheel_radius), -omega_max, omega_max) 
+
+        action.set_base_motion((omega_r, omega_l), "velocity")
+
+
+
+        return action
+
+    def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
+        (x, y, th), _ = get_current_base_and_arm_pose(robot, state, objects, params)
+        gx, gy, gth = memory["target_base_pose"]
+        pos_ok = (np.hypot(gx - x, gy - y) <= move_to_pose_tol)
+        yaw_ok = (abs((gth - th + np.pi) % (2*np.pi) - np.pi) <= orientation_tol)
+        if pos_ok and yaw_ok:
+            print(f"[TERMINAL] SUCCESS - Position error: {np.hypot(gx - x, gy - y):.4f}, "
+                  f"Orientation error: {abs((gth - th + np.pi) % (2*np.pi) - np.pi):.4f}")
+        return pos_ok and yaw_ok
+
+    return ParameterizedOption(
+        name=name,
+        types=types,
+        params_space=params_space,
+        policy=_policy,
+        initiable=_initiable,
+        terminal=_terminal,
+    )

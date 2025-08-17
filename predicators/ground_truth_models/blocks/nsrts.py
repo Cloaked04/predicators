@@ -215,7 +215,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         robot  = Variable("?robot", robot_type)
         table = Variable("?table", table_type)
 
-        parameters=[block, other_block, robot, table]
+        parameters=[block, otherblock, robot, table]
         option_vars = [robot, block, table]
         option=Pick
         preconditions={
@@ -245,15 +245,15 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         block = Variable("?block", block_type)
         otherblock = Variable("?otherblock", block_type)
         robot = Variable("?robot", robot_type)
-        table = Variable("?robot", table_type)
+        table = Variable("?table", table_type)
 
         parameters = [block, otherblock, robot, table]
         option_vars = [robot, otherblock]
         option = Stack
         preconditions = {
             LiftedAtom(Holding, [block]),
-            LiftedAtom(Clear, [otherblock])
-            LiftedAtom(OnTable, [otherblock, table])
+            LiftedAtom(Clear, [otherblock]),
+            LiftedAtom(OnTable, [otherblock, table]),
             LiftedAtom(RobotAt, [robot, table])
         }
         add_effects = {
@@ -309,8 +309,8 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         table = Variable("?table", table_type)
         othertable = Variable("?table", table_type)
 
-        parameters = [robot, table]
-        option_vars = [robot]
+        parameters = [robot, table, othertable]
+        option_vars = [robot, othertable]
         option = Move
 
         preconditions = {LiftedAtom(RobotAt, [robot, table])}
