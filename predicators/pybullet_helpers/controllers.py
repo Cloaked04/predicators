@@ -785,13 +785,13 @@ def create_move_base_option(
     base_path: List[Tuple[float, float, float]],
     target_base_pose: Tuple[float, float, float],
     move_to_pose_tol: float = 0.05,     # 5 cm
-    vel: float = 0.4,                   # nominal cruise speed
+    vel: float = 0.2,                   # nominal cruise speed
     LOOKAHEAD: float = 0.25,
     wheel_radius: float = 0.065,
     track_width: float = 0.3748,
     force: float = 5.0,                 # (unused here; wheel control path would use it)
     omega_max: float = 17.4,            # wheel joint limit (rad/s)
-    orientation_tol: float = 0.087,     # ~5°
+    orientation_tol: float = 0.06,     # ~5°
     orientation_gain: float = 2.0,      # yaw P gain
 ) -> ParameterizedOption:
 
@@ -818,6 +818,7 @@ def create_move_base_option(
         memory["step_count"] += 1
 
         # Pose
+        # ipdb.set_trace()
         (x, y, theta), arm_q = get_current_base_and_arm_pose(robot, state, objects, params)
         goal_xy = np.array(memory["target_base_pose"][:2])
         goal_yaw = float(memory["target_base_pose"][2])

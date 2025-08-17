@@ -1,3 +1,4 @@
+import ipdb
 import numpy as np
 import pybullet as p
 from gym.spaces import Box
@@ -207,9 +208,11 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
 
 
 
-    def set_wheel_motors(self, robot: SingleArmPyBulletRobot, omega_r: float, omega_l: float, physicsClientId:int) -> None:
+    def set_wheel_motors(self, omega_r: float, omega_l: float, physicsClientId:int) -> None:
         """Set velocity for both wheels.
         """
+        # ipdb.set_trace()
+
 
         # X, Y, THETA = robot.get_base_pose(physicsClientId)
         # vx, vy = 0.3 * np.cos(THETA), 0.3 * np.sin(THETA)
@@ -225,7 +228,7 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
                 jointIndices=[self.wheel_ids[1], self.wheel_ids[0]],
                 controlMode=p.VELOCITY_CONTROL,
                 targetVelocities=[omega_r, omega_l],
-                forces=[100.0, 100.0],
+                forces=[50.0, 50.0],
                 physicsClientId=physicsClientId
             )
 

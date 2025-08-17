@@ -2,9 +2,10 @@
 
 Contains useful common code.
 """
-
+import time
 import abc
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, cast
+import ipdb
 
 import matplotlib
 import numpy as np
@@ -172,6 +173,7 @@ class PyBulletEnv(BaseEnv):
 
     def simulate(self, state: State, action: Action) -> State:
         # Optimization: check if we're already in the right state.
+
         if self._current_observation is None or \
             not state.allclose(self._current_state):
             self._current_observation = state
@@ -268,9 +270,11 @@ class PyBulletEnv(BaseEnv):
 
     def step(self, action: Action) -> Observation:
         # Send the action to the robot.
-        target_joint_positions = action.arr.tolist()
+        # ipdb.set_trace()
+        # target_joint_positions = action.arr.tolist()
         #target_joint_positions = action.tolist()
         #self._pybullet_robot.set_motors(target_joint_positions)
+        target_joint_positions = action.arr
 
         #Base motion if any:
 
@@ -363,6 +367,7 @@ class PyBulletEnv(BaseEnv):
         if CFG.pybullet_control_mode != "reset":
             for _ in range(CFG.pybullet_sim_steps_per_action):
                 p.stepSimulation(physicsClientId=self._physics_client_id)
+            time.sleep(CFG.pybullet_sim_steps_per_action*(1/240)+0.05)
 
         #Only handle grasping changes if we have arm/ finger actions
         if len(action.arr)>0:

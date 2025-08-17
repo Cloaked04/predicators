@@ -38,9 +38,9 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
     #Workspace params for each table:
     _table_workspaces: ClassVar[List[Dict[str, float]]] = [
-            {"x_lb":0.875, "xub": 1.125, "y_lb": 0.3, "y_ub": 0.7},
-            {"x_lb":1.575, "xub": 1.825, "y_lb": 0.3, "y_ub": 0.7},
-            {"x_lb":1.225, "xub": 1.475, "y_lb": 0.8, "y_ub": 1.2},
+            {"x_lb":0.875, "xub": 1.125, "y_lb": -0.7, "y_ub": -0.3},
+            {"x_lb":-1.825, "xub": -1.575, "y_lb": 1.3, "y_ub": 1.7},
+            {"x_lb":2.225, "xub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
             ]
     robo_x = sum(pose[0] for pose in _default_table_poses)/ len(_default_table_poses)
     robo_y = sum(pose[1] for pose in _default_table_poses)/ len(_default_table_poses)
@@ -61,9 +61,12 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         self._table_workspaces = table_workspaces or self._table_workspaces[:num_tables]
 
         #Validate configuration
-        assert len(self._blocks_per_table) == num_tables, f"blocks_per_table_length ({len(self._blocks_per_table)})  must match num_tables ({num_tables})."
-        assert len(self._table_poses) == num_tables, f"table_poses length ({len(self._table_poses)}) must match num_tables ({num_tables})"
-        assert len(self._table_workspaces) == num_tables, f"table_workspaces length ({len(self._table_workspaces)}) must match num_tables ({num_tables})"
+        assert len(self._blocks_per_table) == num_tables, f"blocks_per_table_length ({len(self._blocks_per_table)})"
+                                                                                f"must match num_tables ({num_tables})."
+        assert len(self._table_poses) == num_tables, f"table_poses length ({len(self._table_poses)})"
+                                                                f"must match num_tables ({num_tables})"
+        assert len(self._table_workspaces) == num_tables, f"table_workspaces length({len(self._table_workspaces)})" 
+                                                                            f"must match num_tables ({num_tables})"
           
         super().__init__(use_gui)
           
@@ -127,7 +130,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
     def _AtHolds(self, state: State, objects: List[Object]) -> bool:
         """Checks whether robot is at a table/loc.
-        Currently returning true if robot is within 0.5 of the
+        Currently returning true if robot is within 0.1 of the
         table.
         """
         assert len(objects) == 1, f"Only the table to be checked for must be passed as object."
@@ -137,17 +140,19 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         tx = state.get(table, "pose_x")
         ty = state.get(table, "pose_y")
 
+        x_workspace = (tx-0.125, ty+0.125)
+        y_workspace = (ty-0.2, ty+0.2)
+
         robot_x, robot_y, _ = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id)
 
-        dist = np.linalg.norm(np.array([robot_x-tx, robot_y-ty]))
-
-        return dist <=0.5
+        
+        return (x_workspace[0]-0.1 <=robot_x <= x_workspace[1]+0.1 and y_workspace[0]-0.1<=robot_y<=y_workspace[1]+0.1)
 
 
 
     @classmethod
     def get_name(cls) -> str:
-        return "pybullet_multi_table_blocks"
+        return "pybullet_multitable_blocks"
 
     @classmethod
     def initialize_pybullet(

@@ -1,10 +1,10 @@
 """Ground-truth models for blocks environment and variants."""
 
-from .nsrts import BlocksGroundTruthNSRTFactory
+from .nsrts import BlocksGroundTruthNSRTFactory, PyBulletMultiTableBlocksNSRTFactory
 from .options import BlocksGroundTruthOptionFactory, \
-    PyBulletBlocksGroundTruthOptionFactory
+    PyBulletBlocksGroundTruthOptionFactory, PyBulletMultiTableBlocksGroundTruthOptionFactory
 
 __all__ = [
-    "BlocksGroundTruthNSRTFactory", "BlocksGroundTruthOptionFactory",
-    "PyBulletBlocksGroundTruthOptionFactory"
+    "BlocksGroundTruthNSRTFactory", "PyBulletMultiTableBlocksNSRTFactory","BlocksGroundTruthOptionFactory",
+    "PyBulletBlocksGroundTruthOptionFactory", "PyBulletMultiTableBlocksGroundTruthOptionFactory"
 ]

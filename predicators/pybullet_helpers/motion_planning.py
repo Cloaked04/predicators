@@ -562,6 +562,9 @@ def run_coordinated_motion_planning(
     # Get robot's current state to restore later
     current_base_pose = robot.get_base_pose(physics_client_id)
     current_joint_positions = robot.get_joints()
+    if held_object_id_at_start is not None:
+        current_held_object_pos_orn = p.getBasePositionAndOrientation(
+                held_object_id_at_start, physicsClientId=physics_client_id)
 
     # First: check whether target is reachable from current base position
     if try_arm_only_first:
@@ -621,9 +624,10 @@ def run_coordinated_motion_planning(
             print("Coordinated Planning: Arm-only IK failed. Moving to base planning.")
             pass
 
-    # Restore robot state before base planning
-    robot.move_base_to(current_base_pose, physics_client_id)
-    robot.set_joints(current_joint_positions)
+    # Restore robot state before base planning:
+    if try_arm_only_first:
+        robot.move_base_to(current_base_pose, physics_client_id)
+        robot.set_joints(current_joint_positions)
 
     def _base_collision_fn() -> bool:
         """
@@ -660,13 +664,13 @@ def run_coordinated_motion_planning(
                 robot.robot_id,
                 robot.end_effector_id, # Or robot.tool_link_id, depending on grasp def
                 physics_client_id=physics_client_id
-            ).pose # This is a Pose(position, orientation)
+            ).pose
 
             new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
                 ee_link_world_pose.position,
                 ee_link_world_pose.orientation,
-                ee_to_held_object_transform_at_start[0],  # position part of transform
-                ee_to_held_object_transform_at_start[1]   # orientation part of transform
+                ee_to_held_object_transform_at_start[0],  
+                ee_to_held_object_transform_at_start[1]   
             )
             p.resetBasePositionAndOrientation(
                 held_object_id_at_start,
@@ -897,7 +901,9 @@ def run_coordinated_motion_planning(
         # Check if target is reachable from this base pose
         try:
 
-            #Temporarily move base to candidate position
+            #Temporarily move base to candidate position;
+            #Since the arm is not meddled with, it stays the same.
+            #Block is transported as well.
             robot.move_base_to(test_pose,  physics_client_id, held_object_id_at_start, ee_to_held_object_transform_at_start)
 
             # Check IK reachability
@@ -924,11 +930,23 @@ def run_coordinated_motion_planning(
                     logger.warning(f"\n Collsion check:COLLIDES :-(")
                     robot.move_base_to(current_base_pose, physics_client_id)
                     robot.set_joints(current_joint_positions)
+                    if held_object_id_at_start is not None:
+                        p.resetBasePositionAndOrientation(
+                            held_object_id_at_start,
+                            current_held_object_pos_orn[0],
+                            current_held_object_pos_orn[1],
+                            physicsClientId=physics_client_id)
                     continue
                 elif not is_colliding:
                     logger.info(f"\n Collision Check: OK!!!")
                     robot.move_base_to(current_base_pose, physics_client_id)
                     robot.set_joints(current_joint_positions)
+                    if held_object_id_at_start is not None:
+                        p.resetBasePositionAndOrientation(
+                            held_object_id_at_start,
+                            current_held_object_pos_orn[0],
+                            current_held_object_pos_orn[1],
+                            physicsClientId=physics_client_id)
 
                     logger.info(f"Attempting base path planning:")
 
@@ -949,6 +967,12 @@ def run_coordinated_motion_planning(
                         # Restore initial state
                         robot.move_base_to(current_base_pose, physics_client_id)
                         robot.set_joints(current_joint_positions)
+                        if held_object_id_at_start is not None:
+                            p.resetBasePositionAndOrientation(
+                                held_object_id_at_start,
+                                current_held_object_pos_orn[0],
+                                current_held_object_pos_orn[1],
+                                physicsClientId=physics_client_id)
                         continue
 
                     elif base_path is not None:
@@ -958,6 +982,12 @@ def run_coordinated_motion_planning(
                         #Set the robot to initial base and joint position:
                         robot.move_base_to(current_base_pose, physics_client_id)
                         robot.set_joints(current_joint_positions)
+                        if held_object_id_at_start is not None:
+                            p.resetBasePositionAndOrientation(
+                                held_object_id_at_start,
+                                current_held_object_pos_orn[0],
+                                current_held_object_pos_orn[1],
+                                physicsClientId=physics_client_id)
 
                         #Arm motion planning:
                         final_base_pose = base_path[-1]
@@ -1004,6 +1034,14 @@ def run_coordinated_motion_planning(
 
                         if arm_path is None:
                             logger.warning("Coordinated planning: Arm path planning failed after base movement.")
+                            robot.move_base_to(current_base_pose, physics_client_id)
+                            robot.set_joints(current_joint_positions)
+                            if held_object_id_at_start is not None:
+                                p.resetBasePositionAndOrientation(
+                                    held_object_id_at_start,
+                                    current_held_object_pos_orn[0],
+                                    current_held_object_pos_orn[1],
+                                    physicsClientId=physics_client_id)
                             continue
 
 
@@ -1018,6 +1056,12 @@ def run_coordinated_motion_planning(
                             logger.warning(f"IK to move down failed.")
                             robot.move_base_to(current_base_pose, physics_client_id)
                             robot.set_joints(current_joint_positions)
+                            if held_object_id_at_start is not None:
+                                p.resetBasePositionAndOrientation(
+                                    held_object_id_at_start,
+                                    current_held_object_pos_orn[0],
+                                    current_held_object_pos_orn[1],
+                                    physicsClientId=physics_client_id)
                             continue
 
 
@@ -1048,12 +1092,30 @@ def run_coordinated_motion_planning(
                                             )
                         logger.warning(f"Length of path to move down to target: {len(arm_path_to_move_down)}.")
 
+                        if arm_path_to_move_down is None:
+                            logger.warning("Coordinated planning: Arm path planning failed after base movement.")
+                            robot.move_base_to(current_base_pose, physics_client_id)
+                            robot.set_joints(current_joint_positions)
+                            if held_object_id_at_start is not None:
+                                p.resetBasePositionAndOrientation(
+                                    held_object_id_at_start,
+                                    current_held_object_pos_orn[0],
+                                    current_held_object_pos_orn[1],
+                                    physicsClientId=physics_client_id)
+                            continue
+
                         arm_path.extend(arm_path_to_move_down)
 
 
                         # Restore initial state after planning is complete
                         robot.move_base_to(current_base_pose, physics_client_id)
                         robot.set_joints(current_joint_positions)
+                        if held_object_id_at_start is not None:
+                            p.resetBasePositionAndOrientation(
+                                held_object_id_at_start,
+                                current_held_object_pos_orn[0],
+                                current_held_object_pos_orn[1],
+                                physicsClientId=physics_client_id)
 
 
                         if arm_path is not None:
@@ -1102,11 +1164,23 @@ def run_coordinated_motion_planning(
             #Restore robot to initial position in case IK returned None:
             robot.move_base_to(current_base_pose, physics_client_id)
             robot.set_joints(current_joint_positions)
+            if held_object_id_at_start is not None:
+                p.resetBasePositionAndOrientation(
+                    held_object_id_at_start,
+                    current_held_object_pos_orn[0],
+                    current_held_object_pos_orn[1],
+                    physicsClientId=physics_client_id)
 
         except InverseKinematicsError:
             logger.info(f"\nIK FAILED.Trying again.")
             robot.move_base_to(current_base_pose, physics_client_id)
             robot.set_joints(current_joint_positions)
+            if held_object_id_at_start is not None:
+                p.resetBasePositionAndOrientation(
+                    held_object_id_at_start,
+                    current_held_object_pos_orn[0],
+                    current_held_object_pos_orn[1],
+                    physicsClientId=physics_client_id)
             continue
 
         logger.critical(f"\nIKFast failed {base_path_planner_max_tries}. Something's off.")
