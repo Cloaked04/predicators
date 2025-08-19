@@ -7,6 +7,7 @@ from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
     List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 
 import numpy as np
+from numpy.typing import NDArray
 from gym.spaces import Box
 import pybullet as p
 from predicators.settings import CFG
@@ -1400,7 +1401,7 @@ def create_arm_motion_planning_option(
     params_space: Box,
     physics_client_id: int,
     initial_joint_positions: JointPositions,
-    z_func: Union[Callable[[float], float], float]
+    z_func: Union[Callable[[float], float], float],
     home_orn: Sequence[float],
     collision_bodies: Collection[int],
     seed: int,
@@ -1531,7 +1532,6 @@ def create_move_base_option(
     params_space: Box,
     get_current_base_and_arm_pose: Callable[[SingleArmPyBulletRobot, State, Sequence[Object], Array],
                                             Tuple[Pose, JointPositions]],
-    target_ee_pose: Pose,
     collision_bodies: Collection[int],
     seed: int,
     physics_client_id: int,
@@ -1565,7 +1565,7 @@ def create_move_base_option(
     w_max = 2.0 * wheel_radius * omega_max / track_width
 
 
-    def _plan_and_cache_base_motion(robot: MobileSingleArmPybulletRobot, state: State, objects: Sequence[Object],
+    def _plan_and_cache_base_motion(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object],
                                    memory: Dict) -> None:
         
         filtered_collision_bodies = list(collision_bodies)
@@ -1633,7 +1633,7 @@ def create_move_base_option(
         return True
 
     def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
-        if "path" not in memory or "target_base_pose" not int memory or "path_pointer" not in memory:
+        if "path" not in memory or "target_base_pose" not in memory or "path_pointer" not in memory:
             _plan_and_create_base_motion(state, objects, memory)
         
         

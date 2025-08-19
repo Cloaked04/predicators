@@ -7,7 +7,7 @@ option in the environment.
 from __future__ import annotations
 
 import abc
-from typing import Callable, Set, Tuple
+from typing import Callable, Set, Tuple, Optional
 
 import numpy as np
 
@@ -17,15 +17,18 @@ from predicators.ground_truth_models import get_gt_options
 from predicators.settings import CFG
 from predicators.structs import Action, DefaultState, ParameterizedOption, \
     State, _Option
+from predicators.envs.blocks import BlocksEnv
+from predicators.pybullet_helpers.robots.single_arm import SingleArmPyBulletRobot
 
 
-def create_option_model(name: str) -> _OptionModelBase:
+def create_option_model(name: str, robot: Optional[SingleArmPyBulletRobot]=None,
+                        env: Optional[BlocksEnv]=None, physics_client_id: Optional[int]=None) -> _OptionModelBase:
     """Create an option model given its name."""
     if name == "oracle":
         env = create_new_env(CFG.env,
                              do_cache=False,
                              use_gui=CFG.option_model_use_gui)
-        options = get_gt_options(env.get_name())
+        options = get_gt_options(env.get_name(), robot=robot, env=env, physics_client_id=physics_client_id)
         return _OracleOptionModel(options, env.simulate)
     if name.startswith("oracle"):
         env_name = name[name.index("_") + 1:]

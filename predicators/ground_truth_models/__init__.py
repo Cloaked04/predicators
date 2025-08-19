@@ -1,12 +1,16 @@
 """Implements ground-truth NSRTs and options."""
 import abc
+import ipdb
 from pathlib import Path
-from typing import Dict, List, Sequence, Set
+from typing import Dict, List, Sequence, Set, Optional
 
 from gym.spaces import Box
 
 from predicators import utils
-from predicators.envs import BaseEnv, get_or_create_env
+from predicators.envs import BaseEnv ,get_or_create_env
+from predicators.envs.blocks import BlocksEnv
+from predicators.envs.pybullet_multitable_blocks import PyBulletMultiTableBlocksEnv
+from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleArmPyBulletRobot
 from predicators.settings import CFG
 from predicators.structs import NSRT, LiftedDecisionList, \
     ParameterizedOption, Predicate, Type
@@ -76,8 +80,11 @@ class GroundTruthLDLBridgePolicyFactory(abc.ABC):
         return utils.parse_ldl_from_str(ldl_str, types, predicates, nsrts)
 
 
-def get_gt_options(env_name: str) -> Set[ParameterizedOption]:
+def get_gt_options(env_name: str, robot: Optional[MobileSingleArmPyBulletRobot]=None,
+                    env: Optional[PyBulletMultiTableBlocksEnv]=None, 
+                    physics_client_id: Optional[int]=None) -> Set[ParameterizedOption]:
     """Create ground truth options for an env."""
+    # ipdb.set_trace()
     env = get_or_create_env(env_name)
     for cls in utils.get_all_subclasses(GroundTruthOptionFactory):
         if not cls.__abstractmethods__ and env_name in cls.get_env_names():
@@ -85,7 +92,7 @@ def get_gt_options(env_name: str) -> Set[ParameterizedOption]:
             types = {t.name: t for t in env.types}
             predicates = {p.name: p for p in env.predicates}
             options = factory.get_options(env_name, types, predicates,
-                                          env.action_space)
+                                          env.action_space, robot, env, physics_client_id)
             break
     else:  # pragma: no cover
         raise NotImplementedError("Ground-truth options not implemented for "
@@ -97,10 +104,13 @@ def get_gt_options(env_name: str) -> Set[ParameterizedOption]:
 
 
 def get_gt_nsrts(env_name: str, predicates_to_keep: Set[Predicate],
-                 options_to_keep: Set[ParameterizedOption]) -> Set[NSRT]:
+                 options_to_keep: Set[ParameterizedOption], 
+                 robot: Optional[MobileSingleArmPyBulletRobot]=None,
+                 env: Optional[PyBulletMultiTableBlocksEnv]=None, 
+                 physics_client_id: Optional[int]=None) -> Set[NSRT]:
     """Create ground truth options for an env."""
     env = get_or_create_env(env_name)
-    env_options = get_gt_options(env_name)
+    env_options = get_gt_options(env_name, robot, env, physics_client_id)
     assert predicates_to_keep.issubset(env.predicates)
     assert options_to_keep.issubset(env_options)
     for cls in utils.get_all_subclasses(GroundTruthNSRTFactory):

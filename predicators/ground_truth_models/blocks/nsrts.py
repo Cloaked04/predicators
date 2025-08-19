@@ -164,8 +164,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         robot_type = types["robot"]
         table_type = types["table"]
 
-        # Predicates (reuse the same ones the blocks env exposes;
-        # if your multitable env adds more, pull them here too)
+        # Predicates
         On = predicates["On"]
         OnTable = predicates["OnTable"]
         GripperOpen = predicates["GripperOpen"]
@@ -220,7 +219,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         option=Pick
         preconditions={
             LiftedAtom(On, [block, otherblock]),
-            LiftedAtom(OnTable, [otherblock, table],)
+            LiftedAtom(OnTable, [otherblock, table]),
             LiftedAtom(Clear, [block]),
             LiftedAtom(RobotAt, [robot, table]),
             LiftedAtom(GripperOpen, [robot])
@@ -248,7 +247,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         table = Variable("?table", table_type)
 
         parameters = [block, otherblock, robot, table]
-        option_vars = [robot, otherblock]
+        option_vars = [robot, otherblock, table]
         option = Stack
         preconditions = {
             LiftedAtom(Holding, [block]),
@@ -277,7 +276,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         table = Variable("?table", table_type)
 
         parameters = [block, robot, table]
-        option_vars = [robot]
+        option_vars = [robot, table]
         option = PutOnTable
         preconditions = {
             LiftedAtom(Holding, [block]),
@@ -291,7 +290,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         delete_effects = {LiftedAtom(Holding, [block])}
 
 
-        def put_on_table_sampler(state: State, goal: Set[GroundAtom],
+        def putontable_sampler(state: State, goal: Set[GroundAtom],
                                  rng: np.random.Generator,
                                  objs: Sequence[Object]) -> Array:
             x = rng.uniform()
@@ -307,7 +306,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         #Move:
         robot = Variable("?robot", robot_type)
         table = Variable("?table", table_type)
-        othertable = Variable("?table", table_type)
+        othertable = Variable("?othertable", table_type)
 
         parameters = [robot, table, othertable]
         option_vars = [robot, othertable]

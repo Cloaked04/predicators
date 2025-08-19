@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import ipdb
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import islice
@@ -183,6 +184,7 @@ def _sesame_plan_with_astar(
 
     # init_atoms contains all the atoms (Grounded) that hold in the initial state.
     init_atoms = utils.abstract(task.init, predicates)
+    # ipdb.set_trace()
     objects = list(task.init)
     start_time = time.perf_counter()
     ground_nsrts = sesame_ground_nsrts(task, init_atoms, nsrts, objects,

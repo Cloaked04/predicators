@@ -1,6 +1,7 @@
 #Pybullet version of blocks that allows creating multiple table in the env.
 
 import sys
+import ipdb
 import logging
 from pathlib import Path
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
@@ -38,34 +39,35 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
     #Workspace params for each table:
     _table_workspaces: ClassVar[List[Dict[str, float]]] = [
-            {"x_lb":0.875, "xub": 1.125, "y_lb": -0.7, "y_ub": -0.3},
-            {"x_lb":-1.825, "xub": -1.575, "y_lb": 1.3, "y_ub": 1.7},
-            {"x_lb":2.225, "xub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
+            {"x_lb":0.875, "x_ub": 1.125, "y_lb": -0.7, "y_ub": -0.3},
+            {"x_lb":-1.825, "x_ub": -1.575, "y_lb": 1.3, "y_ub": 1.7},
+            {"x_lb":2.225, "x_ub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
             ]
     robo_x = sum(pose[0] for pose in _default_table_poses)/ len(_default_table_poses)
     robo_y = sum(pose[1] for pose in _default_table_poses)/ len(_default_table_poses)
     robo_z = 0.01
 
+    _default_blocks_per_table: ClassVar[List[int]] = [8, 8, 8]
 
     def __init__(self, use_gui: bool = True,
                  num_tables: int = 3,
-                 blocks_per_table: Optional[List[int]] = [2, 2, 2],
+                 blocks_per_table: Optional[List[int]] = None,
                  table_poses: Optional[List[Pose3D]] = None,
                  table_workspaces: Optional[List[Dict[str, float]]] = None,
                  ) -> None:
 
         #Store multi-table configuration
         self._num_tables = num_tables
-        self._blocks_per_table = blocks_per_table
+        self._blocks_per_table = blocks_per_table or self._default_blocks_per_table
         self._table_poses = table_poses or self._default_table_poses[:num_tables]
         self._table_workspaces = table_workspaces or self._table_workspaces[:num_tables]
 
         #Validate configuration
-        assert len(self._blocks_per_table) == num_tables, f"blocks_per_table_length ({len(self._blocks_per_table)})"
+        assert len(self._blocks_per_table) == num_tables, f"blocks_per_table length ({len(self._blocks_per_table)})"\
                                                                                 f"must match num_tables ({num_tables})."
-        assert len(self._table_poses) == num_tables, f"table_poses length ({len(self._table_poses)})"
+        assert len(self._table_poses) == num_tables, f"table_poses length ({len(self._table_poses)})"\
                                                                 f"must match num_tables ({num_tables})"
-        assert len(self._table_workspaces) == num_tables, f"table_workspaces length({len(self._table_workspaces)})" 
+        assert len(self._table_workspaces) == num_tables, f"table_workspaces length({len(self._table_workspaces)})" \
                                                                             f"must match num_tables ({num_tables})"
           
         super().__init__(use_gui)
@@ -99,10 +101,17 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     def predicates(self) -> set:
         """Over-ride to include table-specific predicates"""
         base_predicates = set(super().predicates)
-        base_predicates.discard(BlocksEnv._OnTable)
-        base_predicates.add(self._OnTable)
+        # ipdb.set_trace()
+        # base_predicates.discard(BlocksEnv.OnTable)
+        # base_predicates.add(self._OnTable)
         base_predicates.add(self._At)
         return base_predicates
+
+    @property
+    def types(self) -> Set[Type]:
+        base_types = set(super().types)
+        base_types.add(self._table_type)
+        return base_types
 
     def _OnTable_holds(self, state:State, objects:List[Object]) -> bool:
         """Check if a block is on a specific table
@@ -133,14 +142,14 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         Currently returning true if robot is within 0.1 of the
         table.
         """
-        assert len(objects) == 1, f"Only the table to be checked for must be passed as object."
-        table = objects[0]
+        # assert len(objects) == 1, f"Only the table to be checked for must be passed as object."
+        table = objects[1]
         assert table.is_instance(self._table_type)
 
         tx = state.get(table, "pose_x")
         ty = state.get(table, "pose_y")
 
-        x_workspace = (tx-0.125, ty+0.125)
+        x_workspace = (tx-0.125, tx+0.125)
         y_workspace = (ty-0.2, ty+0.2)
 
         robot_x, robot_y, _ = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id)
@@ -169,7 +178,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
         #Create multiple tables
         table_ids = []
-        for i, pose in enumerate(poses):
+        for _, pose in enumerate(poses):
             table_id = p.loadURDF(utils.get_env_asset_path("urdf/table.urdf"),
                                   useFixedBase=True,
                                   physicsClientId=physics_client_id)
@@ -201,19 +210,22 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                                  color, lineWidth=3.0, physicsClientId=physics_client_id)  
 
         # Create blocks - total from all tables  
-        total_blocks = sum(cls._blocks_per_table) if hasattr(cls, '_blocks_per_table') else \
-                      max(max(CFG.blocks_num_blocks_train), max(CFG.blocks_num_blocks_test))  
+        # total_blocks = sum(cls.blocks_per_table) if hasattr(cls, 'blocks_per_table') else \
+        #               max(max(CFG.blocks_num_blocks_train), max(CFG.blocks_num_blocks_test))
+        total_blocks = sum(cls._default_blocks_per_table)
           
         block_ids = []  
         block_size = CFG.blocks_block_size  
-        for i in range(total_blocks):  
+        for i in range(max(total_blocks,30)):  
             color = cls._obj_colors[i % len(cls._obj_colors)]  
             half_extents = (block_size / 2.0, block_size / 2.0, block_size / 2.0)  
             block_ids.append(  
                 create_pybullet_block(color, half_extents, cls._obj_mass,  
                                     cls._obj_friction, cls._default_orn,  
                                     physics_client_id))  
-        bodies["block_ids"] = block_ids  
+        bodies["block_ids"] = block_ids
+
+        assert len(bodies["block_ids"]) == max(total_blocks, 30), "Not enough blocks for env."  
   
         return physics_client_id, pybullet_robot, bodies
 
@@ -230,10 +242,13 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         #Position robot at center of tables:
         avg_x = sum(pose[0] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
         avg_y = sum(pose[1] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
-        base_pose = Pose(position=(avg_x, avg_y, 0.01), orientation=(0.0, 0.0, 0.0, 1.0))
+        base_pose = Pose(position=(avg_x, avg_y, 0.0), orientation=(0.0, 0.0, 0.0, 1.0))
 
         robot_ee_orn = cls.get_robot_ee_home_orn()
-        ee_home = Pose((avg_x+0.5, avg_y, cls.pick_z), robot_ee_orn)
+        ee_home = Pose((avg_x+0.6, avg_y, cls.pick_z), robot_ee_orn)
+        # print(f"\n Base pose: {base_pose}")
+        # print(f"\n EE home: {ee_home}")
+        # input()
         return create_single_arm_pybullet_robot(CFG.pybullet_robot, physics_client_id, ee_home, base_pose)
 
     def _extract_robot_state(self, state: State) -> Array:
@@ -343,7 +358,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
         state = utils.PyBulletState(state_dict, simulator_state=joint_positions, base_pose=base_pose)
 
-        assert set(state) == self._current_state, \
+        assert set(state) == set(self._current_state), \
                 (f"Reconstructed state has objects {set(state)}, but "
                 f"self._current_state has objects {set(self._current_state)}.")
 
@@ -435,12 +450,12 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         Randomly sample a new (x, y) position for a pile of blocks on the table, making sure it doesn’t overlap
         too closely with any existing piles.
         """
-        table_workspace = _table_workspaces[table_idx]
+        table_workspace = self._table_workspaces[table_idx]
 
         while True:
-            x = rng.uniform(table_workspace['x_lb'], table_workspae['x_ub'])
+            x = rng.uniform(table_workspace['x_lb'], table_workspace['x_ub'])
             y = rng.uniform(table_workspace['y_lb'], table_workspace['y_ub'])
-            if table_xy_is_clear(x, y, existing_xys):
+            if self.table_xy_is_clear(x, y, existing_xys):
                 return (x, y)
 
     def table_xy_is_clear(self, x: float, y: float,
@@ -461,7 +476,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
 
     def set_table(self, table_idx: int, exact_state: Dict[str, Any], setup: str = 'pile',
-                                            params: Optional[Union[int, List[Any]]] = None) -> State:
+                                            params: Optional[Union[int, List[Any]]] = None) -> Dict[Object, Array]:
         """Take in params and define an initial state for multiple tables
         env.
 
@@ -494,17 +509,19 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             for pile in range(num_piles):
                 piles.append([])
                 for block_num in range(num_blocks_per_pile):
-                    block = Object(f"block{block_num}", self._block_type)
+                    block = Object(f"block{table_idx}_{pile}_{block_num}", self._block_type)
                     # Add block to pile
                     piles[-1].append(block)
 
             data: Dict[Object, Array] = {}
             # Create a block to pile index:
-            block_to_pile_idx = {}
+            # Idx. (i,j) means j-th block in 
+            # i-th pile.
+            pile_to_block_idx = {}
             for i, pile in enumerate(piles):
                 for j, block in enumerate(pile):
-                    assert block not in block_to_pile_idx
-                    block_to_pile_idx[block] = (i, j)
+                    assert block not in pile_to_block_idx, "Block shouldn't alredy be part of the pile."
+                    pile_to_block_idx[block] = (i, j)
             
             # Sample pile (x, y)s
             pile_to_xy: Dict[int, Tuple[float, float]] = {}
@@ -513,34 +530,27 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             #tolerance level.
             rng = np.random.default_rng()
             for i in range(len(piles)):
-                pile_to_xy[i] = sample_initial_pile_xy(
+                pile_to_xy[i] = self.sample_initial_pile_xy(
                     rng, set(pile_to_xy.values()), table_idx)
 
             # Create block states
-            for block, pile_idx in block_to_pile_idx.items():
-                pile_i, pile_j = pile_idx
+            for block, pile_idx in pile_to_block_idx.items():
+                pile_i, block_j = pile_idx
                 x, y = pile_to_xy[pile_i]
                 #z corresponds to the center of the block.
-                z = self.table_height + self._block_size * (0.5 + pile_j)
+                z = self.table_height + self._block_size * (0.5 + block_j)
                 r, g, b = rng.uniform(size=3)
                 if "clear" in self._block_type.feature_names:
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b,
                     # clear]
                     # Block is clear iff it is at the top of a pile
-                    clear = pile_j == len(piles[pile_i]) - 1
+                    clear = block_j == len(piles[pile_i]) - 1
                     data[block] = np.array([x, y, z, 0.0, r, g, b, clear])
                 else:
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b]
                     data[block] = np.array([x, y, z, 0.0, r, g, b])
-            # [pose_x, pose_y, pose_z, fingers]
-            # Note: the robot poses are not used in this environment (they are
-            # constant), but they change and get used in the PyBullet subclass.
-            #TODO: This will create a problem. Need to figure out how to initialize
-            #       this correctly for this environment.
-            rx, ry, rz = self.robo_x, self.robo_y, self.robo_z
-            rf = 1.0  # fingers start out open
-            data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
-            return State(data)
+
+            return data
 
         if setup == 'exact_pile':
             assert exact_state is not None, f"Must provide a state description for exact state."
@@ -551,18 +561,18 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             for pile in exact_state.keys():
                 piles.append([])
                 for i in range(len(exact_state[pile])):
-                    block = Object(f"block{block_count}", self._block_type)
+                    block = Object(f"block{table_idx}_{len(piles)}_{block_count}", self._block_type)
                     piles[-1].append(block)
                     block_to_params_dict[block] = exact_state[pile][i]
                     block_count+=1
 
             data: Dict[Object, Array] = {}
             # Create a block to pile index:
-            block_to_pile_idx = {}
+            pile_to_block_idx = {}
             for i, pile in enumerate(piles):
                 for j, block in enumerate(pile):
-                    assert block not in block_to_pile_idx
-                    block_to_pile_idx[block] = (i, j)
+                    assert block not in pile_to_block_idx
+                    pile_to_block_idx[block] = (i, j)
 
             # Sample pile (x, y)s
             pile_to_xy: Dict[int, Tuple[float, float]] = {}
@@ -571,60 +581,56 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             #tolerance level.
             rng = np.random.default_rng()
             for i in range(len(piles)):
-                pile_to_xy[i] = sample_initial_pile_xy(
+                pile_to_xy[i] = self.sample_initial_pile_xy(
                     rng, set(pile_to_xy.values()), table_idx)
 
 
             # Create block states
-            for block, pile_idx in block_to_pile_idx.items():
-                pile_i, pile_j = pile_idx
+            for block, pile_idx in pile_to_block_idx.items():
+                pile_i, block_j = pile_idx
                 x, y = pile_to_xy[pile_i]
                 #z corresponds to the center of the block.
-                z = self.table_height + self._block_size * (0.5 + pile_j)
+                z = self.table_height + self._block_size * (0.5 + block_j)
                 r, g, b = ImageColor.getrgb(block_to_params_dict[block])
                 if "clear" in self._block_type.feature_names:
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b,
                     # clear]
                     # Block is clear iff it is at the top of a pile
-                    clear = pile_j == len(piles[pile_i]) - 1
+                    clear = block_j == len(piles[pile_i]) - 1
                     data[block] = np.array([x, y, z, 0.0, r, g, b, clear])
                 else:
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b]
                     data[block] = np.array([x, y, z, 0.0, r, g, b])
-            # [pose_x, pose_y, pose_z, fingers]
-            # Note: the robot poses are not used in this environment (they are
-            # constant), but they change and get used in the PyBullet subclass.
-            #TODO: This will create a problem. Need to figure out how to initialize
-            #       this correctly for this environment.
-            rx, ry, rz = self.robo_x, self.robo_y, self.robo_z
-            rf = 1.0  # fingers start out open
-            data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
-            return State(data)
+
+            return data
 
         if setup == "exact_scattered":
             assert exact_state is not None, f"Must provide a state description for exact state."
             assert isinstance(exact_state, list), f"State description must be provided in a list format for\
                                                     mode exact_scattered."
 
-            table_workspace = _table_workspaces[table_idx]
+            table_workspace = self._table_workspaces[table_idx]
             #Compute the max number of blocks that can be on the table;
             #maximum allowed blocks is a constant number below that.
             #This constant can be updated if required.
             table_width = np.abs(table_workspace['x_ub'] - table_workspace['x_lb'])
             table_length = np.abs(table_workspace['y_ub'] - table_workspace['y_lb'])
-            max_blocks_on_table = np.floor(((table_length*table_width)/(self._block_size*self._block_size))\
-                                                        *(1 - self.collision_padding))
-            max_num_block_limit = max_blocks_on_table+5
+            #TODO: Fix computation for max_blocks_on_table; currently it's gives a negative value.
+            max_blocks_on_table = int(np.floor(((table_length*table_width)/(self._block_size*self._block_size))\
+                                                        *(1 - self.collision_padding)))
+            
+            # max_num_block_limit = max_blocks_on_table+5
+            max_num_block_limit = 20
 
             exact_state = exact_state[:max_num_block_limit]
+
 
             #Each block is a new pile, scattered on the table.
             piles: List[List[Object]] = []
             for i in range(len(exact_state)):
                 piles.append([])    
-                block = Object(f"block{i}", self._block_type)
+                block = Object(f"block{table_idx}_{len(piles)}_{i}", self._block_type)
                 piles[-1].append(block)
-
 
             data: Dict[Object, Array] = {}
             # Sample pile (x, y)s
@@ -634,7 +640,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             #tolerance level.
             rng = np.random.default_rng()
             for i in range(len(piles)):
-                pile_to_xy[i] = sample_initial_pile_xy(
+                pile_to_xy[i] = self.sample_initial_pile_xy(
                     rng, set(pile_to_xy.values()), table_idx)
 
             # Create block states
@@ -648,21 +654,59 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b,
                     # clear]
                     # Block is clear iff it is at the top of a pile
-                    clear = pile_j == len(piles[pile_i]) - 1
+                    # Here, since the piles contain a single block,
+                    # they all are clear.
+                    clear = True
                     data[block[0]] = np.array([x, y, z, 0.0, r, g, b, clear])
                 else:
                     # [pose_x, pose_y, pose_z, held, color_r, color_g, color_b]
                     data[block[0]] = np.array([x, y, z, 0.0, r, g, b])
-            # [pose_x, pose_y, pose_z, fingers]
-            # Note: the robot poses are not used in this environment (they are
-            # constant), but they change and get used in the PyBullet subclass.
-            #TODO: This will create a problem. Need to figure out how to initialize
-            #       this correctly for this environment.
-            rx, ry, rz = self.robo_x, self.robo_y, self.robot_z
-            rf = 1.0  # fingers start out open
-            data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
-            return State(data)
+            return data
 
+
+    def set_state(self, table_configs: Dict[int, Dict[str, Any]]) -> State:  
+        """Master function to create complete multi-table state."""  
+          
+        # Initialize base state with all tables and robot  
+        complete_data = {}  
+          
+        # Add all table objects  
+        for i, table in enumerate(self._tables):  
+            tx, ty, tz = self._table_poses[i]  
+            complete_data[table] = np.array([tx, ty, tz, i], dtype=np.float32)  
+          
+        # Add robot 
+        # [pose_x, pose_y, pose_z, fingers]
+        # Note: the robot poses are not used in this environment (they are
+        # constant), but they change and get used in the PyBullet subclass.
+        #TODO: This will create a problem. Need to figure out how to initialize
+        #       this correctly for this environment.
+        rx, ry, rz = self.robo_x, self.robo_y, self.robo_z
+        rf = 1.0  # fingers start out open
+        complete_data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
+        
+          
+        # For each table configuration, add blocks  
+        for table_idx, config in table_configs.items(): 
+
+            table_state = self.set_table(table_idx, config['exact_state'], config['setup'], config.get('params'))  
+            # Merge block objects from table_state into complete_data 
+            for obj, obj_data in table_state.items():  
+                if obj.is_instance(self._block_type):
+                    complete_data[obj] = obj_data
+                else:
+                    raise NotImplementedError(f"The environment is currently designed to accept only blocks.")
+          
+        final_state = State(complete_data)
+
+        # Create PyBulletState with initial joint positions  
+        joint_positions = list(self._pybullet_robot.initial_joint_positions)  
+        state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions)  
+          
+        self._current_observation = state_with_sim  
+        self._reset_state(state_with_sim)
+
+        return state_with_sim
 
 
 
