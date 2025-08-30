@@ -31,7 +31,7 @@ class PDDLEnvGroundTruthOptionFactory(GroundTruthOptionFactory):
     @classmethod
     def get_options(cls, env_name: str, types: Dict[str, Type],
                     predicates: Dict[str, Predicate],
-                    action_space: Box) -> Set[ParameterizedOption]:
+                    action_space: Box, *args, **kwargs) -> Set[ParameterizedOption]:
         env_cls = cls._get_env_name_to_env_class()[env_name]
         domain_str = env_cls.get_domain_str()
         _, _, strips_operators = _parse_pddl_domain(domain_str)

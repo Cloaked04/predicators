@@ -71,6 +71,10 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                                                                             f"must match num_tables ({num_tables})"
           
         super().__init__(use_gui)
+
+        #2D position of where the robot starts at
+        self._home_xy: Tuple[float, float] = None
+        self._AtHome = Predicate("AtHome", [self._robot_type], self._AtHomeHolds)
           
         # Create table type and objects  
         self._table_type = Type("table", ["pose_x", "pose_y", "pose_z", "id"])
@@ -81,7 +85,10 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                                         self._OnTable_holds)
 
         # RobotAt predicate for determining robot's location; Eg: At(robot, table1)
-        self._At = Predicate("RobotAt", [self._robot_type, self._table_type], self._AtHolds)  
+        self._At = Predicate("RobotAt", [self._robot_type, self._table_type], self._AtHolds)
+
+        # BlockAt predicate for determining block is on what table: Eg: BlockAt(block, table1)
+        self._BlockAt = Predicate("BlockAt", [self._block_type, self._table_type], self._BlockAtHolds)
           
         # Track correspondence between PyBullet IDs and objects  
         self._block_id_to_block: Dict[int, Object] = {}  
@@ -105,6 +112,8 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         # base_predicates.discard(BlocksEnv.OnTable)
         # base_predicates.add(self._OnTable)
         base_predicates.add(self._At)
+        base_predicates.add(self._AtHome)
+        base_predicates.add(self._BlockAt)
         return base_predicates
 
     @property
@@ -124,14 +133,14 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         table_id = int(state.get(table, "id"))
         workspace = self._table_workspaces[table_id]
 
-        bx = state.get(block, "pose_x")
-        by = state.get(block, "pose_y")
-        bz = state.get(block, "pose_z")
+        block_x = state.get(block, "pose_x")
+        block_y = state.get(block, "pose_y")
+        block_z = state.get(block, "pose_z")
 
         #Check if block is within table workspace and at table height and not held by robot
-        x_in_bounds = workspace["x_lb"] <=bx <= workspace["x_ub"]
-        y_in_bounds = workspace["y_lb"] <=by <= workspace["y_ub"]
-        z_on_table = abs(bz-(self.table_height+self._block_size/2))<self.on_tol
+        x_in_bounds = workspace["x_lb"] <=block_x <= workspace["x_ub"]
+        y_in_bounds = workspace["y_lb"] <=block_y <= workspace["y_ub"]
+        z_on_table = abs(block_z-(self.table_height+self._block_size/2))<self.on_tol
         not_held = state.get(block, "held")<0.5
 
         return x_in_bounds and y_in_bounds and z_on_table and not_held
@@ -139,24 +148,70 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
     def _AtHolds(self, state: State, objects: List[Object]) -> bool:
         """Checks whether robot is at a table/loc.
-        Currently returning true if robot is within 0.1 of the
+        Currently returning true if robot is within 0.2 of the
         table.
         """
         # assert len(objects) == 1, f"Only the table to be checked for must be passed as object."
+        robot = objects[0]
         table = objects[1]
         assert table.is_instance(self._table_type)
 
-        tx = state.get(table, "pose_x")
-        ty = state.get(table, "pose_y")
+        table_x = state.get(table, "pose_x")
+        table_y = state.get(table, "pose_y")
 
-        x_workspace = (tx-0.125, tx+0.125)
-        y_workspace = (ty-0.2, ty+0.2)
+        # x_workspace = (tx-0.125, tx+0.125)
+        # y_workspace = (ty-0.2, ty+0.2)
 
-        robot_x, robot_y, _ = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id)
+        # robot_x, robot_y, _ = self._pybullet_robot.get_base_pose(physics_client_id=self._physics_client_id)
+        robot_x, robot_y = state.get(robot, "pose_x"), state.get(robot, "pose_y")
+
+        dist_from_center = np.linalg.norm((robot_x-table_x, robot_y-table_y))
 
         
-        return (x_workspace[0]-0.1 <=robot_x <= x_workspace[1]+0.1 and y_workspace[0]-0.1<=robot_y<=y_workspace[1]+0.1)
+        return dist_from_center<=0.5
 
+
+    def _AtHomeHolds(self, state: State, objects: List[Object]) -> bool:
+        """True iff the robot's current base (x,y) is within eps of the start base (x,y).
+        This way, home can be anywhere the robot is initialized to start.
+        """
+        assert len(objects) == 1
+        robot = objects[0]
+        assert robot.is_instance(self._robot_type)
+
+        # Lazily set home if not set yet.
+        # if self._home_xy is None:
+        #     home_x, home_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        #     self._home_xy = (home_x, home_y)
+
+        base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        # base_x, base_y = state.get(robot, "pose_x"), state.get(robot, "pose_y")
+        epsilon = 0.10   # choose to match your base controller tolerance
+        return np.hypot(base_x - self._home_xy[0], base_y - self._home_xy[1]) <= epsilon
+
+
+    def _BlockAtHolds(self, state: State, objects: List[Object]) -> bool:
+        """True iff the block's x,y lie in the table's workspace.
+        """
+
+        assert len(objects) >=2
+        block = objects[0]
+        table = objects[1]
+
+        assert block.is_instance(self._block_type)
+        assert table.is_instance(self._table_type)
+
+        block_x = state.get(block, "pose_x")
+        block_y = state.get(block, "pose_y")
+        table_id = int(state.get(table, "id"))
+
+        table_workspace = self._table_workspaces[table_id]
+
+        x_in_bounds = table_workspace["x_lb"] <=block_x <= table_workspace["x_ub"]
+        y_in_bounds = table_workspace["y_lb"] <=block_y <= table_workspace["y_ub"]
+        not_held = state.get(block, "held")<0.5
+
+        return x_in_bounds and y_in_bounds and not_held
 
 
     @classmethod
@@ -256,11 +311,12 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         qx, qy, qz, qw = self.get_robot_ee_home_orn()
         f = self.fingers_state_to_joint(self._pybullet_robot,
                                         state.get(self._robot, "fingers"))
-        return np.array([
+        extracted_robot_state = np.array([
             state.get(self._robot, "pose_x"),
             state.get(self._robot, "pose_y"),
             state.get(self._robot, "pose_z"), qx, qy, qz, qw, f
                         ], dtype=np.float32)
+        return extracted_robot_state
 
 
     def _reset_state(self, state: State) -> None:
@@ -681,7 +737,8 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         # constant), but they change and get used in the PyBullet subclass.
         #TODO: This will create a problem. Need to figure out how to initialize
         #       this correctly for this environment.
-        rx, ry, rz = self.robo_x, self.robo_y, self.robo_z
+        ee_home_position = self._pybullet_robot.get_state()[:3]
+        rx, ry, rz = ee_home_position[0], ee_home_position[1], ee_home_position[2]
         rf = 1.0  # fingers start out open
         complete_data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
         
@@ -700,11 +757,14 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         final_state = State(complete_data)
 
         # Create PyBulletState with initial joint positions  
-        joint_positions = list(self._pybullet_robot.initial_joint_positions)  
-        state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions)  
-          
+        joint_positions = list(self._pybullet_robot.get_joints())
+        base_pose = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions, base_pose=base_pose)  
         self._current_observation = state_with_sim  
         self._reset_state(state_with_sim)
+        #Set robot's home location to where it is.
+        base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        self._home_xy = (float(base_x), float(base_y))
 
         return state_with_sim
 

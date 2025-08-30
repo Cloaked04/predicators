@@ -170,13 +170,16 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         GripperOpen = predicates["GripperOpen"]
         Holding = predicates["Holding"]
         Clear = predicates["Clear"]
+        AtHome = predicates["AtHome"]
         RobotAt = predicates["RobotAt"]
+        BlockAt = predicates["BlockAt"]
 
         # Options — these *must* match the names your multitable option factory exports
-        Pick        = options["Pick"]
-        Stack       = options["Stack"]
-        PutOnTable  = options["PutOnTable"]
-        Move        = options["Move"]
+        Pick = options["Pick"]
+        Stack = options["Stack"]
+        PutOnTable = options["PutOnTable"]
+        MoveTo = options["MoveTo"]
+        MoveToPick = options["MoveToPick"]
 
         nsrts: Set[NSRT] = set()
 
@@ -208,14 +211,15 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         nsrts.add(pickfromtable_nsrt)
 
 
-        # Unstack
+        # UnstackFromTable
         block  = Variable("?block", block_type)
         otherblock = Variable("?otherblock", block_type)
         robot  = Variable("?robot", robot_type)
         table = Variable("?table", table_type)
 
         parameters=[block, otherblock, robot, table]
-        option_vars = [robot, block, table]
+        # option_vars = [robot, block, table]
+        option_vars = [robot, block]
         option=Pick
         preconditions={
             LiftedAtom(On, [block, otherblock]),
@@ -234,10 +238,45 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
             LiftedAtom(GripperOpen, [robot]),
         }
 
-        unstack_nsrt = NSRT("Unstack", parameters, preconditions, add_effects,
+        unstackfromtable_nsrt = NSRT("UnstackFromTable", parameters, preconditions, add_effects,
                             delete_effects, set(), option, option_vars,
                             null_sampler)
-        nsrts.add(unstack_nsrt)
+        nsrts.add(unstackfromtable_nsrt)
+
+
+        # UnstackFromBlock
+        block  = Variable("?block", block_type)
+        otherblock = Variable("?otherblock", block_type)
+        robot  = Variable("?robot", robot_type)
+        otherotherblock = Variable("?otherotherblock", block_type)
+
+        parameters=[block, otherblock, robot, otherotherblock, table]
+        # option_vars = [robot, block, table]
+        option_vars = [robot, block]
+        option=Pick
+        preconditions={
+            LiftedAtom(On, [block, otherblock]),
+            LiftedAtom(On, [otherblock, otherotherblock]),
+            LiftedAtom(Clear, [block]),
+            LiftedAtom(RobotAt, [robot, table]),
+            LiftedAtom(BlockAt, [block, table]),
+            LiftedAtom(GripperOpen, [robot])
+        }
+        add_effects={
+            LiftedAtom(Holding, [block]),
+            LiftedAtom(Clear, [otherblock])
+        }
+        delete_effects={
+            LiftedAtom(On, [block, otherblock]),
+            LiftedAtom(BlockAt, [block, table]),
+            LiftedAtom(Clear, [block]),
+            LiftedAtom(GripperOpen, [robot]),
+        }
+
+        unstackfromblock_nsrt = NSRT("UnstackFromBlock", parameters, preconditions, add_effects,
+                            delete_effects, set(), option, option_vars,
+                            null_sampler)
+        nsrts.add(unstackfromblock_nsrt)
 
 
         # Stack
@@ -303,14 +342,31 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
 
         nsrts.add(putontable_nsrt)
 
-        #Move:
+        # MoveFromHomeToTable:
+        robot = Variable("?robot", robot_type)
+        table = Variable("?table", table_type)
+        parameters = [robot, table]
+        option_vars = [robot, table]
+        option = MoveTo
+        preconditions = { LiftedAtom(AtHome, [robot]) }
+        add_effects = { LiftedAtom(RobotAt, [robot, table]) }
+        delete_effects = { LiftedAtom(AtHome, [robot]) }
+
+        move_from_home_nsrt = NSRT(
+            "MoveFromHome", parameters, preconditions,
+            add_effects, delete_effects, set(),
+            option, option_vars, null_sampler
+        )
+        nsrts.add(move_from_home_nsrt)
+
+        #MoveFromTableToTable:
         robot = Variable("?robot", robot_type)
         table = Variable("?table", table_type)
         othertable = Variable("?othertable", table_type)
 
         parameters = [robot, table, othertable]
         option_vars = [robot, othertable]
-        option = Move
+        option = MoveTo
 
         preconditions = {LiftedAtom(RobotAt, [robot, table])}
         add_effects = {LiftedAtom(RobotAt, [robot, othertable])}
@@ -318,10 +374,47 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
 
         #Do we need a sampler?
 
-        move_nsrt = NSRT("Move", parameters, preconditions, add_effects,
+        move_to_nsrt = NSRT("MoveFromTable", parameters, preconditions, add_effects,
                         delete_effects, set(), option, option_vars, null_sampler)
 
-        nsrts.add(move_nsrt)
+        nsrts.add(move_to_nsrt)
+
+        #MoveFromHomeToPick:
+        robot = Variable("?robot", robot_type)
+        block = Variable("?block", block_type)
+        table = Variable("?table", table_type)
+
+        parameters = [robot, table, block]
+        # parameters = [robot, table]
+        option_vars = [robot, block]
+        option = MoveToPick
+
+        preconditions = {LiftedAtom(AtHome, [robot]),
+                         LiftedAtom(BlockAt, [block, table])}
+        add_effects = {LiftedAtom(RobotAt, [robot, table])}
+        delete_effects = (LiftedAtom(AtHome, [robot]))
+
+        move_from_home_to_pick = NSRT("MoveFromHomeToPick", parameters, preconditions, add_effects,
+                                    delete_effects, set(), option, option_vars, null_sampler)
+        
+        #MoveFromTableToPick:
+        robot = Variable("?robot", robot_type)
+        block = Variable("?block", block_type)
+        table = Variable("?table", table_type)
+        table = Variable("?othertable", table_type)
+
+
+        parameters = [robot, table, othertable, block]
+        option_vars = [robot, block]
+        option = MoveToPick
+
+        preconditions = {LiftedAtom(RobotAt, [robot, table]),
+                         LiftedAtom(BlockAt, [block, othertable])}
+        add_effects = {LiftedAtom(RobotAt, [robot, othertable])}
+        delete_effects = (LiftedAtom(RobotAt, [robot, table]))
+
+        move_from_table_to_pick = NSRT("MoveFromTableToPick", parameters, preconditions, add_effects,
+                                    delete_effects, set(), option, option_vars, null_sampler)
 
 
 

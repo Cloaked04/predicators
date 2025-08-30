@@ -55,18 +55,21 @@ table_configs = {
 # Create the initial state  
 initial_state = env.set_state(table_configs)
 
-table_pose = env._table_poses[0]  # (1.0, -0.5, 0.0)  
-  
-# Position robot near the table  
-robot_target_x = table_pose[0] + 0.09  
-robot_target_y = table_pose[1] + 0.09 
-  
-# Move the robot base  
-pybullet_robot.move_base_to((robot_target_x, robot_target_y, 0.0),   
-                                physics_client_id=physics_client_id)
-  
-# Get the updated state after robot movement  
-updated_initial_state = env._get_state()
+# table_pose = env._table_poses[0]  # (1.0, -0.5, 0.0)  
+
+# def points_on_circle(x, y, r=0.83, num_points=1):
+#     """Return points on a circle centered at (x, y) with radius r."""
+#     angles = np.linspace(0, 2*np.pi, num_points, endpoint=False)
+#     xs = x + r * np.cos(angles)
+#     ys = y + r * np.sin(angles)
+#     return [xs, ys]
+
+# # Position robot near the table  
+# robot_target_x, robot_target_y  = points_on_circle(table_pose[0], table_pose[1])
+
+# # Move the robot base  
+# pybullet_robot.move_base_to((robot_target_x, robot_target_y, 0.0),   
+#                                 physics_client_id=physics_client_id)
   
 # 3. Define goal using your multi-table predicates  
 # Example goal: Move specific blocks to table 2, robot should end at table 1:
@@ -85,7 +88,7 @@ goal = {
 }  
   
 # 4. Create Task object  
-task = Task(updated_initial_state, goal) 
+task = Task(initial_state, goal) 
 initial_options=get_gt_options(env.get_name(), robot=pybullet_robot, env=env, physics_client_id=physics_client_id)
 initial_nsrts=get_gt_nsrts(env.get_name(), predicates_to_keep=env.predicates, options_to_keep=initial_options, 
                                                 robot=pybullet_robot, env=env, physics_client_id=physics_client_id)
@@ -130,7 +133,7 @@ approach = OracleApproach(
 # 6. Solve the TAMP problem using bilevel planning  
 print("Starting TAMP planning with bilevel approach...")  
 try:  
-    policy = approach.solve(task, timeout=500)  
+    policy = approach.solve(task, timeout=20000)  
     print("Planning completed successfully!")  
       
     # 7. Execute the policy  

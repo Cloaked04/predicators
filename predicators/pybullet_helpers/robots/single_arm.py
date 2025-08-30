@@ -270,12 +270,10 @@ class SingleArmPyBulletRobot(abc.ABC):
         # First, reset the joint values to initial joint positions,
         # so that IK is consistent (less sensitive to initialization).
         self.set_joints(self.initial_joint_positions)
-
         # Now run IK to get to the actual starting rx, ry, rz. We use
         # validate=True to ensure that this initialization works.
         pose = Pose((rx, ry, rz), (qx, qy, qz, qw))
         self.inverse_kinematics(pose, validate=True)
-
         # Handle setting the robot finger joints.
         for finger_id in [self.left_finger_id, self.right_finger_id]:
             p.resetJointState(self.robot_id,

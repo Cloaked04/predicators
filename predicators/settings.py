@@ -695,6 +695,7 @@ class GlobalSettings:
                     # tasks take more actions to complete.
                     "pybullet_cover": 1000,
                     "pybullet_blocks": 1000,
+                    "pybullet_multitable_blocks": 20000,
                     "doors": 1000,
                     "coffee": 1000,
                     "kitchen": 1000,

@@ -174,21 +174,28 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
             target_pose: Tuple (x, y, theta) or Pose object
             physics_client_id: PyBullet physics client ID
         """
+        #Get robot's current base pose and orientation:
+        current_pos, current_orn = p.getBasePositionAndOrientation(self.robot_id, physicsClientId=physics_client_id)
+        current_joints = self.get_joints()
+
         if isinstance(target_pose, tuple):
             x, y, theta = target_pose
             #pos = [x, y, self._base_pose.position[2]]
-            pos = [x, y, 0.05]
+            pos = [x, y, current_pos[-1]]
             orn = p.getQuaternionFromEuler([0, 0, theta])
+            # orn = current_orn
         else:
             pos = target_pose.position
             #Extract yaw from the orientation quaternion and only use yaw
             #Understand these concepts better
-            _, _, yaw = p.getEulerFromQuaternion(target_pose.orientation)
-            orn = p.getQuaternionFromEuler([0, 0, yaw])
+            # _, _, yaw = p.getEulerFromQuaternion(target_pose.orientation)
+            # orn = p.getQuaternionFromEuler([0, 0, yaw])
+            orn = target_pose.orientation
 
         p.resetBasePositionAndOrientation(
             self.robot_id, pos, orn, physicsClientId=physics_client_id
         )
+        self.set_joints(current_joints)
 
         if held_object_id is not None:
             assert ee_link_to_held_object is not None
@@ -238,7 +245,7 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
         self,
         target_pose: Tuple[float, float, float],
         physics_client_id: int,
-        step_size: float = 0.01,
+        step_size: float = 0.005,
         time_step: float = 0.01 
     ) -> None:
         """
@@ -287,10 +294,10 @@ class MobileSingleArmPyBulletRobot(SingleArmPyBulletRobot):
                 self.robot_id, new_pos, new_orn, physicsClientId=physics_client_id)
             
             # Step simulation to update visuals and physics
-            for _ in range(10):  # Multiple steps for stability
-                p.stepSimulation(physicsClientId=physics_client_id)
-            
-            time.sleep(time_step)  # Sleep for smoother visualization
+            # for _ in range(10):  # Multiple steps for stability
+            #     p.stepSimulation(physicsClientId=physics_client_id)
+            # # Sleep for smoother visualization
+            # time.sleep(10*(1/240))
 
 
     

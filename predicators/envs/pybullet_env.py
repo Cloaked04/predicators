@@ -100,6 +100,7 @@ class PyBulletEnv(BaseEnv):
                    useFixedBase=True,
                    physicsClientId=physics_client_id)
 
+
         p.changeDynamics(
                     bodyUniqueId=plane_id,
                     linkIndex= -1,
@@ -306,6 +307,23 @@ class PyBulletEnv(BaseEnv):
                 self._pybullet_robot.move_base_smoothly(
                     (x,y, theta),
                     self._physics_client_id)
+                # Re-establish held-constraint if a object was held
+                # before base motion.
+                if self._held_obj_id is not None:
+                    world_to_base_link = get_link_state(self._pybullet_robot.robot_id,
+                                                        self._pybullet_robot.end_effector_id,
+                                                        physics_client_id=self._physics_client_id).com_pose
+                    base_link_to_held_obj = p.invertTransform(*self._held_obj_to_base_link)
+                    world_to_held_obj = p.multiplyTransforms(world_to_base_link[0],
+                                                             world_to_base_link[1],
+                                                             base_link_to_held_obj[0],
+                                                             base_link_to_held_obj[1])
+                    p.resetBasePositionAndOrientation(
+                                                    self._held_obj_id,
+                                                    world_to_held_obj[0],
+                                                    world_to_held_obj[1],
+                                                    physicsClientId=self._physics_client_id)
+                    self._create_grasp_constraint()
 
             elif mode == "velocity":
                 #Use the differential drive kinematics defined in mobile_single_arm.py
@@ -437,11 +455,7 @@ class PyBulletEnv(BaseEnv):
         return closest_held_obj
 
     def _create_grasp_constraint(self) -> None:
-        '''
-        Note from Pratyush: Don't understand this function yet.
-        Create PyBullet constraint that allows the body to be held during
-        simulations.
-        '''
+        
         assert self._held_obj_id is not None
         base_link_to_world = np.r_[p.invertTransform(
             *p.getLinkState(self._pybullet_robot.robot_id,

@@ -1,0 +1,136 @@
+[GroundNSRT-MoveFromHome:
+    Parameters: (robby:robot, table1:table)
+    Preconditions: [AtHome(robby:robot)]
+    Add Effects: [RobotAt(robby:robot, table1:table)]
+    Delete Effects: [AtHome(robby:robot)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='MoveTo', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table1:table], 
+GroundNSRT-UnstackFromBlock:
+    Parameters: (block1_1_2:block, block1_1_1:block, robby:robot, block1_1_0:block, table1:table)
+    Preconditions: [BlockAt(block1_1_2:block, table1:table), Clear(block1_1_2:block), GripperOpen(robby:robot), On(block1_1_1:block, block1_1_0:block), On(block1_1_2:block, block1_1_1:block), RobotAt(robby:robot, table1:table)]
+    Add Effects: [Clear(block1_1_1:block), Holding(block1_1_2:block)]
+    Delete Effects: [BlockAt(block1_1_2:block, table1:table), Clear(block1_1_2:block), GripperOpen(robby:robot), On(block1_1_2:block, block1_1_1:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block1_1_2:block], 
+GroundNSRT-PutOnTable:
+    Parameters: (block1_1_2:block, robby:robot, table1:table)
+    Preconditions: [Holding(block1_1_2:block), RobotAt(robby:robot, table1:table)]
+    Add Effects: [Clear(block1_1_2:block), GripperOpen(robby:robot), OnTable(block1_1_2:block, table1:table)]
+    Delete Effects: [Holding(block1_1_2:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='PutOnTable', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table1:table], 
+GroundNSRT-UnstackFromTable:
+    Parameters: (block1_1_1:block, block1_1_0:block, robby:robot, table1:table)
+    Preconditions: [Clear(block1_1_1:block), GripperOpen(robby:robot), On(block1_1_1:block, block1_1_0:block), OnTable(block1_1_0:block, table1:table), RobotAt(robby:robot, table1:table)]
+    Add Effects: [Clear(block1_1_0:block), Holding(block1_1_1:block)]
+    Delete Effects: [Clear(block1_1_1:block), GripperOpen(robby:robot), On(block1_1_1:block, block1_1_0:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block1_1_1:block], 
+GroundNSRT-Stack:
+    Parameters: (block1_1_1:block, block1_1_2:block, robby:robot, table1:table)
+    Preconditions: [Clear(block1_1_2:block), Holding(block1_1_1:block), OnTable(block1_1_2:block, table1:table), RobotAt(robby:robot, table1:table)]
+    Add Effects: [Clear(block1_1_1:block), GripperOpen(robby:robot), On(block1_1_1:block, block1_1_2:block)]
+    Delete Effects: [Clear(block1_1_2:block), Holding(block1_1_1:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Stack', types=[Type(name='robot'), Type(name='block'), Type(name='table')])
+    Option Objects: [robby:robot, block1_1_2:block, table1:table], 
+GroundNSRT-PickFromTable:
+    Parameters: (block1_1_0:block, robby:robot, table1:table)
+    Preconditions: [Clear(block1_1_0:block), GripperOpen(robby:robot), OnTable(block1_1_0:block, table1:table), RobotAt(robby:robot, table1:table)]
+    Add Effects: [Holding(block1_1_0:block)]
+    Delete Effects: [Clear(block1_1_0:block), GripperOpen(robby:robot), OnTable(block1_1_0:block, table1:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block1_1_0:block], 
+GroundNSRT-MoveFromTable:
+    Parameters: (robby:robot, table1:table, table2:table)
+    Preconditions: [RobotAt(robby:robot, table1:table)]
+    Add Effects: [RobotAt(robby:robot, table2:table)]
+    Delete Effects: [RobotAt(robby:robot, table1:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='MoveTo', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table2:table], 
+GroundNSRT-PutOnTable:
+    Parameters: (block1_1_0:block, robby:robot, table2:table)
+    Preconditions: [Holding(block1_1_0:block), RobotAt(robby:robot, table2:table)]
+    Add Effects: [Clear(block1_1_0:block), GripperOpen(robby:robot), OnTable(block1_1_0:block, table2:table)]
+    Delete Effects: [Holding(block1_1_0:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='PutOnTable', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table2:table], 
+GroundNSRT-MoveFromTable:
+    Parameters: (robby:robot, table2:table, table0:table)
+    Preconditions: [RobotAt(robby:robot, table2:table)]
+    Add Effects: [RobotAt(robby:robot, table0:table)]
+    Delete Effects: [RobotAt(robby:robot, table2:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='MoveTo', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table0:table], 
+GroundNSRT-UnstackFromBlock:
+    Parameters: (block0_0_2:block, block0_0_1:block, robby:robot, block0_0_0:block, table0:table)
+    Preconditions: [BlockAt(block0_0_2:block, table0:table), Clear(block0_0_2:block), GripperOpen(robby:robot), On(block0_0_1:block, block0_0_0:block), On(block0_0_2:block, block0_0_1:block), RobotAt(robby:robot, table0:table)]
+    Add Effects: [Clear(block0_0_1:block), Holding(block0_0_2:block)]
+    Delete Effects: [BlockAt(block0_0_2:block, table0:table), Clear(block0_0_2:block), GripperOpen(robby:robot), On(block0_0_2:block, block0_0_1:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block0_0_2:block], 
+GroundNSRT-PutOnTable:
+    Parameters: (block0_0_2:block, robby:robot, table0:table)
+    Preconditions: [Holding(block0_0_2:block), RobotAt(robby:robot, table0:table)]
+    Add Effects: [Clear(block0_0_2:block), GripperOpen(robby:robot), OnTable(block0_0_2:block, table0:table)]
+    Delete Effects: [Holding(block0_0_2:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='PutOnTable', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table0:table], 
+GroundNSRT-UnstackFromTable:
+    Parameters: (block0_0_1:block, block0_0_0:block, robby:robot, table0:table)
+    Preconditions: [Clear(block0_0_1:block), GripperOpen(robby:robot), On(block0_0_1:block, block0_0_0:block), OnTable(block0_0_0:block, table0:table), RobotAt(robby:robot, table0:table)]
+    Add Effects: [Clear(block0_0_0:block), Holding(block0_0_1:block)]
+    Delete Effects: [Clear(block0_0_1:block), GripperOpen(robby:robot), On(block0_0_1:block, block0_0_0:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block0_0_1:block], 
+GroundNSRT-Stack:
+    Parameters: (block0_0_1:block, block0_0_2:block, robby:robot, table0:table)
+    Preconditions: [Clear(block0_0_2:block), Holding(block0_0_1:block), OnTable(block0_0_2:block, table0:table), RobotAt(robby:robot, table0:table)]
+    Add Effects: [Clear(block0_0_1:block), GripperOpen(robby:robot), On(block0_0_1:block, block0_0_2:block)]
+    Delete Effects: [Clear(block0_0_2:block), Holding(block0_0_1:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Stack', types=[Type(name='robot'), Type(name='block'), Type(name='table')])
+    Option Objects: [robby:robot, block0_0_2:block, table0:table], 
+GroundNSRT-PickFromTable:
+    Parameters: (block0_0_0:block, robby:robot, table0:table)
+    Preconditions: [Clear(block0_0_0:block), GripperOpen(robby:robot), OnTable(block0_0_0:block, table0:table), RobotAt(robby:robot, table0:table)]
+    Add Effects: [Holding(block0_0_0:block)]
+    Delete Effects: [Clear(block0_0_0:block), GripperOpen(robby:robot), OnTable(block0_0_0:block, table0:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='Pick', types=[Type(name='robot'), Type(name='block')])
+    Option Objects: [robby:robot, block0_0_0:block], 
+GroundNSRT-MoveFromTable:
+    Parameters: (robby:robot, table0:table, table2:table)
+    Preconditions: [RobotAt(robby:robot, table0:table)]
+    Add Effects: [RobotAt(robby:robot, table2:table)]
+    Delete Effects: [RobotAt(robby:robot, table0:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='MoveTo', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table2:table], 
+GroundNSRT-PutOnTable:
+    Parameters: (block0_0_0:block, robby:robot, table2:table)
+    Preconditions: [Holding(block0_0_0:block), RobotAt(robby:robot, table2:table)]
+    Add Effects: [Clear(block0_0_0:block), GripperOpen(robby:robot), OnTable(block0_0_0:block, table2:table)]
+    Delete Effects: [Holding(block0_0_0:block)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='PutOnTable', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table2:table], 
+GroundNSRT-MoveFromTable:
+    Parameters: (robby:robot, table2:table, table1:table)
+    Preconditions: [RobotAt(robby:robot, table2:table)]
+    Add Effects: [RobotAt(robby:robot, table1:table)]
+    Delete Effects: [RobotAt(robby:robot, table2:table)]
+    Ignore Effects: []
+    Option: LinearChainParameterizedOption(name='MoveTo', types=[Type(name='robot'), Type(name='table')])
+    Option Objects: [robby:robot, table1:table]]

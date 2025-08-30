@@ -22,6 +22,7 @@ from predicators.pybullet_helpers.robots.mobile_single_arm import MobileSingleAr
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.joint import JointPositions, get_joint_infos, get_joint_positions
 from predicators.pybullet_helpers.link import get_link_state, get_link_pose
+from predicators.pybullet_helpers.inverse_kinematics import InverseKinematicsError
 
 #Import the functions that are to be tested:
 
@@ -51,9 +52,10 @@ CFG.pybullet_birrt_num_iters = 50
 CFG.pybullet_birrt_num_attempts = 10
 CFG.pybullet_birrt_smooth_amt = 20
 CFG.seed = random.randint(0,10000)
+seed = CFG.seed
 #CFG.seed = 12
 #Num of PyBullet physics steps per high-level Action in visualize_action_sequence
-CFG.pybullet_sim_steps_per_action = 30
+CFG.pybullet_sim_steps_per_action = 10
 
 #Function to reset robot to a known pose
 def reset_robot_fetch_mobile(robot: MobileSingleArmPyBulletRobot,
@@ -174,7 +176,7 @@ for _ in range(20):
 
 home_orn = env.get_robot_ee_home_orn()
 # Keeping the z a bit high to avoid collision:
-z = env.table_height + CFG.blocks_block_size/2 + 0.1
+z = env.table_height + CFG.blocks_block_size/2 + 0.05
 #logging.critical(f"Value of z: {z}.")
 orn = (0, 0.7071, 0, 0.7071)
 
@@ -244,65 +246,72 @@ target_ee_pose = Pose(position=(1.5 , 0.75, z),
 coordinated_path = run_coordinated_motion_planning(
     robot,
     target_ee_pose=target_ee_pose,
-    collision_bodies=static_collision_bodies,
+    collision_bodies=static_collision_bodies[1:],
     seed=CFG.seed,
     physics_client_id=physics_client_id,
-    try_arm_only_first=True # Planner will try arm-only, fail, then try base+arm
+    try_arm_only_first=False # Planner will try arm-only, fail, then try base+arm
 )
 
-base_path_waypoints, arm_path_waypoints = coordinated_path
+# base_path_waypoints, arm_path_waypoints = coordinated_path
+base_path_waypoints = coordinated_path
 
 
-def get_current_base_and_arm_pose(robot, state:State, objects: Sequence[Object], params: Array):
+# def get_current_base_and_arm_pose(robot, state:State, objects: Sequence[Object], params: Array):
 
-    current_base_pose = robot.get_base_pose(physics_client_id)
-    current_joint_positions = robot.get_joints()
+#     current_base_pose = robot.get_base_pose(physics_client_id)
+#     current_joint_positions = robot.get_joints()
 
-    return current_base_pose, current_joint_positions
-
-
-target_base_pose = base_path_waypoints[-1]
-
-move_option_memory = {}
-param_space = Box(low=np.array([], dtype=np.float32),
-                  high=np.array([], dtype=np.float32), dtype=np.float32)
-
-move_option = create_move_base_option(robot, name="diff-drive",types=[env._robot_type], params_space=param_space,
-                                    get_current_base_and_arm_pose=get_current_base_and_arm_pose, base_path=base_path_waypoints,
-                                    target_base_pose = target_base_pose)
+#     return current_base_pose, current_joint_positions
 
 
-grounded_move = move_option.ground([robot_obj], np.array([], dtype=np.float32))
+# target_base_pose = base_path_waypoints[-1]
 
-assert grounded_move.initiable(move_option_memory)
+# move_option_memory = {}
+# param_space = Box(low=np.array([], dtype=np.float32),
+#                   high=np.array([], dtype=np.float32), dtype=np.float32)
 
-print(grounded_move)
-
-state = state_obj_to_modify
-
-# ipdb.set_trace()
+# move_option = create_move_base_option(robot, name="diff-drive",types=[env._robot_type], params_space=param_space,
+#                                     get_current_base_and_arm_pose=get_current_base_and_arm_pose, base_path=base_path_waypoints,
+#                                     target_base_pose = target_base_pose)
 
 
-while not grounded_move.terminal(move_option_memory):
-    action = grounded_move.policy(move_option_memory)
-    assert action is not None, "Action for base motion can't be None."
-    #logging.warning(f"\nNext action to be simulated:{action}.")
+# grounded_move = move_option.ground([robot_obj], np.array([], dtype=np.float32))
+
+# assert grounded_move.initiable(move_option_memory)
+
+# print(grounded_move)
+
+# state = state_obj_to_modify
+
+# # ipdb.set_trace()
+
+
+# while not grounded_move.terminal(move_option_memory):
+#     action = grounded_move.policy(move_option_memory)
+#     assert action is not None, "Action for base motion can't be None."
+#     #logging.warning(f"\nNext action to be simulated:{action}.")
+#     state = env.simulate(state, action)
+
+#     # omega_r, omega_l = action.base_motion['params']
+
+#     # robot.set_wheel_motors(omega_r, omega_l, physics_client_id)
+
+#     # fixed_arm_pos = action.arr
+#     # robot.set_motors(fixed_arm_pos)
+
+#     # for _ in range(30):
+#     #     p.stepSimulation(physicsClientId=physics_client_id)
+#     # time.sleep(0.15)
+
+# print(f"\n Robot at {robot.get_base_pose(physics_client_id)} after executing differential drive.")
+state = env._current_observation
+current_joint_positions = robot.get_joints()
+for waypoint in base_path_waypoints:
+    action = Action(np.zeros(len(robot.action_space.low), dtype=float))
+    action._arr = current_joint_positions
+    action.set_base_motion(params=waypoint, mode="smooth_position")
+    # robot.move_base_smoothly(target_pose=waypoint, physics_client_id=physics_client_id)
     state = env.simulate(state, action)
-
-    # omega_r, omega_l = action.base_motion['params']
-
-    # robot.set_wheel_motors(omega_r, omega_l, physics_client_id)
-
-    # fixed_arm_pos = action.arr
-    # robot.set_motors(fixed_arm_pos)
-
-    # for _ in range(30):
-    #     p.stepSimulation(physicsClientId=physics_client_id)
-    # time.sleep(0.15)
-
-
-print(f"\n Robot at {robot.get_base_pose(physics_client_id)} after executing differential drive.")
-input()
 
 
 '''
@@ -310,12 +319,96 @@ Now chain arm motion planning with this:
     - convert run_motion_planning to a singleParameterizedOption
     - connect to diff drive
 '''
+state = env._current_observation
+arm_path = []
+start_joint_positions = robot.get_joints()
+final_finger_state = 0.04
 
-for waypoint in arm_path_waypoints:
+z_above_target = target_ee_pose.position[-1]+0.1
+target_ee_pos_xy = target_ee_pose.position[:2]
+ee_pose_above_target = Pose(position=(*target_ee_pos_xy, z_above_target), orientation=target_ee_pose.orientation)
+print(f"\nEE pose above target: {ee_pose_above_target}.")
+
+try:
+    joint_solutions_above_target = robot.inverse_kinematics(ee_pose_above_target, validate=False, set_joints=False)
+
+    assert joint_solutions_above_target is not None
+
+    # Ensure target_joint_position has the correct final_finger_state if it was determined.
+    if final_finger_state is not None and joint_solutions_above_target is not None:
+        mutable_bjs = list(joint_solutions_above_target)
+        # Check if finger indices are valid for the length of best_joint_solution
+        if robot.left_finger_joint_idx < len(mutable_bjs) and \
+           robot.right_finger_joint_idx < len(mutable_bjs):
+            mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
+            mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
+            joint_solutions_above_target = tuple(mutable_bjs)
+        else:
+            # This case should be rare if IK solution was valid
+            logging.warning(f"Warning: Finger joint indices out of bounds for \
+                        joint_solution_. Length: {len(mutable_bjs)}")
+
+    logging.warning(f"Planning arm motion to above target.")
+    arm_path = run_motion_planning(robot,
+                                start_joint_positions,    # Joints before any movement starts
+                                joint_solutions_above_target, # Target joints from IK at final base pose (with fingers updated)
+                                static_collision_bodies,
+                                seed,
+                                physics_client_id,
+                                held_object=None,
+                                base_link_to_held_object=None,
+                                )
+    assert arm_path is not None
+except InverseKinematicsError:
+    logging.critical(f"\nIK for EE pose above target failed.")
+    sys.exit(0)
+
+
+robot.set_joints(joint_solutions_above_target)
+
+try: 
+    joint_solutions_to_target = robot.inverse_kinematics(target_ee_pose, validate=True, set_joints=False)
+
+    assert joint_solutions_to_target is not None
+
+    # Ensure target_joint_position has the correct final_finger_state if it was determined.
+    if final_finger_state is not None and joint_solutions_to_target is not None:
+        mutable_bjs = list(joint_solutions_to_target)
+        # Check if finger indices are valid for the length of best_joint_solution
+        if robot.left_finger_joint_idx < len(mutable_bjs) and \
+           robot.right_finger_joint_idx < len(mutable_bjs):
+            mutable_bjs[robot.left_finger_joint_idx] = final_finger_state
+            mutable_bjs[robot.right_finger_joint_idx] = final_finger_state
+            joint_solutions_to_target = tuple(mutable_bjs)
+        else:
+            # This case should be rare if IK solution was valid
+            logging.warning(f"Warning: Finger joint indices out of bounds for \
+                        joint_solution_. Length: {len(mutable_bjs)}")
+
+    logging.warning(f"Planning arm motion to target.")
+    arm_path_to_target = run_motion_planning(robot,
+                                joint_solutions_above_target,    # Joints before any movement starts
+                                joint_solutions_to_target, # Target joints from IK at final base pose (with fingers updated)
+                                static_collision_bodies,
+                                seed,
+                                physics_client_id,
+                                held_object=None,
+                                base_link_to_held_object=None,
+                                )
+    assert arm_path_to_target is not None
+except InverseKinematicsError:
+    logging.critical(f"\nIK for EE pose above target failed.")
+    sys.exit(0)
+
+robot.set_joints(start_joint_positions)
+
+arm_path.extend(arm_path_to_target)
+
+
+for waypoint in arm_path:
     action = Action(np.zeros(len(robot.action_space.low), dtype=float))
     action._arr = waypoint
     action.set_base_motion(params=(0.0, 0.0), mode="velocity")
-
     state = env.simulate(state, action)
 
     # robot.set_motors(action.arr)
@@ -375,7 +468,7 @@ try:
 except utils.OptionExecutionFailure as e:
     logging.error(f"\nExecuting close_finger_option failed.")
 
-# ipdb.set_trace()
+# # ipdb.set_trace()
 
 assert env._held_obj_id is not None, "Object is not held."
 assert env._held_constraint_id is not None, "Held constraint not created."
@@ -386,7 +479,7 @@ logging.critical(f"Arm is now holding object {block_to_pick_obj_sym.name}.")
 #Slightly move arm up to check if the arm motion is possible without dropping held obj:
 
 current_x, current_y, current_z = robot.get_state()[:3]
-target_z = current_z+0.5
+target_z = current_z+0.2
 ee_position_with_held = (current_x, current_y, target_z)
 ee_pose_with_held_orn = robot.get_state()[3:-1]
 ee_pose_with_held = Pose(position=ee_position_with_held, orientation=ee_pose_with_held_orn)
@@ -398,15 +491,15 @@ assert len(initial_joint_positions_with_held) == 9, "Initial joint positions mus
 initial_left_finger_val = initial_joint_positions_with_held[robot.left_finger_joint_idx]
 initial_right_finger_val = initial_joint_positions_with_held[robot.right_finger_joint_idx]
 
-target_joint_positions_with_held = robot.inverse_kinematics(ee_pose_with_held, validate=True, set_joints=False)
+target_joint_positions_with_held = robot.inverse_kinematics(ee_pose_with_held, validate=False, set_joints=False)
 
 target_joint_positions_with_held[robot.left_finger_joint_idx] = initial_left_finger_val
 target_joint_positions_with_held[robot.right_finger_joint_idx] = initial_right_finger_val
 
 bodies_in_sim = [body for body in bodies_in_sim if body != 9 and body != 0]
 
-print(f"\n Collision bodies: {bodies_in_sim}.")
-# ipdb.set_trace()
+# print(f"\n Collision bodies: {bodies_in_sim}.")
+# # ipdb.set_trace()
 
 # 1. world -> base_link pose | It actually is World -> EE transform
 world_to_ee_pos, world_to_ee_orn = get_link_pose(
@@ -446,6 +539,7 @@ for waypoint in arm_waypoints_with_held:
     assert len(waypoint) == 9, "Waypoints must be of length 9."
 
     action = Action(np.array(waypoint))
+    action.set_base_motion(params=(0.0,0.0), mode='velocity')
     sim_state = env.simulate(sim_state, action)
 
 assert env._held_obj_id is not None, "Object is not held after moving arm up."
@@ -453,7 +547,7 @@ assert env._held_constraint_id is not None, "Held constraint did not remain inta
 # print(f"\nMoving arm up with object held complete.")
 input("\nMoving arm up with object held complete.")
 
-#Trying full-body IK with held obj:
+# #Trying full-body IK with held obj:
 
 home_orn = env.get_robot_ee_home_orn()
 target_ee_pos_with_held = Pose(position=(-2.5, 0.75, 0.3), orientation=home_orn)
@@ -498,26 +592,96 @@ assert env._held_constraint_id is not None, "Held constraint did not remain inta
 
 input("Coordinated planning successful. Continue to simulate:")
 
-base_path_with_held, arm_path_with_held = coordinated_path_with_held
+# base_path_with_held, arm_path_with_held = coordinated_path_with_held
 
+# sim_state = env._current_observation
+
+# for waypoint in base_path_with_held:
+#     action = Action(np.zeros(shape=len(robot.arm_joints),dtype=float))
+#     action.set_base_motion(params=waypoint, mode='smooth_position')
+#     sim_state = env.simulate(sim_state, action)
+
+base_path_with_held = coordinated_path_with_held
+current_joint_positions = robot.get_joints()
 sim_state = env._current_observation
 
 for waypoint in base_path_with_held:
     action = Action(np.zeros(shape=len(robot.arm_joints),dtype=float))
+    action._arr = current_joint_positions
     action.set_base_motion(params=waypoint, mode='smooth_position')
     sim_state = env.simulate(sim_state, action)
+
+# for waypoint in base_path_with_held:
+#     robot.move_base_smoothly(target_pose=waypoint, physics_client_id=physics_client_id)
 
 assert env._held_obj_id is not None, "Object is not held after moving base."
 assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving base."
 print(f"\nMoving base with object held complete.")  
 
-for waypoint in arm_path_with_held:
+#Perform arm motion planning with held to a position for place:
+
+initial_joint_positions_with_held_after_move = robot.get_joints()
+
+initial_left_finger_val_after_move = initial_joint_positions_with_held_after_move[robot.left_finger_joint_idx]
+initial_right_finger_val_after_move = initial_joint_positions_with_held_after_move[robot.right_finger_joint_idx]
+
+target_joint_positions_with_held_after_move = robot.inverse_kinematics(target_ee_pos_with_held, validate=False, set_joints=False)
+
+target_joint_positions_with_held_after_move[robot.left_finger_joint_idx] = initial_left_finger_val_after_move
+target_joint_positions_with_held_after_move[robot.right_finger_joint_idx] = initial_right_finger_val_after_move
+
+# 1. world -> base_link pose | It actually is World -> EE transform
+world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                            robot.robot_id,
+                                            robot.end_effector_id,
+                                            physics_client_id=physics_client_id
+                                        )
+
+# 2. base_link -> world
+ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                            world_to_ee_pos, world_to_ee_orn
+                                        )
+                                        
+# 3. world -> object
+world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                            env._held_obj_id, physicsClientId=physics_client_id
+                                        )
+
+# 4. base_link -> object (chain transforms)
+ee_link_to_held_obj = p.multiplyTransforms(
+                                            ee_to_world_pos, ee_to_world_orn,
+                                            world_to_obj_pos, world_to_obj_orn
+                                            )
+
+arm_waypoints_with_held = run_motion_planning(robot,
+                                              initial_joint_positions_with_held_after_move,
+                                              target_joint_positions_with_held_after_move,
+                                              bodies_in_sim,
+                                              CFG.seed,
+                                              physics_client_id,
+                                              held_object=env._held_obj_id,
+                                              base_link_to_held_object=ee_link_to_held_obj)
+
+assert arm_waypoints_with_held is not None, "Arm planning with obj held failed."
+
+for waypoint in arm_waypoints_with_held:
+    assert len(waypoint) == 9, "Waypoints must be of length 9."
+
     action = Action(np.array(waypoint))
+    action.set_base_motion(params=(0.0,0.0), mode='velocity')
     sim_state = env.simulate(sim_state, action)
 
-assert env._held_obj_id is not None, "Object is not held after moving arm after moving base."
-assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving arm after base."
-print(f"\nMoving base and arm with object held complete.")            
+assert env._held_obj_id is not None, "Object is not held after moving arm up."
+assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving arm up."
+
+
+# for waypoint in arm_path_with_held:
+#     action = Action(np.array(waypoint))
+#     sim_state = env.simulate(sim_state, action)
+
+# assert env._held_obj_id is not None, "Object is not held after moving arm after moving base."
+# assert env._held_constraint_id is not None, "Held constraint did not remain intact after moving arm after base."
+# print(f"\nMoving base and arm with object held complete.")            
 
 
 

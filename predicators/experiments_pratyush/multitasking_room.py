@@ -93,7 +93,7 @@ def setup_and_plan_with_astar():
             task_planning_heuristic=CFG.sesame_task_planning_heuristic,
             max_skeletons_optimized=CFG.sesame_max_skeletons_optimized,
             max_horizon=CFG.horizon,
-            heuristic_method = "hmax"
+            heuristic_method = "lmcut"
         )
         
         print("\nGenerated Plan:")

@@ -1,6 +1,6 @@
 """Ground-truth options for the (non-pybullet) blocks environment."""
 
-from typing import Callable, ClassVar, Dict, List, Sequence, Set, Tuple
+from typing import Callable, ClassVar, Dict, List, Sequence, Set, Tuple, Union
 
 import ipdb
 import random
@@ -15,7 +15,8 @@ from predicators.envs.pybullet_multitable_blocks import PyBulletMultiTableBlocks
 from predicators.ground_truth_models import GroundTruthOptionFactory
 from predicators.pybullet_helpers.controllers import \
     create_change_fingers_option, create_move_end_effector_to_pose_option,\
-    create_arm_motion_planning_option, create_move_base_option
+    create_arm_motion_planning_option, create_disjoint_move_base_option,\
+    create_base_reset_based_move_base_option, create_base_reset_based_move_base_to_pick_option
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.joint import JointInfo, JointPositions
 from predicators.pybullet_helpers.link import get_link_state, get_link_pose
@@ -389,29 +390,29 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         block_size = CFG.blocks_block_size
 
         def get_current_fingers(state: State) -> float:
-            robot, = state.get_objects(robot_type)
+            symbolic_robot, = state.get_objects(robot_type)
             return PyBulletBlocksEnv.fingers_state_to_joint(
-                pybullet_robot, state.get(robot, "fingers"))
+                robot, state.get(symbolic_robot, "fingers"))
 
         def open_fingers_func(state: State, objects: Sequence[Object],
                               params: Array) -> Tuple[float, float]:
             del objects, params  # unused
             current = get_current_fingers(state)
-            target = pybullet_robot.open_fingers
+            target = robot.open_fingers
             return current, target
 
         def close_fingers_func(state: State, objects: Sequence[Object],
                                params: Array) -> Tuple[float, float]:
             del objects, params  # unused
             current = get_current_fingers(state)
-            target = pybullet_robot.closed_fingers
+            target = robot.closed_fingers
             return current, target
 
         #Move
         option_types = [robot_type, table_type]
         params_space = Box(0, 1, (0, ))
-        Move = utils.LinearChainParameterizedOption(
-                "Move",
+        MoveTo = utils.LinearChainParameterizedOption(
+                "MoveTo",
                 [
                     cls._create_move_robot_base_option(
                         name="MoveRobot",
@@ -422,6 +423,22 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                         physics_client_id=physics_client_id),
                 ])
 
+        #MoveToPick
+        option_types = [robot_type, block_type]
+        params_space = Box(0, 1, (0,))
+        MoveToPick = utils.LinearChainParameterizedOption(
+                        "MoveToPick",
+                        [
+                            cls._create_move_robot_base_to_pick_option(
+                                name="MoveRobotToPick",
+                                option_types=option_types,
+                                params_space=params_space,
+                                robot=robot,
+                                env=env,
+                                physics_client_id=physics_client_id),
+                        ])
+
+
         # Pick
         option_types = [robot_type, block_type]
         params_space = Box(0, 1, (0, ))
@@ -431,7 +448,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move to far above the block which we will grasp.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorToPreGrasp",
-                    z_func=lambda x: (x + PyBulletBlocksEnv.pick_z),
+                    z_func=lambda z: (z+0.2),
                     finger_status="open",
                     robot=robot,
                     option_types=option_types,
@@ -461,7 +478,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move back up.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorBackUpPostGrasp",
-                    z_func=lambda x: (x + PyBulletBlocksEnv.pick_z),
+                    z_func=lambda z: (z+0.2),
                     finger_status="closed",
                     robot=robot,
                     option_types=option_types,
@@ -479,7 +496,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move to above the block on which we will stack.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorToPreStack",
-                    z_func=lambda x: (x+PyBulletBlocksEnv.pick_z),
+                    z_func=lambda z: (z+0.2),
                     finger_status="closed",
                     robot=robot,
                     option_types=option_types,
@@ -505,7 +522,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move back up.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorBackUpPostStack",
-                    z_func=lambda x: (x+PyBulletBlocksEnv.pick_z),
+                    z_func=lambda z: (z+0.2),
                     finger_status="open",
                     robot=robot,
                     option_types=option_types,
@@ -525,7 +542,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move to above the table at the (x, y) where we will place.
                 cls._create_move_arm_to_above_table_option(
                     name="MoveEndEffectorToPrePutOnTable",
-                    z=PyBulletBlocksEnv.pick_z,
+                    z=0.3,
                     finger_status="closed",
                     robot=robot,
                     option_types=option_types,
@@ -550,7 +567,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 # Move back up.
                 cls._create_move_arm_to_above_table_option(
                     name="MoveEndEffectorBackUpPostPutOnTable",
-                    z=PyBulletBlocksEnv.pick_z,
+                    z=0.3,
                     finger_status="open",
                     robot=robot,
                     option_types=option_types,
@@ -559,11 +576,11 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                     physics_client_id=physics_client_id),
             ])
 
-        return {Move, Pick, Stack, PutOnTable}
+        return {MoveTo, MoveToPick, Pick, Stack, PutOnTable}
 
 
     @classmethod
-    def _create_move_arm_to_above_block_option(cls, name: str, z_func: Callable[[float], float], finger_status:str,
+    def _create_move_arm_to_above_block_option(cls, name: str, z_func: Union[Callable[[float], float], float], finger_status:str,
                                                robot: MobileSingleArmPyBulletRobot, option_types:List[Type], 
                                                params_space: Box, env: PyBulletMultiTableBlocksEnv, 
                                                physics_client_id: int) -> ParameterizedOption:
@@ -617,7 +634,6 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                                 z_func=z_func, home_orn=home_orn, collision_bodies=collision_bodies, seed=CFG.seed, 
                                 held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
 
-
     @classmethod
     def _create_move_robot_base_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
                                         option_types: Sequence[Type],  params_space:Box, 
@@ -641,7 +657,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         # ipdb.set_trace()
 
-        collision_bodies = [b for b in all_bodies if b!=robot.robot_id]
+        collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
 
         held_obj_id_at_start = env._held_obj_id
         ee_link_to_held_obj = None
@@ -668,9 +684,69 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                                                         ee_to_world_pos, ee_to_world_orn,
                                                         world_to_obj_pos, world_to_obj_orn
                                                         )
+        home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
-        return create_move_base_option(name=name, robot=robot, types=option_types, params_space=params_space, 
-            get_current_base_and_arm_pose=get_current_base_and_arm_pose, collision_bodies=collision_bodies, 
+        return create_base_reset_based_move_base_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+            get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
+            seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
+            ee_to_held_object_transform_at_start=ee_link_to_held_obj)
+
+
+
+    @classmethod
+    def _create_move_robot_base_to_pick_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
+                                        option_types: Sequence[Type],  params_space:Box, 
+                                        env: PyBulletMultiTableBlocksEnv, physics_client_id: int) -> ParameterizedOption:
+
+        """Compute/derive values required to initialize the base motion option which first plans
+        then executes the base motion via differential drive.
+        """
+
+        def get_current_base_and_arm_pose(robot: MobileSingleArmPyBulletRobot, state:State, objects: Sequence[Object],
+                                         params: Array) -> Tuple[Tuple[float, float, float], JointPositions]:
+
+            current_base_pose = robot.get_base_pose(physics_client_id)
+            current_joint_positions = robot.get_joints()
+
+            return current_base_pose, current_joint_positions
+
+        assert physics_client_id is not None
+        all_bodies = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
+                for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
+
+        # ipdb.set_trace()
+
+        collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
+
+        held_obj_id_at_start = env._held_obj_id
+        ee_link_to_held_obj = None
+        if held_obj_id_at_start is not None:
+            # 1. world -> base_link pose | It actually is World -> EE transform
+            world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                                        robot.robot_id,
+                                                        robot.end_effector_id,
+                                                        physics_client_id=physics_client_id
+                                                    )
+
+            # 2. base_link -> world
+            ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                                        world_to_ee_pos, world_to_ee_orn
+                                                    )
+                                                    
+            # 3. world -> object
+            world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                                        held_obj_id_at_start, physicsClientId=physics_client_id
+                                                    )
+
+            # 4. base_link -> object (chain transforms)
+            ee_link_to_held_obj = p.multiplyTransforms(
+                                                        ee_to_world_pos, ee_to_world_orn,
+                                                        world_to_obj_pos, world_to_obj_orn
+                                                        )
+        home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
+
+        return create_base_reset_based_move_base_to_pick_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+            get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
             seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
             ee_to_held_object_transform_at_start=ee_link_to_held_obj)
 

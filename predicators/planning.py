@@ -274,6 +274,7 @@ def _sesame_plan_with_astar(
             # _run_low_level_search.
             refinement_start_time = time.perf_counter()
             for skeleton, atoms_sequence in gen:
+                # ipdb.set_trace()
                 if CFG.sesame_use_necessary_atoms:
                     atoms_seq = utils.compute_necessary_atoms_seq(
                         skeleton, atoms_sequence, task.goal)
@@ -364,6 +365,8 @@ def filter_nsrts(
     #   - If allow_noops is False, only NSRTs with effects are kept.
     # (nsrt.add_effects | nsrt.delete_effects) represents the union of both add and delete affects
     # keeps the nsrt even if it only has one effect.
+
+    # ipdb.set_trace()
 
     nonempty_ground_nsrts = [
         nsrt for nsrt in ground_nsrts
@@ -705,6 +708,7 @@ def run_low_level_search(
         metrics["num_samples"] += 1
         # Increment cur_idx. It will be decremented later on if we get stuck.
         cur_idx += 1
+        ipdb.set_trace()
         if option.initiable(state):
             try:
                 next_state, num_actions = \
