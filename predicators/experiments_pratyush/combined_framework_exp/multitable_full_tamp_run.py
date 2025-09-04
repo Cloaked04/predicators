@@ -1,5 +1,7 @@
 import ipdb, traceback
 import numpy as np
+import logging
+import random
 
 from predicators.settings import CFG, GlobalSettings
 from predicators.envs.pybullet_multitable_blocks import PyBulletMultiTableBlocksEnv
@@ -9,8 +11,21 @@ from predicators.structs import GroundAtom, EnvironmentTask, Task, Object
 from predicators.utils import option_plan_to_policy  
 from predicators.option_model import create_option_model
 
+logging.basicConfig(
+    filename="tamp_run.log",
+    filemode="w",
+    level=logging.DEBUG,                    
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
+CFG.blocks_block_size = 0.05
+CFG.pybullet_birrt_num_iters = 50
+CFG.pybullet_birrt_num_attempts = 10
+CFG.pybullet_birrt_smooth_amt = 20
+CFG.seed = random.randint(0,10000)
 CFG.pybullet_robot = "fetch_mobile"
+CFG.option_model_terminate_on_repeat = False
 
 
 # 1. Initialize your multi-table environment  
@@ -89,9 +104,10 @@ goal = {
   
 # 4. Create Task object  
 task = Task(initial_state, goal) 
-initial_options=get_gt_options(env.get_name(), robot=pybullet_robot, env=env, physics_client_id=physics_client_id)
+# ipdb.set_trace() 
+initial_options=get_gt_options(env.get_name(), robot=pybullet_robot, env_obj=env, physics_client_id=physics_client_id)
 initial_nsrts=get_gt_nsrts(env.get_name(), predicates_to_keep=env.predicates, options_to_keep=initial_options, 
-                                                robot=pybullet_robot, env=env, physics_client_id=physics_client_id)
+                                                robot=pybullet_robot, env_obj=env, physics_client_id=physics_client_id)
 # for item in initial_nsrts:
 #     print(f"\n{item}")
 # input()
@@ -117,7 +133,6 @@ initial_nsrts=get_gt_nsrts(env.get_name(), predicates_to_keep=env.predicates, op
 
 # input()
 #****************************************************************************************
-  
 # 5. Create Oracle approach with your environment's components  
 approach = OracleApproach(  
     initial_predicates=env.predicates, 
@@ -127,7 +142,7 @@ approach = OracleApproach(
     train_tasks=[],
     task_planning_heuristic="lmcut",
     nsrts=initial_nsrts,
-    option_model=create_option_model('oracle', robot=pybullet_robot, env=env, physics_client_id=physics_client_id)
+    option_model=create_option_model('oracle', robot=pybullet_robot, env_obj=env, physics_client_id=physics_client_id)
 )  
   
 # 6. Solve the TAMP problem using bilevel planning  

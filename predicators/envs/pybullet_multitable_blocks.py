@@ -2,6 +2,7 @@
 
 import sys
 import ipdb
+import copy
 import logging
 from pathlib import Path
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
@@ -48,6 +49,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     robo_z = 0.01
 
     _default_blocks_per_table: ClassVar[List[int]] = [8, 8, 8]
+    _initial_state: ClassVar[State] = None
 
     def __init__(self, use_gui: bool = True,
                  num_tables: int = 3,
@@ -765,11 +767,75 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         #Set robot's home location to where it is.
         base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
         self._home_xy = (float(base_x), float(base_y))
-
+        self._initial_state = copy.deepcopy(state_with_sim)
+        # ipdb.set_trace()
         return state_with_sim
 
 
 
+    def reset_state(self, state: State) -> None:
+            """Resets state with blocks distributed across tables.
+            Unlike the _reset_state function that's to be used
+            during initial state reset or tearing down a scene to set
+            a new scene, this sets the robot to exactly as in the state passed.
+            To be used during TAMP runs for planning while executing options.
+            """
+            self._pybullet_robot.move_base_to(state.base_pose, self._physics_client_id)
+            self._pybullet_robot.set_joints(state.simulator_state)
+
+            #Reset tables
+            table_objs = state.get_objects(self._table_type)
+            self._table_id_to_table = {}
+            for i, table_obj in enumerate(table_objs):
+                if i<len(self._table_ids):
+                    table_id = self._table_ids[i]
+                    self._table_id_to_table[table_id] = table_obj
+
+            #Reset blocks: save a mapping from block id to block obj,
+            #and update its pose and color.
+            block_objs = state.get_objects(self._block_type)
+            self._block_id_to_block = {}
+            for i, block_obj in enumerate(block_objs):
+                if i<len(self._block_ids):
+                    block_id = self._block_ids[i]
+                    self._block_id_to_block[block_id] = block_obj
+
+                    bx = state.get(block_obj, "pose_x")
+                    by = state.get(block_obj, "pose_y")
+                    bz = state.get(block_obj, "pose_z")
+
+                    p.resetBasePositionAndOrientation(block_id, [bx, by, bz], self._default_orn,
+                                                        physicsClientId=self._physics_client_id)
+
+                    #Update block color
+                    r = state.get(block_obj, "color_r")
+                    g = state.get(block_obj, "color_g")
+                    b = state.get(block_obj, "color_b")
+                    color = (r, g, b, 1.0)
+                    p.changeVisualShape(block_id, linkIndex=-1, rgbaColor=color, physicsClientId=self._physics_client_id)
+
+            #Handle held objects
+            held_object = self._get_held_block(state)
+            if held_object is not None:
+                self._force_grasp_object(held_object)
+
+            #Move unused blocks out of view
+            h = self._block_size
+            oov_x, oov_y = self._out_of_view_xy
+            for i in range(len(block_objs), len(self._block_ids)):
+                block_id = self._block_ids[i]
+                assert block_id not in self._block_id_to_block
+                p.resetBasePositionAndOrientation(block_id, [oov_x, oov_y, i*h], self._default_orn,
+                                                physicsClientId=self._physics_client_id)
+
+            #Validate state reconstruction
+            # reconstructed_state = self._get_state()
+            # if not reconstructed_state.allclose(state):
+            #     logging.debug("Desired state:")
+            #     logging.debug(state.pretty_str())
+            #     logging.debug("Reconstructed state:")
+            #     logging.debug(reconstructed_state.pretty_str())
+            #     raise ValueError("Could not reconstruct state.")
 
 
 

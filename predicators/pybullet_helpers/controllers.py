@@ -14,6 +14,7 @@ import pybullet as p
 from predicators.settings import CFG
 
 from predicators import utils
+from predicators.envs.pybullet_env import PyBulletEnv
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.inverse_kinematics import \
     InverseKinematicsError
@@ -174,6 +175,7 @@ def create_change_fingers_option(
                                          Tuple[float, float]],
     max_vel_norm: float,
     grasp_tol: float,
+    env: Optional[State] = None,
 ) -> ParameterizedOption:
     """A generic utility that creates a ParameterizedOption for changing the
     robot fingers, given a function that takes in the current state, objects,
@@ -185,7 +187,11 @@ def create_change_fingers_option(
 
     def _policy(state: State, memory: Dict, objects: Sequence[Object],
                 params: Array) -> Action:
-        del memory  # unused
+        # del memory  # unused
+        #Sync PyBullet state with planner state:
+        if env is not None:
+        #     ipdb.set_trace()
+            env.reset_state(state)
         current_val, target_val = get_current_and_target_val(
             state, objects, params)
         f_delta = target_val - current_val
@@ -200,11 +206,16 @@ def create_change_fingers_option(
         target = np.clip(target, robot.action_space.low,
                          robot.action_space.high)
         assert robot.action_space.contains(target)
-        return Action(target)
+        # if env is not None:
+        #     env.reset_state(env._initial_state)
+        # ipdb.set_trace()
+        action = Action(target)
+        action.set_base_motion(params=(0.0,0.0), mode="velocity")
+        return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object],
                   params: Array) -> bool:
-        del memory  # unused
+        # del memory  # unused
         #ipdb.set_trace()
         current_val, target_val = get_current_and_target_val(
             state, objects, params)
@@ -1397,6 +1408,7 @@ def create_place_object_option(
 
 def create_arm_motion_planning_option(
     name: str,
+    env: PyBulletEnv,
     robot: SingleArmPyBulletRobot,
     types: Sequence[Type],
     params_space: Box,
@@ -1422,14 +1434,17 @@ def create_arm_motion_planning_option(
 
     def _plan_once_and_cache_actions(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object], memory: Dict) -> None:
 
+        waypoints: Optional[Sequence[JointPositions]] = None
         filtered_collision_bodies = collision_bodies
         if held_obj_id is not None:
             # Exclude the held object from obstacle set
             filtered_collision_bodies = [b for b in collision_bodies if b != held_obj_id or b!=0]
 
-        waypoints: Optional[Sequence[JointPositions]] = None
-        ipdb.set_trace()
+        #Sync PyBullet state and simulator state:
+        env.reset_state(state)
+        
         if "Grasp" in name or "Stack" in name:
+            ipdb.set_trace()
 
             _, block = objects
     
@@ -1446,11 +1461,11 @@ def create_arm_motion_planning_option(
 
             initial_left_finger_val = initial_joint_positions[robot.left_finger_joint_idx]
             initial_right_finger_val = initial_joint_positions[robot.right_finger_joint_idx]
-            world_robot_base_pose = robot.get_base_pose(physics_client_id)
-            world_robot_joint_positions = robot.get_joints()
-            simulator_robot_base_pose = state.base_pose
+            # world_robot_base_pose = robot.get_base_pose(physics_client_id)
+            # world_robot_joint_positions = robot.get_joints()
+            # simulator_robot_base_pose = state.base_pose
             #Move robot to simulator's base pose for ik:
-            robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
+            #robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
             print(f"Calling IK for arm motion planning for target_ee_pose: {target_ee_pose}.")
             input()
             try:
@@ -1469,16 +1484,20 @@ def create_arm_motion_planning_option(
                                                     base_link_to_held_object=base_link_to_held_object, 
                                                     )
                     #Reset robot to world base pose:
-                    robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                    robot.set_joints(world_robot_joint_positions)
+                    #robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
+                    #robot.set_joints(world_robot_joint_positions)
+                    #Restore PyBullet state to initial state:
+                    # env.reset_state(env._initial_state)
             except InverseKinematicsError:
-                robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                robot.set_joints(world_robot_joint_positions)
+                # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
+                # robot.set_joints(world_robot_joint_positions)
+                # env.reset_state(env._initial_state)
                 raise utils.OptionExecutionFailure(f"\nInverse Kinematics failed.")
             
             
 
         elif "OnTable" in name:
+            ipdb.set_trace()
 
             _, table = objects
 
@@ -1498,11 +1517,12 @@ def create_arm_motion_planning_option(
 
             initial_left_finger_val = initial_joint_positions[robot.left_finger_joint_idx]
             initial_right_finger_val = initial_joint_positions[robot.right_finger_joint_idx]
-            world_robot_base_pose = robot.get_base_pose(physics_client_id)
-            world_robot_joint_positions = robot.get_joints()
-            simulator_robot_base_pose = state.base_pose
+            # world_robot_base_pose = robot.get_base_pose(physics_client_id)
+            # world_robot_joint_positions = robot.get_joints()
+            # simulator_robot_base_pose = state.base_pose
             #Move robot to simulator's base pose for ik:
-            robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
+            # robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
+            # ipdb.set_trace()
             print(f"Calling IK for arm motion planning for target_ee_pose: {target_ee_pose}.")
             input()
             try:
@@ -1521,11 +1541,13 @@ def create_arm_motion_planning_option(
                                                     base_link_to_held_object=base_link_to_held_object, 
                                                     )
                     #Reset robot to world base pose:
-                    robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                    robot.set_joints(world_robot_joint_positions)
+                    # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
+                    # robot.set_joints(world_robot_joint_positions)
+                    # env.reset_state(env._initial_state)
             except InverseKinematicsError:
-                robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                robot.set_joints(world_robot_joint_positions)
+                # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
+                # robot.set_joints(world_robot_joint_positions)
+                # env.reset_state(env._initial_state)
                 raise utils.OptionExecutionFailure(f"\nInverse Kineamtics failed.")
 
         if waypoints is None or len(waypoints) == 0:
@@ -1546,8 +1568,9 @@ def create_arm_motion_planning_option(
             action.set_base_motion((0.0,0.0), "velocity")
             actions.append(action)
 
+        actions = deque(actions)
         memory["actions"] = actions
-        memory["idx"] = 0
+        # memory["idx"] = 0
 
 
     def _initiable(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
@@ -1557,21 +1580,18 @@ def create_arm_motion_planning_option(
 
     def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
         # plan on first call
-        if "actions" not in memory or "idx" not in memory:
+        if "actions" not in memory:
             _plan_once_and_cache_actions(robot, state, objects, memory)
 
-        i = memory["idx"]
-        actions: List[Action] = memory["actions"]
-        if i >= len(actions):
-            # If the caller kept invoking after terminal, treat as failure (like your other options)
-            raise utils.OptionExecutionFailure(f"{name}: policy called after completion.")
-
-        act = actions[i]
-        memory["idx"] = i + 1
-        return act
+        if len(memory['actions']) == 1:
+            ipdb.set_trace()
+        action = memory["actions"].popleft()
+        return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
-        return ("actions" in memory and "idx" in memory and memory["idx"] >= len(memory["actions"]))
+        if "actions" not in memory:
+            return False
+        return len(memory["actions"])==0
 
     return ParameterizedOption(
         name=name,
@@ -1587,6 +1607,7 @@ def create_arm_motion_planning_option(
 
 def create_integrated_move_base_option(
     name: str,
+    env: PyBulletEnv,
     robot: MobileSingleArmPyBulletRobot,
     types: Sequence[Type],
     params_space: Box,
@@ -1826,6 +1847,7 @@ def create_integrated_move_base_option(
 
 def create_disjoint_move_base_option(
     name: str,
+    env: PyBulletEnv,
     robot: MobileSingleArmPyBulletRobot,
     types: Sequence[Type],
     params_space: Box,
@@ -1889,7 +1911,6 @@ def create_disjoint_move_base_option(
 
         target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
             
-
         base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
                                                                         robot=robot,
                                                                         target_ee_pose=target_ee_pose,
@@ -2113,6 +2134,7 @@ def create_disjoint_move_base_option(
 
 def create_base_reset_based_move_base_option(
     name: str,
+    env: PyBulletEnv,
     robot: MobileSingleArmPyBulletRobot,
     types: Sequence[Type],
     params_space: Box,
@@ -2138,6 +2160,9 @@ def create_base_reset_based_move_base_option(
         if held_object_id_at_start is not None:
             # Exclude the held object from obstacle set
             filtered_collision_bodies = [b for b in filtered_collision_bodies if b != held_object_id_at_start]
+
+        #Sync PyBullet state to planner state before planning
+        env.reset_state(state)
 
         _, table = objects
 
@@ -2186,9 +2211,14 @@ def create_base_reset_based_move_base_option(
                                                                         ee_to_held_object_transform_at_start=ee_to_held_object_transform_at_start,
                                                                     )
 
+
         if base_path_waypoints is None or len(base_path_waypoints) == 0:
+            # env.reset_state(env._initial_state)
             raise utils.OptionExecutionFailure(f"{name}: Base path planning failed or returned empty path.")
 
+        # ipdb.set_trace()
+        #Restore PyBullet state
+        # env.reset_state(env._initial_state)
         # target_base_pose = base_path_waypoints[-1]
         current_arm_joints = robot.get_joints()
         base_path_waypoints = deque(base_path_waypoints)
@@ -2207,9 +2237,10 @@ def create_base_reset_based_move_base_option(
             _plan_and_cache_base_motion(robot, state, objects, memory)
 
         waypoint = memory["path"].popleft()
-
         action = Action(np.array(memory["current_arm_joints"]))
         action.set_base_motion(params=waypoint, mode="smooth_position")
+        if(len(memory["path"])<=5):
+            ipdb.set_trace()
         return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
@@ -2231,6 +2262,7 @@ def create_base_reset_based_move_base_option(
 
 def create_base_reset_based_move_base_to_pick_option(
     name: str,
+    env: PyBulletEnv,
     robot: MobileSingleArmPyBulletRobot,
     types: Sequence[Type],
     params_space: Box,
@@ -2257,10 +2289,12 @@ def create_base_reset_based_move_base_to_pick_option(
             # Exclude the held object from obstacle set
             filtered_collision_bodies = [b for b in filtered_collision_bodies if b != held_object_id_at_start]
 
+        env.reset_state(state)
+
         _, block = objects
 
-        print(f"Block to be picked:{block}.")
-        input()
+        # print(f"Block to be picked:{block}.")
+        # input()
 
         block_x, block_y, block_z = (state.get(block, "pose_x"),
                                      state.get(block, "pose_y"),
@@ -2273,7 +2307,7 @@ def create_base_reset_based_move_base_to_pick_option(
         # print(f"Target EE position for block {block.name}: {target_ee_pose}.")
         # input()
             
-
+        ipdb.set_trace()
         base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
                                                                         robot=robot,
                                                                         target_ee_pose=target_ee_pose,
@@ -2290,8 +2324,12 @@ def create_base_reset_based_move_base_to_pick_option(
                                                                     )
 
         if base_path_waypoints is None or len(base_path_waypoints) == 0:
+            #Restore PyBullet state
+            env.reset_state(env._initial_state)
             raise utils.OptionExecutionFailure(f"{name}: Base path planning failed or returned empty path.")
 
+        #Restore PyBullet state
+        env.reset_state(env._initial_state)
         # target_base_pose = base_path_waypoints[-1]
         current_arm_joints = robot.get_joints()
         base_path_waypoints = deque(base_path_waypoints)
@@ -2310,7 +2348,8 @@ def create_base_reset_based_move_base_to_pick_option(
             _plan_and_cache_base_motion(robot, state, objects, memory)
         
         waypoint = memory["path"].popleft()
-
+        if len(memory["path"])<=5:
+            ipdb.set_trace()
         action = Action(np.array(memory["current_arm_joints"]))
         action.set_base_motion(params=waypoint, mode="smooth_position")
         return action

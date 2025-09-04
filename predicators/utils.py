@@ -17,6 +17,7 @@ import re
 import subprocess
 import sys
 import time
+import ipdb
 from argparse import ArgumentParser
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -949,12 +950,28 @@ class LinearChainParameterizedOption(ParameterizedOption):
         # Check if the current child has terminated.
         current_index = memory["current_child_index"]
         current_child = self._children[current_index]
+
+        # Initialize a local tracker on the class if not already there
+        if not hasattr(self, "_last_child"):
+            self._last_child = None
+
+        # Only print when current_child changes
+        if self._last_child is not current_child:
+            print(f"\nExecuting LinearChainParameterizedOption: {self._children}")
+            print(f"\nExecuting exact sub-option: {current_child}.")
+            self._last_child = current_child
+
         child_memory = memory["child_memory"][current_index]
         if current_child.terminal(state, child_memory, objects, params):
             # Move on to the next child.
             current_index += 1
             memory["current_child_index"] = current_index
             current_child = self._children[current_index]
+            #Print when control moves to next child:
+            if self._last_child is not current_child:
+                print(f"\nExecuting LinearChainParameterizedOption: {self._children}")
+                print(f"\nExecuting exact sub-option: {current_child}.")
+                self._last_child = current_child
             child_memory = memory["child_memory"][current_index]
             assert current_child.initiable(state, child_memory, objects,
                                            params)
@@ -1231,6 +1248,7 @@ def run_policy_with_simulator(
             monitor_observed = False
             exception_raised_in_step = False
             try:
+                # ipdb.set_trace()
                 act = policy(state)
                 if monitor is not None:
                     monitor.observe(state, act)

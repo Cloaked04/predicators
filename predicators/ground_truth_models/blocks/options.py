@@ -10,6 +10,7 @@ from gym.spaces import Box
 
 from predicators import utils
 from predicators.envs.blocks import BlocksEnv
+from predicators.envs.pybullet_env import PyBulletEnv
 from predicators.envs.pybullet_blocks import PyBulletBlocksEnv
 from predicators.envs.pybullet_multitable_blocks import PyBulletMultiTableBlocksEnv
 from predicators.ground_truth_models import GroundTruthOptionFactory
@@ -381,9 +382,9 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
     def get_options(cls, env_name: str, types: Dict[str, Type],
                     predicates: Dict[str, Predicate],
                     action_space: Box, robot: MobileSingleArmPyBulletRobot,
-                    env: BlocksEnv, physics_client_id: int) -> Set[ParameterizedOption]:
+                    env: PyBulletEnv, physics_client_id: int) -> Set[ParameterizedOption]:
 
-        #ipdb.set_trace()
+        # ipdb.set_trace()
         robot_type = types["robot"]
         block_type = types["block"]
         table_type = types["table"]
@@ -459,7 +460,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 create_change_fingers_option(
                     robot, "OpenFingers", option_types, params_space,
                     open_fingers_func, CFG.pybullet_max_vel_norm,
-                    PyBulletBlocksEnv.grasp_tol),
+                    PyBulletBlocksEnv.grasp_tol, env=env),
                 # Move down to grasp.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorToGrasp",
@@ -474,7 +475,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 create_change_fingers_option(
                     robot, "CloseFingers", option_types, params_space,
                     close_fingers_func, CFG.pybullet_max_vel_norm,
-                    PyBulletBlocksEnv.grasp_tol),
+                    PyBulletBlocksEnv.grasp_tol, env=env),
                 # Move back up.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorBackUpPostGrasp",
@@ -518,7 +519,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 create_change_fingers_option(
                     robot, "OpenFingers", option_types, params_space,
                     open_fingers_func, CFG.pybullet_max_vel_norm,
-                    PyBulletBlocksEnv.grasp_tol),
+                    PyBulletBlocksEnv.grasp_tol, env=env),
                 # Move back up.
                 cls._create_move_arm_to_above_block_option(
                     name="MoveEndEffectorBackUpPostStack",
@@ -563,7 +564,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                 create_change_fingers_option(
                     robot, "OpenFingers", option_types, params_space,
                     open_fingers_func, CFG.pybullet_max_vel_norm,
-                    PyBulletBlocksEnv.grasp_tol),
+                    PyBulletBlocksEnv.grasp_tol, env=env),
                 # Move back up.
                 cls._create_move_arm_to_above_table_option(
                     name="MoveEndEffectorBackUpPostPutOnTable",
@@ -582,7 +583,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
     @classmethod
     def _create_move_arm_to_above_block_option(cls, name: str, z_func: Union[Callable[[float], float], float], finger_status:str,
                                                robot: MobileSingleArmPyBulletRobot, option_types:List[Type], 
-                                               params_space: Box, env: PyBulletMultiTableBlocksEnv, 
+                                               params_space: Box, env: PyBulletEnv, 
                                                physics_client_id: int) -> ParameterizedOption:
 
         """Compute/derive values required to initialize the arm motion option which first plans
@@ -629,7 +630,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
-        return create_arm_motion_planning_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
                                 physics_client_id=physics_client_id,  initial_joint_positions=initial_joint_position, 
                                 z_func=z_func, home_orn=home_orn, collision_bodies=collision_bodies, seed=CFG.seed, 
                                 held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
@@ -637,7 +638,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
     @classmethod
     def _create_move_robot_base_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
                                         option_types: Sequence[Type],  params_space:Box, 
-                                        env: PyBulletMultiTableBlocksEnv, physics_client_id: int) -> ParameterizedOption:
+                                        env: PyBulletEnv, physics_client_id: int) -> ParameterizedOption:
 
         """Compute/derive values required to initialize the base motion option which first plans
         then executes the base motion via differential drive.
@@ -686,7 +687,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                                                         )
         home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
-        return create_base_reset_based_move_base_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+        return create_base_reset_based_move_base_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
             get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
             seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
             ee_to_held_object_transform_at_start=ee_link_to_held_obj)
@@ -696,7 +697,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
     @classmethod
     def _create_move_robot_base_to_pick_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
                                         option_types: Sequence[Type],  params_space:Box, 
-                                        env: PyBulletMultiTableBlocksEnv, physics_client_id: int) -> ParameterizedOption:
+                                        env: PyBulletEnv, physics_client_id: int) -> ParameterizedOption:
 
         """Compute/derive values required to initialize the base motion option which first plans
         then executes the base motion via differential drive.
@@ -745,7 +746,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                                                         )
         home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
-        return create_base_reset_based_move_base_to_pick_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+        return create_base_reset_based_move_base_to_pick_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
             get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
             seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
             ee_to_held_object_transform_at_start=ee_link_to_held_obj)
@@ -753,7 +754,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
     @classmethod
     def _create_move_arm_to_above_table_option(cls, name: str, z: float, finger_status:str, robot:MobileSingleArmPyBulletRobot, 
-                                            option_types: Sequence[Type], params_space:Box, env: PyBulletMultiTableBlocksEnv, 
+                                            option_types: Sequence[Type], params_space:Box, env: PyBulletEnv, 
                                             physics_client_id: int) -> ParameterizedOption:
 
         """Compute/derive values required to initialize the arm motion planning option to
@@ -797,7 +798,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         #TODO: Figure out how to compute or pass the target_ee_pose for this option.
 
-        return create_arm_motion_planning_option(name=name, robot=robot, types=option_types, params_space=params_space, 
+        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
                                 physics_client_id=physics_client_id,  initial_joint_positions=initial_joint_position, 
                                 z_func=z, home_orn=home_orn, collision_bodies=collision_bodies, seed=CFG.seed, 
                                 held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
