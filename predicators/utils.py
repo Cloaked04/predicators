@@ -32,6 +32,7 @@ import imageio
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pybullet as p
 import pathos.multiprocessing as mp
 from gym.spaces import Box
 from matplotlib import patches
@@ -3752,3 +3753,107 @@ def run_ground_nsrt_with_assertions(ground_nsrt: _GroundNSRT,
             assert not atom.holds(state), \
                 f"Delete effect for {ground_nsrt_str} failed: {atom}"
     return state
+
+
+def sample_point_in_collision(sample: Tuple[float, float, float],
+                              collision_bodies: Sequence[int],
+                              tolerance: float,
+                              physics_client_id:int) -> bool:
+    """
+    Receives a point (x,y) which belongs to a table's workspace
+    and check whether it intersects any other block's occupancy.
+    """
+
+    sample_x_low, sample_x_high = (sample[0] - CFG.blocks_block_size/2 - (tolerance/2)),\
+                                  (sample[0] + CFG.blocks_block_size/2 + (tolerance/2))
+    sample_y_low, sample_y_high = (sample[1] - CFG.blocks_block_size/2 - (tolerance/2)),\
+                                  (sample[1] + CFG.blocks_block_size/2 + (tolerance/2))
+
+    # code to make a physical block; copied from pybullet_env:
+    pos = (sample[0], sample[1], sample[2])
+    # half-extents are larger than block size to include the 
+    # tolerances on both ends.
+    half_extents = ((sample_x_high - sample_x_low)/2,
+                    (sample_x_high - sample_x_low)/2,
+                    (sample_x_high - sample_x_low)/2)
+
+    orientation = [0.0, 0.0, 0.0, 1.0]
+    # Currently unused; just left here in case
+    color = (0.95, 0.05, 0.95, 1.0)
+    mass = 0.05
+    friction = 1.2
+
+    # Create the collision shape.
+    collision_id = p.createCollisionShape(p.GEOM_BOX,
+                                          halfExtents=half_extents,
+                                          physicsClientId=physics_client_id)
+
+    # Don't really need the visual shape.
+    # visual_id = p.createVisualShape(p.GEOM_BOX,
+    #                                 halfExtents=half_extents,
+    #                                 rgbaColor=color,
+    #                                 physicsClientId=physics_client_id)
+
+    # Create the body.
+    temp_block_id = p.createMultiBody(baseMass=0.0,
+                                      baseCollisionShapeIndex=collision_id,
+                                      baseVisualShapeIndex=-1,
+                                      basePosition=pos,
+                                      baseOrientation=orientation,
+                                      physicsClientId=physics_client_id)
+    # p.changeDynamics(
+    #     block_id,
+    #     linkIndex=-1,  # -1 for the base
+    #     lateralFriction=friction,
+    #     physicsClientId=physics_client_id)
+
+    # try:
+    #     # test AABB overlap first
+    #     aabb_min, aabb_max = p.getAABB(temp_block_id, -1, physicsClientId=physics_client_id)
+    #     # overlapping = p.getOverlappingObjects(aabb_min, aabb_max, physicsClientId=physics_client_id) or []
+
+    #     candidates = []
+    #     for i in range(p.getNumBodies(physicsClientId=physics_client_id)):
+    #         body_id = p.getBodyUniqueId(i, physicsClientId=physics_client_id)
+    #         if body_id == temp_block_id or body_id in ignore_collision_bodies:
+    #             continue
+    #         body_min, body_max = p.getAABB(body_id, -1, physicsClientId=physics_client_id)
+    #         if not (aabb_max[0] < body_min[0] or body_max[0] < aabb_min[0] or
+    #                 aabb_max[1] < body_min[1] or body_max[1] < aabb_min[1] or
+    #                 aabb_max[2] < body_min[2] or body_max[2] < aabb_min[2]):
+    #             candidates.append(body_id)
+
+    #     if not candidates:
+    #         # no possible overlaps
+    #         return True
+
+    #     # precise check against candidates
+    #     for body_id in candidates:
+    #         closest_points = p.getClosestPoints(
+    #             bodyA=temp_block_id, bodyB=body_id, distance=0.0, physicsClientId=physics_client_id
+    #         )
+    #         # any contact/penetration means collision
+    #         if closest_points:            
+    #             return False
+
+    #     return True
+    # finally:
+    #     p.removeBody(temp_block_id, physicsClientId=physics_client_id)
+
+    try:
+        # code to perform collision detection:
+        p.performCollisionDetection(physicsClientId=physics_client_id)
+        # ipdb.set_trace()
+        for body in collision_bodies:
+            if p.getContactPoints(temp_block_id,
+                                  body,
+                                  physicsClientId=physics_client_id):
+                logging.critical(f"\nCollision with body id while sampling place:{body}.")
+                return True
+
+        return False
+
+    finally:
+        p.removeBody(temp_block_id, physicsClientId=physics_client_id)
+
+

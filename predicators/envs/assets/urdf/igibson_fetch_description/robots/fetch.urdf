@@ -465,7 +465,7 @@
       <mass value="0.0798" />
       <inertia ixx="0.002" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
     </inertial>
-    <visual>
+    <!--<visual>
       <origin rpy="0 0 0" xyz="0 0.101425 0" />
       <geometry>
         <mesh filename="meshes/r_gripper_finger_link.obj" />
@@ -478,23 +478,23 @@
       <origin rpy="0 0 0" xyz="0 0.101425 0" />
       <geometry>
         <mesh filename="meshes/r_gripper_finger_link.obj" />
-      </geometry>
-    </collision>
-    <!-- <visual>
-      <origin rpy="0 0 0" xyz="0.0701 -0.009 0" />
-      <geometry>
-        <box size="0.212 0.013 0.026"/>
-      </geometry>
-      <material name="">
-        <color rgba="0.356 0.361 0.376 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0.0701 -0.009 0" />
-      <geometry>
-        <box size="0.212 0.013 0.026"/>
       </geometry>
     </collision> -->
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.005 -0.009 0" />
+      <geometry>
+        <box size="0.055 0.013 0.026"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.356 0.361 0.376 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.005 -0.009 0" />
+      <geometry>
+        <box size="0.055 0.013 0.026"/>
+      </geometry>
+    </collision>
   </link>
   <joint name="r_gripper_finger_joint" type="prismatic">
     <origin rpy="0 0 0" xyz="0 0.015425 0" />
@@ -523,19 +523,19 @@
         <mesh filename="meshes/l_gripper_finger_link.obj" />
       </geometry>
     </collision>
-    <!-- <visual>
-      <origin rpy="0 0 0" xyz="0.0701 0.009 0" />
+    <!--<visual>
+      <origin rpy="0 0 0" xyz="-0.005 0.009 0" />
       <geometry>
-        <box size="0.212 0.013 0.026"/>
+        <box size="0.055 0.013 0.026"/>
       </geometry>
       <material name="">
         <color rgba="0.356 0.361 0.376 1" />
       </material>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz="0.0701 0.009 0" />
+      <origin rpy="0 0 0" xyz="-0.005 0.009 0" />
       <geometry>
-        <box size="0.212 0.013 0.026"/>
+        <box size="0.055 0.013 0.026"/>
       </geometry>
     </collision> -->
   </link>

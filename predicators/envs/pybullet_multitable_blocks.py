@@ -29,6 +29,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     capability to initialize multiple tables.
     """
 
+
     #Table params:
     _default_table_poses: ClassVar[List[Pose3D]] = [
             (1.0, -0.5, 0.0),
@@ -271,8 +272,10 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         #               max(max(CFG.blocks_num_blocks_train), max(CFG.blocks_num_blocks_test))
         total_blocks = sum(cls._default_blocks_per_table)
           
-        block_ids = []  
-        block_size = CFG.blocks_block_size  
+        block_ids = []
+        # ipdb.set_trace()
+        # block_size = CFG.blocks_block_size  
+        block_size = CFG.blocks_block_size
         for i in range(max(total_blocks,30)):  
             color = cls._obj_colors[i % len(cls._obj_colors)]  
             half_extents = (block_size / 2.0, block_size / 2.0, block_size / 2.0)  
@@ -283,6 +286,19 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         bodies["block_ids"] = block_ids
 
         assert len(bodies["block_ids"]) == max(total_blocks, 30), "Not enough blocks for env."  
+
+        # p.setPhysicsEngineParameter(useSplitImpulse=1,
+        #                             splitImpulsePenetrationThreshold=-0.01,
+        #                             contactBreakingThreshold=0.02,
+        #                             numSolverIterations=30,
+        #                             warmStartingFactor=0.3,
+        #                             physicsClientId=physics_client_id)
+        # Friction bias: slippery fingertips, stickier table
+        # for L in [20, 21]:  # add palm link if needed
+        #     p.changeDynamics(pybullet_robot.robot_id, L, lateralFriction=0.05, spinningFriction=0.0,
+        #                      rollingFriction=0.0, physicsClientId=physics_client_id)
+        # for table_id in table_ids:
+        #     p.changeDynamics(table_id, -1, lateralFriction=1.0, physicsClientId=physics_client_id)
   
         return physics_client_id, pybullet_robot, bodies
 
@@ -321,9 +337,50 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         return extracted_robot_state
 
 
-    def _reset_state(self, state: State) -> None:
-        """Resets state with blocks distributed across tables."""
-        super()._reset_state(state)
+    def _reset_state(self, state: State, mode: Optional[str] = None) -> None:
+        """Resets state with blocks distributed across tables.
+
+        This reset function can work like the _reset_state function in other 
+        envs only when the robot was already at initial spawn position in 
+        pybullet state passed. This can be done by passing any str via the 
+        mode variable. For example: env._reset_state(state, mode='initial_reset').
+        If mode is none, the robot is set using the information available in state.
+        """
+        if mode is not None:
+            super()._reset_state(state)
+        else:
+            if self._held_constraint_id is not None:
+                p.removeConstraint(self._held_constraint_id,
+                                   physicsClientId=self._physics_client_id)
+                self._held_constraint_id = None
+            self._held_obj_id = None
+            """
+            TODO:
+                - reset robot to base position and orn in state
+                - reset the arm position to that in state
+                - below fix the logic to detect held object in 
+                  pybullet, and re-establish constraint.
+            """
+            qx, qy, qz, qw = self.get_robot_ee_home_orn()
+            f = self.fingers_state_to_joint(self._pybullet_robot,
+                                            state.get(self._robot, "fingers"))
+            robot_ee_pos = (state.get(self._robot, "pose_x"),
+                         state.get(self._robot, "pose_y"),
+                         state.get(self._robot, "pose_z"))
+            robot_ee_pose = Pose(robot_ee_pos, (qx, qy, qz, qw))
+
+            self._pybullet_robot.move_base_to(state.base_pose, self._physics_client_id)
+            self._pybullet_robot.set_joints(state.simulator_state)
+
+            joint_positions = self._pybullet_robot.inverse_kinematics(robot_ee_pose, validate=True)
+
+            self._pybullet_robot.set_joints(joint_positions)
+
+            for finger_id in [self._pybullet_robot.left_finger_id, self._pybullet_robot.right_finger_id]:
+                p.resetJointState(self._pybullet_robot.robot_id,
+                                  finger_id,
+                                  f,
+                                  physicsClientId=self._physics_client_id)
 
         #Reset tables
         table_objs = state.get_objects(self._table_type)
@@ -469,6 +526,8 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         # The block should already be held. Otherwise, the position of the
         # block was wrong in the state.
         held_obj_id = self._detect_held_object()
+        if block_id != held_obj_id:
+            ipdb.set_trace()
         assert block_id == held_obj_id
         # Create the grasp constraint.
         self._held_obj_id = block_id
@@ -763,23 +822,32 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         base_pose = self._pybullet_robot.get_base_pose(self._physics_client_id)
         state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions, base_pose=base_pose)  
         self._current_observation = state_with_sim  
-        self._reset_state(state_with_sim)
+        self._reset_state(state_with_sim, mode="initial_reset")
         #Set robot's home location to where it is.
         base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
         self._home_xy = (float(base_x), float(base_y))
         self._initial_state = copy.deepcopy(state_with_sim)
+        print(f"\nBlocks with corresponding ids: {self._block_id_to_block}.")
+        print(f"\nTables with corresponding ids: {self._table_id_to_table}.")
         # ipdb.set_trace()
         return state_with_sim
 
 
 
     def reset_state(self, state: State) -> None:
-            """Resets state with blocks distributed across tables.
-            Unlike the _reset_state function that's to be used
-            during initial state reset or tearing down a scene to set
-            a new scene, this sets the robot to exactly as in the state passed.
-            To be used during TAMP runs for planning while executing options.
             """
+            To be used during TAMP runs for planning while executing options.
+            Does not validate the state construction becuase at times small
+            errors lead failed resets.
+            """
+
+            if self._held_constraint_id is not None:
+                p.removeConstraint(self._held_constraint_id,
+                                   physicsClientId=self._physics_client_id)
+                self._held_constraint_id = None
+            self._held_obj_id = None
+
+
             self._pybullet_robot.move_base_to(state.base_pose, self._physics_client_id)
             self._pybullet_robot.set_joints(state.simulator_state)
 
@@ -836,20 +904,3 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             #     logging.debug("Reconstructed state:")
             #     logging.debug(reconstructed_state.pretty_str())
             #     raise ValueError("Could not reconstruct state.")
-
-
-
-            
-
-
-
-
-
-
-        
-
-
-
-
-
-

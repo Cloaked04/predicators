@@ -30,7 +30,8 @@ class PyBulletEnv(BaseEnv):
 
     # General robot parameters.
     grasp_tol: ClassVar[float] = 0.05
-    _finger_action_tol: ClassVar[float] = 1e-4
+    # _finger_action_tol: ClassVar[float] = 1e-4
+    _finger_action_tol: ClassVar[float] = 1e-3
 
     # Object parameters.
     _obj_mass: ClassVar[float] = 0.5
@@ -309,7 +310,18 @@ class PyBulletEnv(BaseEnv):
                     self._physics_client_id)
                 # Re-establish held-constraint if a object was held
                 # before base motion.
-                if self._held_obj_id is not None:
+                if self._held_obj_id is not None and self._held_constraint_id is not None:
+
+                    # p.removeConstraint(self._held_constraint_id, physicsClientId=self._physics_client_id)
+                    # self._held_constraint_id = None
+
+                    # for link in [-1, 20, 21]:  # palm/base (-1) + fingers (+ wrist)
+                    #     p.setCollisionFilterPair(self._pybullet_robot.robot_id, self._held_obj_id,
+                    #                              link, -1, enableCollision=0,
+                    #                              physicsClientId=self._physics_client_id)
+
+
+
                     world_to_base_link = get_link_state(self._pybullet_robot.robot_id,
                                                         self._pybullet_robot.end_effector_id,
                                                         physics_client_id=self._physics_client_id).com_pose
@@ -323,7 +335,17 @@ class PyBulletEnv(BaseEnv):
                                                     world_to_held_obj[0],
                                                     world_to_held_obj[1],
                                                     physicsClientId=self._physics_client_id)
-                    self._create_grasp_constraint()
+                    # for _ in range(30):
+                    #     p.stepSimulation(physicsClientId=self._physics_client_id)
+
+                    # p.resetBaseVelocity(self._held_obj_id, [0,0,0], [0,0,0], physicsClientId=self._physics_client_id)
+
+                    # self._create_grasp_constraint()
+
+                    # for link in [-1, 20, 21]:
+                    #     p.setCollisionFilterPair(self._pybullet_robot.robot_id, self._held_obj_id,
+                    #                              link, -1, enableCollision=1,
+                    #                              physicsClientId=self._physics_client_id)
 
             elif mode == "velocity":
                 #Use the differential drive kinematics defined in mobile_single_arm.py
@@ -379,13 +401,12 @@ class PyBulletEnv(BaseEnv):
                 world_to_held_obj[1],
                 physicsClientId=self._physics_client_id)
 
-
         # Step the simulation here before adding or removing constraints
         # because detect_held_object() should use the updated state.
         if CFG.pybullet_control_mode != "reset":
             for _ in range(CFG.pybullet_sim_steps_per_action):
                 p.stepSimulation(physicsClientId=self._physics_client_id)
-            time.sleep(CFG.pybullet_sim_steps_per_action*(1/240)+0.05)
+            time.sleep(CFG.pybullet_sim_steps_per_action*(1/500))
 
         #Only handle grasping changes if we have arm/ finger actions
         if len(action.arr)>0:
@@ -404,6 +425,9 @@ class PyBulletEnv(BaseEnv):
                                    physicsClientId=self._physics_client_id)
                 self._held_constraint_id = None
                 self._held_obj_id = None
+                
+        # print(f"\nNumber of constraints: {p.getNumConstraints(physicsClientId=self._physics_client_id)}.")
+        # print(f"\nConstraint Id for held: {self._held_constraint_id}.")
 
         self._current_observation = self._get_state()
         return self._current_observation.copy()
@@ -478,6 +502,7 @@ class PyBulletEnv(BaseEnv):
             parentFrameOrientation=[0, 0, 0, 1],
             childFrameOrientation=self._held_obj_to_base_link[1],
             physicsClientId=self._physics_client_id)
+        p.changeConstraint(self._held_constraint_id, maxForce=1e5)
 
     def _fingers_closing(self, action: Action) -> bool:
         """Check whether this action is working toward closing the fingers."""

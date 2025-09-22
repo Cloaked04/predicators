@@ -3,9 +3,10 @@
 import sys
 import logging
 import ipdb
+import time
 from typing import Any, Callable, Collection, DefaultDict, Dict, Iterator, \
     List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
-
+import traceback as tb
 import numpy as np
 from collections import deque
 from numpy.typing import NDArray
@@ -23,6 +24,7 @@ from predicators.pybullet_helpers.robots.single_arm import \
 from predicators.pybullet_helpers.robots.mobile_single_arm import\
     MobileSingleArmPyBulletRobot
 from predicators.pybullet_helpers.joint import JointInfo, JointPositions
+from predicators.pybullet_helpers.link import get_link_state, get_link_pose
 from predicators.pybullet_helpers.motion_planning import run_coordinated_motion_planning, run_motion_planning
 from predicators.structs import Action, Array, Object, ParameterizedOption, \
     State, Type
@@ -189,9 +191,58 @@ def create_change_fingers_option(
                 params: Array) -> Action:
         # del memory  # unused
         #Sync PyBullet state with planner state:
-        if env is not None:
-        #     ipdb.set_trace()
-            env.reset_state(state)
+        # if env is not None:
+        # ipdb.set_trace()
+            # env.reset_state(state)
+        # held_obj_id = env._held_obj_id
+        # if name == "OpenFingers" and held_obj_id is not None:
+            # for j in range(p.getNumJoints(robot.robot_id, physicsClientId=env._physics_client_id)):
+            #     name_info = p.getJointInfo(robot.robot_id, j, physicsClientId=env._physics_client_id)[12].decode()
+            #     if "block" in name_info.lower(): print("BLOCK IS A ROBOT LINK:", j, name_info)
+        #     p.changeVisualShape(held_obj_id, -1, rgbaColor=[1,0,0,1], physicsClientId=env._physics_client_id)
+        #     p.changeDynamics(held_obj_id, -1, mass=50.0, physicsClientId=env._physics_client_id)
+        #     p.resetBaseVelocity(held_obj_id, [0,0,0], [0,0,0], physicsClientId=env._physics_client_id)
+            # Save the original functions
+            # _real_reset_pose = p.resetBasePositionAndOrientation
+            # _real_reset_vel  = p.resetBaseVelocity
+
+            # # Wrapper that prints a warning and a stack trace
+            # def _spy_reset_pose(bid, *args, **kwargs):
+            #     if bid == held_obj_id:   # only log for your block
+            #         print("[SPY] resetBasePositionAndOrientation called for block")
+            #         tb.print_stack(limit=8)
+            #     return _real_reset_pose(bid, *args, **kwargs)
+
+            # def _spy_reset_vel(bid, *args, **kwargs):
+            #     if bid == held_obj_id:
+            #         print("[SPY] resetBaseVelocity called for block")
+            #         tb.print_stack(limit=8)
+            #     return _real_reset_vel(bid, *args, **kwargs)
+
+            # # Install the spies
+            # p.resetBasePositionAndOrientation = _spy_reset_pose
+            # p.resetBaseVelocity = _spy_reset_vel
+        ####################################################################
+
+        robot_base_pos, robot_base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=env._physics_client_id)
+        # print(f"\nNum constraints before fixing base in fingers option: {p.getNumConstraints(env._physics_client_id)}.")
+        freeze_id = p.createConstraint(
+            parentBodyUniqueId=0, 
+            parentLinkIndex=-1,   # base link
+            childBodyUniqueId=robot.robot_id, 
+            childLinkIndex=-1,           # world
+            jointType=p.JOINT_FIXED, 
+            jointAxis=[0,0,0],
+            parentFramePosition=(robot_base_pos[0], robot_base_pos[1], 0.01), 
+            childFramePosition=[0,0,0],
+            parentFrameOrientation=robot_base_orn, 
+            childFrameOrientation=[0,0,0,1],
+            physicsClientId=env._physics_client_id)
+        # print(f"\nNum constraints before fixing base in fingers option: {p.getNumConstraints(env._physics_client_id)}.")
+        # print(f"\nConstraint id: {freeze_id}.")
+
+        memory["freeze_id"] = freeze_id
+
         current_val, target_val = get_current_and_target_val(
             state, objects, params)
         f_delta = target_val - current_val
@@ -211,6 +262,8 @@ def create_change_fingers_option(
         # ipdb.set_trace()
         action = Action(target)
         action.set_base_motion(params=(0.0,0.0), mode="velocity")
+        fixed_base_pose = robot.get_base_pose(env._physics_client_id)
+        # action.set_base_motion(fixed_base_pose, "smooth_position")
         return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object],
@@ -220,7 +273,29 @@ def create_change_fingers_option(
         current_val, target_val = get_current_and_target_val(
             state, objects, params)
         squared_dist = (target_val - current_val)**2
-        return squared_dist < grasp_tol
+        terminal = squared_dist < grasp_tol
+        if terminal:
+            # if env._held_obj_id is not None and "Open" in name:
+            #     world_to_obj = np.r_[p.getBasePositionAndOrientation(env._held_obj_id, physicsClientId=env._physics_client_id)]
+            #     # p.resetBasePositionAndOrientation(env._held_obj_id, world_to_obj[:3], world_to_obj[3:], physicsClientId=env._physics_client_id)
+            #     block_coords = world_to_obj[:3]
+            #     block_freeze_id = p.createConstraint(
+            #         parentBodyUniqueId=0, 
+            #         parentLinkIndex=-1,   # base link
+            #         childBodyUniqueId=env._held_obj_id, 
+            #         childLinkIndex=-1,           # world
+            #         jointType=p.JOINT_FIXED, 
+            #         jointAxis=[0,0,0],
+            #         parentFramePosition=(block_coords[0], block_coords[1], block_coords[2]), 
+            #         childFramePosition=[0,0,0],
+            #         parentFrameOrientation=world_to_obj[3:], 
+            #         childFrameOrientation=[0,0,0,1],
+            #         physicsClientId=env._physics_client_id)
+            p.removeConstraint(memory["freeze_id"], physicsClientId=env._physics_client_id)
+            # print(f"Removing base constraint in fingers option: {memory['freeze_id']}.")
+            # print(f"Number of contraints in system now: {p.getNumConstraints(env._physics_client_id)}.")
+            # input()
+        return terminal
 
     return ParameterizedOption(name,
                                types=types,
@@ -1413,7 +1488,6 @@ def create_arm_motion_planning_option(
     types: Sequence[Type],
     params_space: Box,
     physics_client_id: int,
-    initial_joint_positions: JointPositions,
     z_func: Union[Callable[[float], float], float],
     home_orn: Sequence[float],
     collision_bodies: Collection[int],
@@ -1432,21 +1506,92 @@ def create_arm_motion_planning_option(
       - Base is untouched by this option.
     """
 
-    def _plan_once_and_cache_actions(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object], memory: Dict) -> None:
+    def _plan_once_and_cache_actions(robot: MobileSingleArmPyBulletRobot, 
+                                    state: State, objects: Sequence[Object], memory: Dict) -> None:
 
+        # ipdb.set_trace()
+        # Sync PyBullet state to current simulator state
+        # Crucial if you are planning inside the option as the 
+        # state is reset only when env.simulate is called.
+        # env.reset_state(state)
         waypoints: Optional[Sequence[JointPositions]] = None
+        held_obj_id = env._held_obj_id
+        base_link_to_held_object = None
         filtered_collision_bodies = collision_bodies
         if held_obj_id is not None:
             # Exclude the held object from obstacle set
-            filtered_collision_bodies = [b for b in collision_bodies if b != held_obj_id or b!=0]
+            filtered_collision_bodies = [b for b in collision_bodies if b != held_obj_id]
 
-        #Sync PyBullet state and simulator state:
-        env.reset_state(state)
+        if held_obj_id is not None:
+            # 1. world -> base_link pose | It actually is World -> EE transform
+            world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                                        robot.robot_id,
+                                                        robot.end_effector_id,
+                                                        physics_client_id=physics_client_id
+                                                    )
+            # world_to_ee_link =          get_link_state(
+            #                                             robot.robot_id,
+            #                                             robot.end_effector_id,
+            #                                             physics_client_id=physics_client_id
+            #                                         ).com_pose
+
+            # 2. base_link -> world
+            ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                                        world_to_ee_pos, world_to_ee_orn
+                                                    )
+            # base_link_to_world = np.r_[p.invertTransform(world_to_ee_link[0], 
+            #                                         world_to_ee_link[1]
+            #                                         )]
+                                                    
+            # 3. world -> object
+            world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                                        held_obj_id, physicsClientId=physics_client_id
+                                                    )
+            # world_to_obj = np.r_[p.getBasePositionAndOrientation(
+            #                                             held_obj_id, physicsClientId=physics_client_id
+            #                                         )]
+
+            # 4. base_link -> object (chain transforms)
+            base_link_to_held_object = p.multiplyTransforms(
+                                                        ee_to_world_pos, ee_to_world_orn,
+                                                        world_to_obj_pos, world_to_obj_orn
+                                                        )
+            # held_obj_to_base_link = p.invertTransform(
+            #     *p.multiplyTransforms(base_link_to_world[:3], base_link_to_world[3:],
+            #                           world_to_obj[:3], world_to_obj[3:]))
+            # base_link_to_held_object = p.invertTransform(*held_obj_to_base_link)
+
+            # base_link_to_held_object_internal = p.invertTransform(*env._held_obj_to_base_link)
+
+
+        robot_base_pos, robot_base_orn = p.getBasePositionAndOrientation(robot.robot_id, physicsClientId=physics_client_id)
+        # print(f"Num constraints before fixing base: {p.getNumConstraints(physics_client_id)}.")
+        freeze_id = p.createConstraint(
+            parentBodyUniqueId=0, 
+            parentLinkIndex=-1,   # base link
+            childBodyUniqueId=robot.robot_id, 
+            childLinkIndex=-1,           # world
+            jointType=p.JOINT_FIXED, 
+            jointAxis=[0,0,0],
+            parentFramePosition=(robot_base_pos[0], robot_base_pos[1], 0.01), 
+            childFramePosition=[0,0,0],
+            parentFrameOrientation=robot_base_orn, 
+            childFrameOrientation=[0,0,0,1],
+            physicsClientId=physics_client_id)
+        # print(f"Num constraints after fixing base: {p.getNumConstraints(physics_client_id)}.")
+        # ipdb.set_trace()
+
+        memory["freeze_id"] = freeze_id
+        
+        initial_joint_positions = state.simulator_state
         
         if "Grasp" in name or "Stack" in name:
-            ipdb.set_trace()
+            # ipdb.set_trace()
+            if "Stack" in name:
+                _, block, _ = objects
+            else:
+                _, block = objects
 
-            _, block = objects
     
             block_x, block_y, block_z = (state.get(block, "pose_x"),
                                          state.get(block, "pose_y"),
@@ -1466,8 +1611,8 @@ def create_arm_motion_planning_option(
             # simulator_robot_base_pose = state.base_pose
             #Move robot to simulator's base pose for ik:
             #robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
-            print(f"Calling IK for arm motion planning for target_ee_pose: {target_ee_pose}.")
-            input()
+            # print(f"Calling IK for arm motion planning for target_ee_pose: {target_ee_pose}.")
+            # input()
             try:
                 target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=False, set_joints=False)
                 if target_joint_positions is not None:
@@ -1483,77 +1628,141 @@ def create_arm_motion_planning_option(
                                                     held_object=held_obj_id,
                                                     base_link_to_held_object=base_link_to_held_object, 
                                                     )
-                    #Reset robot to world base pose:
-                    #robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                    #robot.set_joints(world_robot_joint_positions)
-                    #Restore PyBullet state to initial state:
-                    # env.reset_state(env._initial_state)
+                    if waypoints is None or len(waypoints) == 0:
+                        p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                        raise utils.OptionExecutionFailure(f"\n{name}: motion planning failed or returned empty path.")
+
             except InverseKinematicsError:
-                # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                # robot.set_joints(world_robot_joint_positions)
-                # env.reset_state(env._initial_state)
+                p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
                 raise utils.OptionExecutionFailure(f"\nInverse Kinematics failed.")
             
             
 
         elif "OnTable" in name:
-            ipdb.set_trace()
-
-            _, table = objects
-
-            table_x, table_y = (state.get(table, "pose_x"),
-                                state.get(table, "pose_y"))
-
-            if not callable(z_func):
-                target_z = z_func
-
-            x_workspace = (table_x-0.125, table_x+0.125)
-            y_workspace = (table_y-0.2, table_y+0.2)
-
-            x_sample = np.random.uniform(*x_workspace, n=1)
-            y_sample = np.random.uniform(*y_workspace, n=1)
-
-            target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
-
-            initial_left_finger_val = initial_joint_positions[robot.left_finger_joint_idx]
-            initial_right_finger_val = initial_joint_positions[robot.right_finger_joint_idx]
-            # world_robot_base_pose = robot.get_base_pose(physics_client_id)
-            # world_robot_joint_positions = robot.get_joints()
-            # simulator_robot_base_pose = state.base_pose
-            #Move robot to simulator's base pose for ik:
-            # robot.move_base_to(target_pose=simulator_robot_base_pose, physics_client_id=physics_client_id)
             # ipdb.set_trace()
-            print(f"Calling IK for arm motion planning for target_ee_pose: {target_ee_pose}.")
-            input()
-            try:
-                target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=False, set_joints=False)
-                if target_joint_positions is not None:
-                    target_joint_positions[robot.left_finger_joint_idx] = initial_left_finger_val
-                    target_joint_positions[robot.right_finger_joint_idx] = initial_right_finger_val
-                    waypoints = run_motion_planning(
-                                                    robot=robot,
-                                                    initial_positions=initial_joint_positions,
-                                                    target_positions=target_joint_positions,
-                                                    collision_bodies=filtered_collision_bodies,
-                                                    seed=seed,
-                                                    physics_client_id=physics_client_id,
-                                                    held_object=held_obj_id,
-                                                    base_link_to_held_object=base_link_to_held_object, 
-                                                    )
-                    #Reset robot to world base pose:
-                    # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                    # robot.set_joints(world_robot_joint_positions)
-                    # env.reset_state(env._initial_state)
-            except InverseKinematicsError:
-                # robot.move_base_to(target_pose=world_robot_base_pose, physics_client_id=physics_client_id)
-                # robot.set_joints(world_robot_joint_positions)
-                # env.reset_state(env._initial_state)
-                raise utils.OptionExecutionFailure(f"\nInverse Kineamtics failed.")
+            if "Pre" in name:
 
-        if waypoints is None or len(waypoints) == 0:
-            raise utils.OptionExecutionFailure(f"{name}: motion planning failed or returned empty path.")
+                _, table, _ = objects
 
-        # 6) Convert waypoints -> Actions
+                table_x, table_y = (state.get(table, "pose_x"),
+                                    state.get(table, "pose_y"))
+
+                x_workspace = (table_x-0.125, table_x+0.125)
+                y_workspace = (table_y-0.2, table_y+0.2)
+
+                if not callable(z_func):
+                    target_z = z_func
+                else:
+                    printf(f"\nZ must be a value for place.")
+                    sys.exit(0)
+
+                sampling_tries = 0
+
+                while sampling_tries < 50:
+                    sampling_tries+=1
+
+                    x_sample = np.random.uniform(*x_workspace)
+                    y_sample = np.random.uniform(*y_workspace)
+
+                    #Just remove all the table for ease of implementation:
+                    collision_bodies_without_table = [body_id for body_id in filtered_collision_bodies\
+                                                     if body_id not in env._table_id_to_table] 
+
+                    if utils.sample_point_in_collision((x_sample, y_sample, target_z), 
+                                                        collision_bodies_without_table,
+                                                        env.grasp_tol, 
+                                                        physics_client_id):
+                        if sampling_tries < 49:
+                            continue
+                        else:
+                            p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                            raise utils.OptionExecutionFailure(f"{name}:Failed to sample a point a table suitable for place.")
+
+                    target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
+
+                    initial_left_finger_val = initial_joint_positions[robot.left_finger_joint_idx]
+                    initial_right_finger_val = initial_joint_positions[robot.right_finger_joint_idx]
+                    try:
+                        target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=False, set_joints=False)
+                        if target_joint_positions is not None:
+                            target_joint_positions[robot.left_finger_joint_idx] = initial_left_finger_val
+                            target_joint_positions[robot.right_finger_joint_idx] = initial_right_finger_val
+                            waypoints = run_motion_planning(
+                                                            robot=robot,
+                                                            initial_positions=initial_joint_positions,
+                                                            target_positions=target_joint_positions,
+                                                            collision_bodies=filtered_collision_bodies,
+                                                            seed=seed,
+                                                            physics_client_id=physics_client_id,
+                                                            held_object=held_obj_id,
+                                                            base_link_to_held_object=base_link_to_held_object, 
+                                                            )
+                            if waypoints is None or len(waypoints) == 0 :
+                                if sampling_tries < 49:
+                                    logger.debug(f"\nPlanning failed. Continuing..")
+                                    continue
+                                p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                                raise utils.OptionExecutionFailure(f"{name}: motion planning failed or returned empty path.")
+                            else:
+                                break
+
+
+                    except InverseKinematicsError:
+                        if sampling_tries < 49:
+                            logger.debug(f"\nIK Failed. Continuing..")
+                            continue
+                        p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                        raise utils.OptionExecutionFailure(f"\nInverse Kineamtics failed.")
+
+            else:
+
+                _, _, block = objects
+
+                block_x, block_y = (state.get(block, "pose_x"),
+                                    state.get(block, "pose_y"))
+
+                if not callable(z_func):
+                    target_z = z_func
+                else:
+                    printf(f"\nZ must be a value for place.")
+                    sys.exit(0)
+
+                target_ee_pose = Pose(position=(block_x, block_y, target_z), orientation=home_orn)
+
+                initial_left_finger_val = initial_joint_positions[robot.left_finger_joint_idx]
+                initial_right_finger_val = initial_joint_positions[robot.right_finger_joint_idx]
+
+                try:
+                    target_joint_positions = robot.inverse_kinematics(target_ee_pose, validate=False, set_joints=False)
+                    if target_joint_positions is not None:
+                        target_joint_positions[robot.left_finger_joint_idx] = initial_left_finger_val
+                        target_joint_positions[robot.right_finger_joint_idx] = initial_right_finger_val
+                        waypoints = run_motion_planning(
+                                                        robot=robot,
+                                                        initial_positions=initial_joint_positions,
+                                                        target_positions=target_joint_positions,
+                                                        collision_bodies=filtered_collision_bodies,
+                                                        seed=seed,
+                                                        physics_client_id=physics_client_id,
+                                                        held_object=held_obj_id,
+                                                        base_link_to_held_object=base_link_to_held_object, 
+                                                        )
+                        if waypoints is None or len(waypoints) == 0 :
+                            p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                            raise utils.OptionExecutionFailure(f"{name}: motion planning failed or returned empty path.")
+
+
+                except InverseKinematicsError:
+                    p.removeConstraint(memory["freeze_id"], physicsClientId=physics_client_id)
+                    raise utils.OptionExecutionFailure(f"\nInverse Kineamtics failed.")
+
+
+        # if waypoints is None or len(waypoints) == 0:
+        #     raise utils.OptionExecutionFailure(f"{name}: motion planning failed or returned empty path.")
+
+        fixed_base_pose = robot.get_base_pose(physics_client_id)
+
+        # Convert waypoints to Actions
         actions: List[Action] = []
         for q in waypoints:
             # Build a full-size action array and set arm joints. Fingers included in q if you put them there.
@@ -1566,6 +1775,7 @@ def create_arm_motion_planning_option(
             assert robot.action_space.contains(arr)
             action = Action(arr)
             action.set_base_motion((0.0,0.0), "velocity")
+            # action.set_base_motion(fixed_base_pose, "smooth_position")
             actions.append(action)
 
         actions = deque(actions)
@@ -1583,15 +1793,21 @@ def create_arm_motion_planning_option(
         if "actions" not in memory:
             _plan_once_and_cache_actions(robot, state, objects, memory)
 
-        if len(memory['actions']) == 1:
-            ipdb.set_trace()
+        # if len(memory['actions']) == 1:
+            # ipdb.set_trace()
         action = memory["actions"].popleft()
         return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
         if "actions" not in memory:
             return False
-        return len(memory["actions"])==0
+        terminal = len(memory["actions"])==0
+        if terminal:
+            # print(f"Removing base constraint: {memory['freeze_id']}.")
+            p.removeConstraint(memory['freeze_id'], physicsClientId=physics_client_id)
+            # print(f"Number of contraints in system now: {p.getNumConstraints(physics_client_id)}.")
+            # input()
+        return terminal
 
     return ParameterizedOption(
         name=name,
@@ -1650,6 +1866,9 @@ def create_integrated_move_base_option(
     def _plan_and_cache_base_motion(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object],
                                    memory: Dict) -> None:
         
+        env.reset_state(state)
+        time.sleep(1)
+
         filtered_collision_bodies = list(collision_bodies)
         if held_object_id_at_start is not None:
             # Exclude the held object from obstacle set
@@ -1674,30 +1893,25 @@ def create_integrated_move_base_option(
                                      state.get(table, "pose_y"),
                                      state.get(table, "pose_z"))
 
-        target_z = table_z * 2.25
-        x_workspace = (table_x-0.125, table_x+0.125)
-        y_workspace = (table_y-0.2, table_y+0.2)
+        target_z = table_z+0.4
 
-        x_sample = np.random.uniform(*x_workspace, size=None)
-        y_sample = np.random.uniform(*y_workspace, size=None)
-
-        target_ee_pose = Pose(position=(x_sample, y_sample, target_z), orientation=home_orn)
+        target_ee_pose = Pose(position=(table_x, table_y, target_z), orientation=home_orn)
             
 
         base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
-                                                                        robot=robot,
-                                                                        target_ee_pose=target_ee_pose,
-                                                                        collision_bodies=filtered_collision_bodies,
-                                                                        seed=seed,
-                                                                        physics_client_id=physics_client_id,
-                                                                        try_arm_only_first=try_arm_only_first,
-                                                                        base_path_planner_max_tries=base_path_planner_max_tries,
-                                                                        workspace_bounds=workspace_bounds,
-                                                                        rng=np.random.default_rng(seed),
-                                                                        final_finger_state=final_finger_state,
-                                                                        held_object_id_at_start=held_object_id_at_start,
-                                                                        ee_to_held_object_transform_at_start=ee_to_held_object_transform_at_start,
-                                                                    )
+                                                                robot=robot,
+                                                                target_ee_pose=target_ee_pose,
+                                                                collision_bodies=filtered_collision_bodies,
+                                                                seed=seed,
+                                                                physics_client_id=physics_client_id,
+                                                                try_arm_only_first=try_arm_only_first,
+                                                                base_path_planner_max_tries=base_path_planner_max_tries,
+                                                                workspace_bounds=workspace_bounds,
+                                                                rng=np.random.default_rng(seed),
+                                                                final_finger_state=final_finger_state,
+                                                                held_object_id_at_start=held_object_id_at_start,
+                                                                ee_to_held_object_transform_at_start=ee_to_held_object_transform_at_start,
+                                                                )
 
         if base_path_waypoints is None or len(base_path_waypoints) == 0:
             raise utils.OptionExecutionFailure(f"{name}: Base path planning failed or returned empty path.")
@@ -2148,21 +2362,57 @@ def create_base_reset_based_move_base_option(
     ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
     rng: Optional[np.random.Generator] = None,
     try_arm_only_first: bool = False,
-    base_path_planner_max_tries: int = 30,
+    base_path_planner_max_tries: int = 40,
     workspace_bounds: Optional[Tuple[float, float, float, float]] = None,
     final_finger_state: Optional[float] = None,
     ) -> ParameterizedOption:
 
     def _plan_and_cache_base_motion(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object],
                                    memory: Dict) -> None:
-        
+
+        # Sync PyBullet state to planner state before planning
+        # as it's only set to planner state when env.simulate_state
+        # is called.
+        env.reset_state(state)
+        time.sleep(0.1)
+
+        held_object_id_at_start = env._held_obj_id
+        ee_to_held_object_transform_at_start = None
         filtered_collision_bodies = list(collision_bodies)
         if held_object_id_at_start is not None:
+            # ipdb.set_trace()
             # Exclude the held object from obstacle set
             filtered_collision_bodies = [b for b in filtered_collision_bodies if b != held_object_id_at_start]
 
-        #Sync PyBullet state to planner state before planning
-        env.reset_state(state)
+        if held_object_id_at_start is not None:
+            # 1. world -> base_link pose | It actually is World -> EE transform
+            world_to_ee_pos, world_to_ee_orn = get_link_pose(
+                                                        robot.robot_id,
+                                                        robot.end_effector_id,
+                                                        physics_client_id=physics_client_id
+                                                    )
+
+            # 2. base_link -> world
+            ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+                                                        world_to_ee_pos, world_to_ee_orn
+                                                    )
+                                                    
+            # 3. world -> object
+            world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+                                                        held_object_id_at_start, physicsClientId=physics_client_id
+                                                    )
+
+            # 4. base_link -> object (chain transforms)
+            ee_to_held_object_transform_at_start = p.multiplyTransforms(
+                                                        ee_to_world_pos, ee_to_world_orn,
+                                                        world_to_obj_pos, world_to_obj_orn
+                                                        )
+
+            # ee_to_held_object_transform_at_start = p.invertTransform(*env._held_obj_to_base_link)
+
+
+
+        
 
         _, table = objects
 
@@ -2237,10 +2487,10 @@ def create_base_reset_based_move_base_option(
             _plan_and_cache_base_motion(robot, state, objects, memory)
 
         waypoint = memory["path"].popleft()
-        action = Action(np.array(memory["current_arm_joints"]))
+        action = Action(np.array(memory["current_arm_joints"], dtype=np.float32))
         action.set_base_motion(params=waypoint, mode="smooth_position")
-        if(len(memory["path"])<=5):
-            ipdb.set_trace()
+        # if(len(memory["path"])<=5):
+            # ipdb.set_trace()
         return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
@@ -2289,7 +2539,7 @@ def create_base_reset_based_move_base_to_pick_option(
             # Exclude the held object from obstacle set
             filtered_collision_bodies = [b for b in filtered_collision_bodies if b != held_object_id_at_start]
 
-        env.reset_state(state)
+        # env.reset_state(state)
 
         _, block = objects
 
@@ -2307,7 +2557,7 @@ def create_base_reset_based_move_base_to_pick_option(
         # print(f"Target EE position for block {block.name}: {target_ee_pose}.")
         # input()
             
-        ipdb.set_trace()
+        # ipdb.set_trace()
         base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
                                                                         robot=robot,
                                                                         target_ee_pose=target_ee_pose,
@@ -2325,11 +2575,11 @@ def create_base_reset_based_move_base_to_pick_option(
 
         if base_path_waypoints is None or len(base_path_waypoints) == 0:
             #Restore PyBullet state
-            env.reset_state(env._initial_state)
+            # env.reset_state(env._initial_state)
             raise utils.OptionExecutionFailure(f"{name}: Base path planning failed or returned empty path.")
 
         #Restore PyBullet state
-        env.reset_state(env._initial_state)
+        # env.reset_state(env._initial_state)
         # target_base_pose = base_path_waypoints[-1]
         current_arm_joints = robot.get_joints()
         base_path_waypoints = deque(base_path_waypoints)
@@ -2348,8 +2598,8 @@ def create_base_reset_based_move_base_to_pick_option(
             _plan_and_cache_base_motion(robot, state, objects, memory)
         
         waypoint = memory["path"].popleft()
-        if len(memory["path"])<=5:
-            ipdb.set_trace()
+        # if len(memory["path"])<=5:
+            # ipdb.set_trace()
         action = Action(np.array(memory["current_arm_joints"]))
         action.set_base_motion(params=waypoint, mode="smooth_position")
         return action

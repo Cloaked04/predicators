@@ -91,6 +91,7 @@ class GlobalSettings:
     blocks_num_blocks_test = [5, 6]
     blocks_holding_goals = False
     blocks_block_size = 0.045  # use 0.0505 for real with panda
+    # blocks_block_size = 0.0225
 
     # playroom env parameters
     playroom_num_blocks_train = [3]
@@ -160,7 +161,7 @@ class GlobalSettings:
     pybullet_robot = "fetch"
     pybullet_birrt_num_attempts = 10
     pybullet_birrt_num_iters = 100
-    pybullet_birrt_smooth_amt = 50
+    pybullet_birrt_smooth_amt = 100
     pybullet_birrt_extend_num_interp = 10
     pybullet_control_mode = "position"
     pybullet_max_vel_norm = 0.05
@@ -190,7 +191,7 @@ class GlobalSettings:
 
     # IKFast parameters
     # ikfast_max_time = 0.05
-    ikfast_max_time = 0.5
+    ikfast_max_time = 2.0
     ikfast_max_candidates = 100
     ikfast_max_attempts = np.inf
     ikfast_max_distance = np.inf
@@ -374,6 +375,7 @@ class GlobalSettings:
     # option model parameters
     option_model_terminate_on_repeat = True
     option_model_use_gui = False
+    envs_with_planning_option = ["pybullet_multitable_blocks"]
 
     # parameters for abstract GNN approach
     gnn_num_message_passing = 3

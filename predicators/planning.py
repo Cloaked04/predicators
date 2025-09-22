@@ -271,7 +271,7 @@ def _sesame_plan_with_astar(
                     sorted(proposed_skeletons,
                            key=lambda s: estimator.get_cost(task, *s)))
             # Refinement section: goes over each plan and tries to refine it using 
-            # _run_low_level_search.
+            # run_low_level_search.
             refinement_start_time = time.perf_counter()
             for skeleton, atoms_sequence in gen:
                 # ipdb.set_trace()
@@ -708,7 +708,7 @@ def run_low_level_search(
         metrics["num_samples"] += 1
         # Increment cur_idx. It will be decremented later on if we get stuck.
         cur_idx += 1
-        ipdb.set_trace()
+        # ipdb.set_trace()
         if option.initiable(state):
             try:
                 next_state, num_actions = \
@@ -718,7 +718,7 @@ def run_low_level_search(
                 # Remember only the most recent failure.
                 discovered_failures[cur_idx - 1] = _DiscoveredFailure(e, nsrt)
             else:  # an EnvironmentFailure was not raised
-                ipdb.set_trace()
+                # ipdb.set_trace()
                 discovered_failures[cur_idx - 1] = None
                 num_actions_per_option[cur_idx - 1] = num_actions
                 traj[cur_idx] = next_state

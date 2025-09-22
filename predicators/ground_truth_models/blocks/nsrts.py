@@ -315,7 +315,7 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         table = Variable("?table", table_type)
 
         parameters = [block, robot, table]
-        option_vars = [robot, table]
+        option_vars = [robot, table, block]
         option = PutOnTable
         preconditions = {
             LiftedAtom(Holding, [block]),

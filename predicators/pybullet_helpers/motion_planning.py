@@ -6,6 +6,7 @@ from typing import Collection, Iterator, Optional, Sequence, List, Tuple, Any
 import sys
 import logging
 import ipdb
+import time
 
 import numpy as np
 import pybullet as p
@@ -121,6 +122,7 @@ def run_motion_planning(
     def _collision_fn(pt: JointPositions) -> bool:
         _set_state(pt)
         p.performCollisionDetection(physicsClientId=physics_client_id)
+        # ipdb.set_trace()
         for body in collision_bodies:
             if p.getContactPoints(robot.robot_id,
                                   body,
@@ -318,15 +320,15 @@ def run_base_motion_planning(
             assert ee_to_held_object_transform is not None
             # It's crucial to use the correct link for the transform.
             # Assuming the grasp constraint is on robot.end_effector_id
-            ee_link_world_pose = get_link_state(
+            world_to_ee_link = get_link_state(
                 robot.robot_id,
                 robot.end_effector_id, # Or robot.tool_link_id, depending on grasp def
                 physics_client_id=physics_client_id
-            ).pose # This is a Pose(position, orientation)
+            ).com_pose # This is a Pose(position, orientation)
 
             new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
-                ee_link_world_pose.position,
-                ee_link_world_pose.orientation,
+                world_to_ee_link[0],
+                world_to_ee_link[1],
                 ee_to_held_object_transform[0],  # position part of transform
                 ee_to_held_object_transform[1]   # orientation part of transform
             )
@@ -336,6 +338,10 @@ def run_base_motion_planning(
                 new_held_object_orn,
                 physicsClientId=physics_client_id
             )
+
+            # for _ in range(20):
+            #     p.stepSimulation(physicsClientId=physics_client_id)
+            # time.sleep(0.05)
 
         # Perform collision detection
         p.performCollisionDetection(physicsClientId=physics_client_id)
@@ -372,6 +378,9 @@ def run_base_motion_planning(
                 original_held_object_pos_orn[1],
                 physicsClientId=physics_client_id
             )
+        # for _ in range(20):
+        #         p.stepSimulation(physicsClientId=physics_client_id)
+
         return collides
 
     # def _distance_fn(pose1: Tuple[float, float, float],
@@ -465,12 +474,12 @@ def _collision_fn(robot: MobileSingleArmPyBulletRobot,
             robot.robot_id,
             robot.end_effector_id, # Assuming transform is relative to end_effector_id
             physics_client_id=physics_client_id
-        ).pose
+        ).com_pose
 
         # Compute the world-frame pose of the held object
         new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
-            ee_link_world_pose.position,
-            ee_link_world_pose.orientation,
+            ee_link_world_pose[0],
+            ee_link_world_pose[1],
             ee_to_held_object_transform[0], # position part of transform
             ee_to_held_object_transform[1]  # orientation part of transform
         )
@@ -480,6 +489,9 @@ def _collision_fn(robot: MobileSingleArmPyBulletRobot,
             new_held_object_orn,
             physicsClientId=physics_client_id
         )
+
+        # for _ in range(60):
+        #     p.stepSimulation(physicsClientId=physics_client_id)
 
     # Perform collision detection without stepping physics
     # in order to get updates values when using get.ContactPoints
@@ -523,11 +535,14 @@ def _collision_fn(robot: MobileSingleArmPyBulletRobot,
             physicsClientId=physics_client_id
         )
 
+        # for _ in range(60):
+        #     p.stepSimulation(physicsClientId=physics_client_id)
+
     return collides
 
 
 def wrap_to_pi(angle: float) -> float:
-    """Map an angle to (-π, π]."""
+    """Map an angle to (-pi, pi]."""
     return (angle + np.pi) % (2*np.pi) - np.pi
 
 
@@ -644,10 +659,10 @@ def run_coordinated_motion_planning(
         # current_arm_positions is already passed and represents the arm state to check with
 
         # If robot is holding an object, save its orientation as well.
-        original_held_object_pos_orn: Optional[Tuple[NDArray, NDArray]] = None
-        if held_object_id_at_start is not None:
-            original_held_object_pos_orn = p.getBasePositionAndOrientation(
-                held_object_id_at_start, physicsClientId=physics_client_id)
+        # original_held_object_pos_orn: Optional[Tuple[NDArray, NDArray]] = None
+        # if held_object_id_at_start is not None:
+        #     original_held_object_pos_orn = p.getBasePositionAndOrientation(
+        #         held_object_id_at_start, physicsClientId=physics_client_id)
 
         # Set robot base to the test pose
         # robot.move_base_to uses p.resetBasePositionAndOrientation
@@ -657,28 +672,31 @@ def run_coordinated_motion_planning(
         #robot.set_joints(current_joint_positions)
 
         # If holding an object, update its pose based on new base and arm state
-        if held_object_id_at_start is not None:
-            assert ee_to_held_object_transform_at_start is not None
-            # It's crucial to use the correct link for the transform.
-            # Assuming the grasp constraint is on robot.end_effector_id
-            ee_link_world_pose = get_link_state(
-                robot.robot_id,
-                robot.end_effector_id, # Or robot.tool_link_id, depending on grasp def
-                physics_client_id=physics_client_id
-            ).pose
+        # if held_object_id_at_start is not None:
+        #     assert ee_to_held_object_transform_at_start is not None
+        #     # It's crucial to use the correct link for the transform.
+        #     # Assuming the grasp constraint is on robot.end_effector_id
+        #     ee_link_world_pose = get_link_state(
+        #         robot.robot_id,
+        #         robot.end_effector_id, # Or robot.tool_link_id, depending on grasp def
+        #         physics_client_id=physics_client_id
+        #     ).com_pose
 
-            new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
-                ee_link_world_pose.position,
-                ee_link_world_pose.orientation,
-                ee_to_held_object_transform_at_start[0],  
-                ee_to_held_object_transform_at_start[1]   
-            )
-            p.resetBasePositionAndOrientation(
-                held_object_id_at_start,
-                new_held_object_pos,
-                new_held_object_orn,
-                physicsClientId=physics_client_id
-            )
+        #     new_held_object_pos, new_held_object_orn = p.multiplyTransforms(
+        #         ee_link_world_pose.position,
+        #         ee_link_world_pose.orientation,
+        #         ee_to_held_object_transform_at_start[0],  
+        #         ee_to_held_object_transform_at_start[1]   
+        #     )
+        #     p.resetBasePositionAndOrientation(
+        #         held_object_id_at_start,
+        #         new_held_object_pos,
+        #         new_held_object_orn,
+        #         physicsClientId=physics_client_id
+        #     )
+
+            # for _ in range(20):
+            #     p.stepSimulation(physicsClientId=physics_client_id)
 
         # Perform collision detection
         p.performCollisionDetection(physicsClientId=physics_client_id)
@@ -689,7 +707,7 @@ def run_coordinated_motion_planning(
             if p.getContactPoints(robot.robot_id, body_id, physicsClientId=physics_client_id):
                 collides = True
                 print(f"\nCollides with body id:{body_id}.")
-                input()
+                # input()
                 break
         
         # Check held object collisions (if any and no collision found yet)
@@ -710,13 +728,17 @@ def run_coordinated_motion_planning(
         #robot.set_joints(current_joint_positions) # Or original arm positions if they could change
 
         # Restore original held object state
-        if held_object_id_at_start is not None and original_held_object_pos_orn is not None:
-            p.resetBasePositionAndOrientation(
-                held_object_id_at_start,
-                original_held_object_pos_orn[0],
-                original_held_object_pos_orn[1],
-                physicsClientId=physics_client_id
-            )
+        # if held_object_id_at_start is not None and original_held_object_pos_orn is not None:
+        #     p.resetBasePositionAndOrientation(
+        #         held_object_id_at_start,
+        #         original_held_object_pos_orn[0],
+        #         original_held_object_pos_orn[1],
+        #         physicsClientId=physics_client_id
+        #     )
+
+            # for _ in range(20):
+            #     p.stepSimulation(physicsClientId=physics_client_id)
+
         return collides
 
     
@@ -868,6 +890,11 @@ def run_coordinated_motion_planning(
     pose_above_target = Pose(position=(x_target, y_target, z_above_target),orientation=target_ee_pose.orientation)
     pose_to_move_down = Pose(position=(x_target, y_target, z),orientation=target_ee_pose.orientation)
 
+    # Making the sampler for base pose disjoint from rng used for planning
+    # to ensure we don't get the same sequence of samples across multiple calls
+    # while running TAMP
+    rad_sampler = np.random.default_rng()
+
     #candidate_base_poses = []
     #candidate_joint_solutions = {}
 
@@ -882,9 +909,9 @@ def run_coordinated_motion_planning(
             rad_test = 0.0
 
             while rad_test<=cutoff_distance:
-                rad_test = rng.uniform(rad_min, rad_max)
+                rad_test = rad_sampler.uniform(rad_min, rad_max)
             #rad_test = rng.uniform(rad_min, rad_max)
-            theta = wrap_to_pi(rng.uniform(0.0, 2*np.pi))
+            theta = wrap_to_pi(rad_sampler.uniform(0.0, 2*np.pi))
 
             logger.info(f"\nSampled radius:{rad_test}.")
 
@@ -930,7 +957,7 @@ def run_coordinated_motion_planning(
 
                     #Set joints to  soltn. returned by IK:
                     robot.set_joints(joint_solution_above_target)
-                    #TODO: Reset blocks pose as well
+                    
                     if held_object_id_at_start is not None:
                         assert ee_to_held_object_transform_at_start is not None
                         world_to_base_link = get_link_state(
@@ -947,6 +974,10 @@ def run_coordinated_motion_planning(
                             world_to_held_obj[1],
                             physicsClientId=physics_client_id)
 
+                        # for _ in range(20):
+                        #     p.stepSimulation(physicsClientId=physics_client_id)
+                        # time.sleep(0.5)
+
                     #Check collison:
                     is_colliding = _base_collision_fn()
                     if is_colliding:
@@ -959,6 +990,9 @@ def run_coordinated_motion_planning(
                                 current_held_object_pos_orn[0],
                                 current_held_object_pos_orn[1],
                                 physicsClientId=physics_client_id)
+                        # for _ in range(20):
+                        #     p.stepSimulation(physicsClientId=physics_client_id)
+                        # time.sleep(0.5)
                         continue
                     elif not is_colliding:
                         logger.info(f"\n Collision Check: OK!!!")
@@ -970,6 +1004,9 @@ def run_coordinated_motion_planning(
                                 current_held_object_pos_orn[0],
                                 current_held_object_pos_orn[1],
                                 physicsClientId=physics_client_id)
+                        # for _ in range(20):
+                        #     p.stepSimulation(physicsClientId=physics_client_id)
+                        # time.sleep(0.5)
 
                         logger.info(f"Attempting base path planning:")
 
@@ -988,14 +1025,17 @@ def run_coordinated_motion_planning(
                         if base_path is None:
                             logger.info("Coordinated planning: Base path planning failed.")
                             # Restore initial state
-                            robot.move_base_to(current_base_pose, physics_client_id)
-                            robot.set_joints(current_joint_positions)
-                            if held_object_id_at_start is not None:
-                                p.resetBasePositionAndOrientation(
-                                    held_object_id_at_start,
-                                    current_held_object_pos_orn[0],
-                                    current_held_object_pos_orn[1],
-                                    physicsClientId=physics_client_id)
+                            # robot.move_base_to(current_base_pose, physics_client_id)
+                            # robot.set_joints(current_joint_positions)
+                            # if held_object_id_at_start is not None:
+                            #     p.resetBasePositionAndOrientation(
+                            #         held_object_id_at_start,
+                            #         current_held_object_pos_orn[0],
+                            #         current_held_object_pos_orn[1],
+                            #         physicsClientId=physics_client_id)
+                            # for _ in range(20):
+                            #     p.stepSimulation(physicsClientId=physics_client_id)
+                            # time.sleep(0.5)
                             continue
 
                         elif base_path is not None:
@@ -1003,27 +1043,33 @@ def run_coordinated_motion_planning(
                             # logger.info(f"\n Proceeding with arm motion planning for joint solution: {joint_solution_above_target}.")
 
                             #Set the robot to initial base and joint position:
-                            robot.move_base_to(current_base_pose, physics_client_id)
-                            robot.set_joints(current_joint_positions)
-                            if held_object_id_at_start is not None:
-                                p.resetBasePositionAndOrientation(
-                                    held_object_id_at_start,
-                                    current_held_object_pos_orn[0],
-                                    current_held_object_pos_orn[1],
-                                    physicsClientId=physics_client_id)
+                            # robot.move_base_to(current_base_pose, physics_client_id)
+                            # robot.set_joints(current_joint_positions)
+                            # if held_object_id_at_start is not None:
+                            #     p.resetBasePositionAndOrientation(
+                            #         held_object_id_at_start,
+                            #         current_held_object_pos_orn[0],
+                            #         current_held_object_pos_orn[1],
+                            #         physicsClientId=physics_client_id)
+                            # for _ in range(20):
+                            #     p.stepSimulation(physicsClientId=physics_client_id)
+                            # time.sleep(0.5)
 
                             return base_path
 
             except InverseKinematicsError:
                 logger.info(f"\nIK FAILED.Trying again.")
                 robot.move_base_to(current_base_pose, physics_client_id)
-                robot.set_joints(current_joint_positions)
-                if held_object_id_at_start is not None:
-                    p.resetBasePositionAndOrientation(
-                        held_object_id_at_start,
-                        current_held_object_pos_orn[0],
-                        current_held_object_pos_orn[1],
-                        physicsClientId=physics_client_id)
+                # robot.set_joints(current_joint_positions)
+                # if held_object_id_at_start is not None:
+                #     p.resetBasePositionAndOrientation(
+                #         held_object_id_at_start,
+                #         current_held_object_pos_orn[0],
+                #         current_held_object_pos_orn[1],
+                #         physicsClientId=physics_client_id)
+                # for _ in range(20):
+                #     p.stepSimulation(physicsClientId=physics_client_id)
+                # time.sleep(0.5)
                 continue
 
                             #Arm motion planning:

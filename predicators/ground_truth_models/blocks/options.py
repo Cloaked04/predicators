@@ -17,7 +17,8 @@ from predicators.ground_truth_models import GroundTruthOptionFactory
 from predicators.pybullet_helpers.controllers import \
     create_change_fingers_option, create_move_end_effector_to_pose_option,\
     create_arm_motion_planning_option, create_disjoint_move_base_option,\
-    create_base_reset_based_move_base_option, create_base_reset_based_move_base_to_pick_option
+    create_integrated_move_base_option, create_base_reset_based_move_base_option,\
+    create_base_reset_based_move_base_to_pick_option
 from predicators.pybullet_helpers.geometry import Pose
 from predicators.pybullet_helpers.joint import JointInfo, JointPositions
 from predicators.pybullet_helpers.link import get_link_state, get_link_pose
@@ -382,13 +383,15 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
     def get_options(cls, env_name: str, types: Dict[str, Type],
                     predicates: Dict[str, Predicate],
                     action_space: Box, robot: MobileSingleArmPyBulletRobot,
-                    env: PyBulletEnv, physics_client_id: int) -> Set[ParameterizedOption]:
+                    env: PyBulletEnv) -> Set[ParameterizedOption]:
 
         # ipdb.set_trace()
         robot_type = types["robot"]
         block_type = types["block"]
         table_type = types["table"]
         block_size = CFG.blocks_block_size
+
+        physics_client_id = env._physics_client_id
 
         def get_current_fingers(state: State) -> float:
             symbolic_robot, = state.get_objects(robot_type)
@@ -533,7 +536,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
             ])
 
         # PutOnTable
-        option_types = [robot_type, table_type]
+        option_types = [robot_type, table_type, block_type]
         params_space = Box(0, 1, (2, ))
         place_z = PyBulletBlocksEnv.table_height + \
             block_size / 2 + cls._offset_z
@@ -590,8 +593,9 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         then executes the the arm motion.
         """
 
-        initial_joint_position = robot.get_joints()
+        # initial_joint_position = robot.get_joints()
         held_obj_id = env._held_obj_id
+        # held_obj_id = None
         ee_link_to_held_object = None
         # if "Grasp" in name:
         #     assert held_obj_id is None, "Cannot be holding an item during Pick."
@@ -626,14 +630,77 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         all_bodies = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
                 for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
 
-        collision_bodies = [b for b in all_bodies if b!=robot.robot_id]
+        collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
 
         home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
-        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
-                                physics_client_id=physics_client_id,  initial_joint_positions=initial_joint_position, 
-                                z_func=z_func, home_orn=home_orn, collision_bodies=collision_bodies, seed=CFG.seed, 
-                                held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
+        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, 
+                                                params_space=params_space, physics_client_id=physics_client_id, 
+                                                z_func=z_func, home_orn=home_orn, collision_bodies=collision_bodies,
+                                                seed=CFG.seed, held_obj_id=held_obj_id, 
+                                                base_link_to_held_object=ee_link_to_held_object)
+
+
+    # @classmethod
+    # def _create_move_robot_base_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
+    #                                     option_types: Sequence[Type],  params_space:Box, 
+    #                                     env: PyBulletEnv, physics_client_id: int) -> ParameterizedOption:
+
+    #     """Compute/derive values required to initialize the base motion option which first plans
+    #     then executes the base motion via differential drive.
+    #     """
+
+    #     def get_current_base_and_arm_pose(robot: MobileSingleArmPyBulletRobot, state:State, objects: Sequence[Object],
+    #                                      params: Array) -> Tuple[Tuple[float, float, float], JointPositions]:
+
+    #         current_base_pose = robot.get_base_pose(physics_client_id)
+    #         current_joint_positions = robot.get_joints()
+
+    #         return current_base_pose, current_joint_positions
+
+    #     assert physics_client_id is not None
+    #     held_obj_id_at_start = env._held_obj_id
+    #     all_bodies = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
+    #             for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
+
+    #     # ipdb.set_trace()
+
+    #     collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
+    #     if held_obj_id_at_start is not None:
+    #         collision_bodies = [b for b in collision_bodies is b!=held_obj_id_at_start]
+
+        
+    #     ee_link_to_held_obj = None
+    #     if held_obj_id_at_start is not None:
+    #         # 1. world -> base_link pose | It actually is World -> EE transform
+    #         world_to_ee_pos, world_to_ee_orn = get_link_pose(
+    #                                                     robot.robot_id,
+    #                                                     robot.end_effector_id,
+    #                                                     physics_client_id=physics_client_id
+    #                                                 )
+
+    #         # 2. base_link -> world
+    #         ee_to_world_pos, ee_to_world_orn = p.invertTransform(
+    #                                                     world_to_ee_pos, world_to_ee_orn
+    #                                                 )
+                                                    
+    #         # 3. world -> object
+    #         world_to_obj_pos, world_to_obj_orn = p.getBasePositionAndOrientation(
+    #                                                     held_obj_id_at_start, physicsClientId=physics_client_id
+    #                                                 )
+
+    #         # 4. base_link -> object (chain transforms)
+    #         ee_link_to_held_obj = p.multiplyTransforms(
+    #                                                     ee_to_world_pos, ee_to_world_orn,
+    #                                                     world_to_obj_pos, world_to_obj_orn
+    #                                                     )
+    #     home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
+
+    #     return create_integrated_move_base_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
+    #         get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
+    #         seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
+    #         ee_to_held_object_transform_at_start=ee_link_to_held_obj)
+
 
     @classmethod
     def _create_move_robot_base_option(cls, name: str, robot: MobileSingleArmPyBulletRobot, 
@@ -661,6 +728,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
 
         held_obj_id_at_start = env._held_obj_id
+        # held_obj_id_at_start = None
         ee_link_to_held_obj = None
         if held_obj_id_at_start is not None:
             # 1. world -> base_link pose | It actually is World -> EE transform
@@ -760,7 +828,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         """Compute/derive values required to initialize the arm motion planning option to
         place item on table."""
 
-        initial_joint_position = robot.get_joints()
+        # initial_joint_position = robot.get_joints()
         held_obj_id = env._held_obj_id
         # assert held_obj_id is not None, "Held object id cannot be none in Place option."
         ee_link_to_held_object = None
@@ -792,16 +860,17 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         all_bodies = [p.getBodyUniqueId(i, physicsClientId=physics_client_id)
                 for i in range(p.getNumBodies(physicsClientId=physics_client_id))]
 
-        collision_bodies = [b for b in all_bodies if b!=robot.robot_id]
+        collision_bodies = [b for b in all_bodies if b!=robot.robot_id and b!=0]
 
         home_orn = PyBulletBlocksEnv.get_robot_ee_home_orn()
 
         #TODO: Figure out how to compute or pass the target_ee_pose for this option.
 
-        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
-                                physics_client_id=physics_client_id,  initial_joint_positions=initial_joint_position, 
-                                z_func=z, home_orn=home_orn, collision_bodies=collision_bodies, seed=CFG.seed, 
-                                held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
+        return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, 
+                                                params_space=params_space, physics_client_id=physics_client_id, 
+                                                z_func=z, home_orn=home_orn, collision_bodies=collision_bodies, 
+                                                seed=CFG.seed, held_obj_id=held_obj_id, 
+                                                base_link_to_held_object=ee_link_to_held_object)
 
 
 

@@ -81,22 +81,36 @@ class GroundTruthLDLBridgePolicyFactory(abc.ABC):
 
 
 def get_gt_options(env_name: str, robot: Optional[MobileSingleArmPyBulletRobot]=None,
-                    env_obj: Optional[PyBulletMultiTableBlocksEnv]=None, 
-                    physics_client_id: Optional[int]=None) -> Set[ParameterizedOption]:
+                    env_obj: Optional[PyBulletMultiTableBlocksEnv]=None) -> Set[ParameterizedOption]:
     """Create ground truth options for an env."""
     # ipdb.set_trace()
-    env = get_or_create_env(env_name)
-    for cls in utils.get_all_subclasses(GroundTruthOptionFactory):
-        if not cls.__abstractmethods__ and env_name in cls.get_env_names():
-            factory = cls()
-            types = {t.name: t for t in env.types}
-            predicates = {p.name: p for p in env.predicates}
-            options = factory.get_options(env_name, types, predicates,
-                                          env.action_space, robot, env_obj, physics_client_id)
-            break
-    else:  # pragma: no cover
-        raise NotImplementedError("Ground-truth options not implemented for "
-                                  f"env: {env_name}")
+    if env_obj is not None:
+        env_name = env_obj.get_name()
+        for cls in utils.get_all_subclasses(GroundTruthOptionFactory):
+            if not cls.__abstractmethods__ and env_name in cls.get_env_names():
+                factory = cls()
+                types = {t.name: t for t in env_obj.types}
+                predicates = {p.name: p for p in env_obj.predicates}
+                options = factory.get_options(env_name, types, predicates,
+                                              env_obj.action_space, robot, env_obj)
+                break
+        else:  # pragma: no cover
+            raise NotImplementedError("Ground-truth options not implemented for "
+                                      f"env: {env_name}")   
+
+    else: 
+        env = get_or_create_env(env_name)
+        for cls in utils.get_all_subclasses(GroundTruthOptionFactory):
+            if not cls.__abstractmethods__ and env_name in cls.get_env_names():
+                factory = cls()
+                types = {t.name: t for t in env.types}
+                predicates = {p.name: p for p in env.predicates}
+                options = factory.get_options(env_name, types, predicates,
+                                              env.action_space)
+                break
+        else:  # pragma: no cover
+            raise NotImplementedError("Ground-truth options not implemented for "
+                                      f"env: {env_name}")
     # Seed the options for reproducibility.
     for option in options:
         option.params_space.seed(CFG.seed)
@@ -106,27 +120,46 @@ def get_gt_options(env_name: str, robot: Optional[MobileSingleArmPyBulletRobot]=
 def get_gt_nsrts(env_name: str, predicates_to_keep: Set[Predicate],
                  options_to_keep: Set[ParameterizedOption], 
                  robot: Optional[MobileSingleArmPyBulletRobot]=None,
-                 env_obj: Optional[PyBulletMultiTableBlocksEnv]=None, 
-                 physics_client_id: Optional[int]=None) -> Set[NSRT]:
+                 env_obj: Optional[PyBulletMultiTableBlocksEnv]=None) -> Set[NSRT]:
     """Create ground truth options for an env."""
-    env = get_or_create_env(env_name)
-    env_options = get_gt_options(env_name, robot, env_obj, physics_client_id)
-    assert predicates_to_keep.issubset(env.predicates)
-    assert options_to_keep.issubset(env_options)
-    for cls in utils.get_all_subclasses(GroundTruthNSRTFactory):
-        if not cls.__abstractmethods__ and env_name in cls.get_env_names():
-            factory = cls()
-            # Give all predicates and options, then filter based on kept ones
-            # at the end of this function. This is easier than filtering within
-            # the factory itself.
-            types = {t.name: t for t in env.types}
-            predicates = {p.name: p for p in env.predicates}
-            options = {o.name: o for o in env_options}
-            nsrts = factory.get_nsrts(env_name, types, predicates, options)
-            break
-    else:  # pragma: no cover
-        raise NotImplementedError("Ground-truth NSRTs not implemented for "
-                                  f"env: {env_name}")
+    if env_obj is not None:
+        env_name = env_obj.get_name()
+        env_options = get_gt_options(env_name, robot, env_obj)
+        assert predicates_to_keep.issubset(env_obj.predicates)
+        assert options_to_keep.issubset(env_options)
+        for cls in utils.get_all_subclasses(GroundTruthNSRTFactory):
+            if not cls.__abstractmethods__ and env_name in cls.get_env_names():
+                factory = cls()
+                # Give all predicates and options, then filter based on kept ones
+                # at the end of this function. This is easier than filtering within
+                # the factory itself.
+                types = {t.name: t for t in env_obj.types}
+                predicates = {p.name: p for p in env_obj.predicates}
+                options = {o.name: o for o in env_options}
+                nsrts = factory.get_nsrts(env_name, types, predicates, options)
+                break
+        else:  # pragma: no cover
+            raise NotImplementedError("Ground-truth NSRTs not implemented for "
+                                      f"env: {env_name}")
+    else:
+        env = get_or_create_env(env_name)
+        env_options = get_gt_options(env_name, robot, env_obj)
+        assert predicates_to_keep.issubset(env.predicates)
+        assert options_to_keep.issubset(env_options)
+        for cls in utils.get_all_subclasses(GroundTruthNSRTFactory):
+            if not cls.__abstractmethods__ and env_name in cls.get_env_names():
+                factory = cls()
+                # Give all predicates and options, then filter based on kept ones
+                # at the end of this function. This is easier than filtering within
+                # the factory itself.
+                types = {t.name: t for t in env.types}
+                predicates = {p.name: p for p in env.predicates}
+                options = {o.name: o for o in env_options}
+                nsrts = factory.get_nsrts(env_name, types, predicates, options)
+                break
+        else:  # pragma: no cover
+            raise NotImplementedError("Ground-truth NSRTs not implemented for "
+                                      f"env: {env_name}")
     # Filter out excluded predicates from NSRTs, and filter out NSRTs whose
     # options are excluded.
     final_nsrts = set()
