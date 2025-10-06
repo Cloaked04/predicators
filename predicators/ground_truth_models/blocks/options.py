@@ -414,7 +414,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         #Move
         option_types = [robot_type, table_type]
-        params_space = Box(0, 1, (0, ))
+        params_space = Box(0, 1, (1, ))
         MoveTo = utils.LinearChainParameterizedOption(
                 "MoveTo",
                 [
@@ -429,7 +429,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         #MoveToPick
         option_types = [robot_type, block_type]
-        params_space = Box(0, 1, (0,))
+        params_space = Box(0, 1, (1,))
         MoveToPick = utils.LinearChainParameterizedOption(
                         "MoveToPick",
                         [
@@ -445,7 +445,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         # Pick
         option_types = [robot_type, block_type]
-        params_space = Box(0, 1, (0, ))
+        params_space = Box(0, 1, (2, ))
         Pick = utils.LinearChainParameterizedOption(
             "Pick",
             [
@@ -493,7 +493,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         # Stack
         option_types = [robot_type, block_type, table_type]
-        params_space = Box(0, 1, (0, ))
+        params_space = Box(0, 1, (2, ))
         Stack = utils.LinearChainParameterizedOption(
             "Stack",
             [
@@ -637,8 +637,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, 
                                                 params_space=params_space, physics_client_id=physics_client_id, 
                                                 z_func=z_func, home_orn=home_orn, collision_bodies=collision_bodies,
-                                                seed=CFG.seed, held_obj_id=held_obj_id, 
-                                                base_link_to_held_object=ee_link_to_held_object)
+                                                held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
 
 
     # @classmethod
@@ -757,7 +756,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         return create_base_reset_based_move_base_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
             get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
-            seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
+            physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
             ee_to_held_object_transform_at_start=ee_link_to_held_obj)
 
 
@@ -816,7 +815,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
 
         return create_base_reset_based_move_base_to_pick_option(name=name, env=env, robot=robot, types=option_types, params_space=params_space, 
             get_current_base_and_arm_pose=get_current_base_and_arm_pose, home_orn=home_orn, collision_bodies=collision_bodies, 
-            seed=CFG.seed, physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
+            physics_client_id=physics_client_id, held_object_id_at_start=held_obj_id_at_start, 
             ee_to_held_object_transform_at_start=ee_link_to_held_obj)
 
 
@@ -869,8 +868,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         return create_arm_motion_planning_option(name=name, env=env, robot=robot, types=option_types, 
                                                 params_space=params_space, physics_client_id=physics_client_id, 
                                                 z_func=z, home_orn=home_orn, collision_bodies=collision_bodies, 
-                                                seed=CFG.seed, held_obj_id=held_obj_id, 
-                                                base_link_to_held_object=ee_link_to_held_object)
+                                                held_obj_id=held_obj_id, base_link_to_held_object=ee_link_to_held_object)
 
 
 

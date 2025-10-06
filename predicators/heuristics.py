@@ -511,10 +511,12 @@ class _RelaxedFactForH:
 
 class _RelaxedOperatorForH:
     """A relaxed operator specifically for h_add and h_max."""
-    def __init__(self, name, preconditions, add_effects):
+    def __init__(self, name, preconditions, add_effects, delete_effects=None):
         self.name = name
         self.preconditions = preconditions
         self.add_effects = add_effects
+        if delete_effects is not None:
+            self.delete_effects = delete_effects
         self.cost = 1
         self.counter = len(preconditions)
 
@@ -532,7 +534,8 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
     """
     def __init__(self, task: _PyperplanTask):
         self.facts = {fact: _RelaxedFactForH(fact) for fact in task.facts}
-        self.operators = []
+        if self.operators is None:
+            self.operators = []
         self.goals = {pred for pred in task.goals}
         self.init = task.initial_state
         self.tie_breaker = 0
@@ -680,5 +683,14 @@ class HAddGeometricHeuristic(_PyperplanRelaxationHeuristicBase):
     heuristic implementation.
     """
     def __init__(self, task: _PyperplanTask):
+        self.operators = []
+
+        for op in task.operators:
+            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.delete_effects)
+            self.operators.append(ro)
+            for var in op.preconditions:
+                self.facts[var].precondition_of.append(ro)
+            if not op.preconditions:
+                self.start_state.precondition_of.append(ro)
         super().__init__(task)
         self.eval = sum

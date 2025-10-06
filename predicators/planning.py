@@ -44,7 +44,8 @@ from .heuristics import CombinedHeuristic, HAddHeuristic
 class _Node:
     """A node for the search over skeletons.
     It represents a state in the high-level planning search space,
-    specifically for the A* search algorithm that generates action skeletons (symbolic sequences of high-level actions).
+    specifically for the A* search algorithm that generates action 
+    skeletons (symbolic sequences of high-level actions).
 
     skeleton: The sequence of high-level actions (NSRTs) leading to this node.
     parent: The parent node in the search tree (used for backtracking and reconstructing paths).
@@ -503,11 +504,13 @@ def _skeleton_generator(
     metrics["num_nodes_created"] += 1
     rng_prio = np.random.default_rng(seed)
 
-    # heappush is a function in heapq; heapq is a min-heap, meaning that the smallest element is always at the top.
+    # heappush is a function in heapq; heapq is a min-heap, 
+    # meaning that the smallest element is always at the top.
     # A* search expands nodes with the lowest estimated cost first.
     # heapq ensures that nodes are processed in increasing order of cost.
     # The random tie-breaker (rng_prio.uniform()) prevents bias in search order.
-    # We push the value from the heuristic along with the random value; in case of a tie, this value is used to determine priority.
+    # We push the value from the heuristic along with the random value; 
+    # in case of a tie, this value is used to determine priority.
 
 
     hq.heappush(queue,

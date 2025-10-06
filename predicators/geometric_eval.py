@@ -88,21 +88,52 @@ class StateGeometricCost:
 
 
 
-	def _get_operator_chain(self, state, fact, facts, ops_dict, found_ops):
+	def _get_operator_chain(self, state, fact, facts, ops_dict, found_ops, visiting=None, 
+							depth=0, max_depth=1000):
 		"""Follow the chain of operators that led to the current op becoming 
-		finite/available.
+		finite/available.  On cycle: return the partial chain collected so far 
+		(stop at the cycle).
 		"""
 		if fact.name in state:
 			return []
 
-		cheapest_op_for_fact = ops_dict[fact.cheapest_achiever]
+		if visiting is None:
+			visiting = set()
+
+		try:
+			cheapest_op_for_fact = ops_dict[fact.cheapest_achiever]
+		except KeyError as e:
+	        raise KeyError(
+	            f"Unknown cheapest_achiever '{fact.cheapest_achiever}' for fact '{fact.name}'"
+	        ) from e
+
+	    op_id = getattr(op, "name", op)
+
 		if cheapest_op_for_fact in found_ops:
 			return []
-		cheapest_op_preconds = [facts[precond] for precond in cheapest_op_for_fact.preconditions]
-		assert len(cheapest_op_preconds) > 0, f"List of preconditions can't be empty."
-		most_expensive_precondition = max(cheapest_op_preconds, key=attrgetter("distance"))
-		chained_ops = self._get_operator_chain(state, most_expensive_precondition, facts, ops_dict, found_ops)
-		return [cheapest_op_for_fact] + chained_ops
+
+		if op_id in visiting:
+			return []
+
+		visiting.add(op_id)
+		cheapest_op_preconds = []
+
+		try:
+			cheapest_op_preconds = [facts[precond] for precond in cheapest_op_for_fact.preconditions]
+
+			# stop deep/degenerate chains but still include current op
+			if depth >= max_depth:
+	            return [cheapest_op_for_fact]
+			# assert len(cheapest_op_preconds) > 0, f"List of preconditions can't be empty."
+			most_expensive_precondition = max(cheapest_op_preconds, key=attrgetter("distance"))
+			if most_expensive_precondition.distance == 0:
+				return [cheapest_op_for_fact]
+			chained_ops = self._get_operator_chain(state, most_expensive_precondition, facts, ops_dict,
+												 	found_ops, visiting, depth+1, max_depth
+												 	)
+			return [cheapest_op_for_fact] + chained_ops
+		finally:
+			visiting.discard(op_id)
 
 
 	def approximate_current_symbolic_state(self, state, ops_dict, facts, current_op):
@@ -123,13 +154,14 @@ class StateGeometricCost:
 		# - for each of them trace back to cheapest achievers till 
 		#	most expensive precond is not a part of state.
 		# Store the ops in each precond's chain
-		# Don't follow a chain deeper if it already exists in he list
+		# Don't follow a chain deeper if it already exists in the list
 		# available ops.
 		topological_sorted_ops = {}
-		found_ops = {}
+		found_ops = ()
 		for fact in ordered_pre_conditions:
 			topological_sorted_ops[fact] = self._get_operator_chain(state, fact, facts, ops_dict, found_ops)
-			found_ops = {op for val in topological_sorted_ops.values() for op in val}
+			# found_ops = (op for val in topological_sorted_ops.values() for op in val)
+			found_ops.update(topological_sorted_ops[fact])
 
 
 		#Apply operators corresponding to pre-conditions for current_op:
@@ -147,8 +179,8 @@ class StateGeometricCost:
 
 
 	def extrapolate_continuous_state(self, state, approximate_current_state, **kwargs):
-		"""Get an approximate representation of current approximate symbolic state
-		based on the position on continuous state of objects at initialization.
+		"""Get an approximate continuous representation of current approximate symbolic
+		state based on continuous state of objects at initialization.
 		"""
 		raise NotImplementedError(f"Function to approximate continuous state not implemented.")
 

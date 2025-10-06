@@ -204,9 +204,16 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
             LiftedAtom(GripperOpen, [robot])
         }
 
+        def putontable_sampler(state: State, goal: Set[GroundAtom],
+                                 rng: np.random.Generator,
+                                 objs: Sequence[Object]) -> Array:
+            x = rng.uniform()
+            y = rng.uniform()
+            return np.array([x, y], dtype=np.float32)
+
         pickfromtable_nsrt = NSRT("PickFromTable", parameters,
                                   preconditions, add_effects, delete_effects,
-                                  set(), option, option_vars, null_sampler)
+                                  set(), option, option_vars, putontable_sampler)
 
         nsrts.add(pickfromtable_nsrt)
 
@@ -238,9 +245,16 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
             LiftedAtom(GripperOpen, [robot]),
         }
 
+        def putontable_sampler(state: State, goal: Set[GroundAtom],
+                                 rng: np.random.Generator,
+                                 objs: Sequence[Object]) -> Array:
+            x = rng.uniform()
+            y = rng.uniform()
+            return np.array([x, y], dtype=np.float32)
+
         unstackfromtable_nsrt = NSRT("UnstackFromTable", parameters, preconditions, add_effects,
                             delete_effects, set(), option, option_vars,
-                            null_sampler)
+                            putontable_sampler)
         nsrts.add(unstackfromtable_nsrt)
 
 
@@ -273,9 +287,16 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
             LiftedAtom(GripperOpen, [robot]),
         }
 
+        def putontable_sampler(state: State, goal: Set[GroundAtom],
+                                 rng: np.random.Generator,
+                                 objs: Sequence[Object]) -> Array:
+            x = rng.uniform()
+            y = rng.uniform()
+            return np.array([x, y], dtype=np.float32)
+
         unstackfromblock_nsrt = NSRT("UnstackFromBlock", parameters, preconditions, add_effects,
                             delete_effects, set(), option, option_vars,
-                            null_sampler)
+                            putontable_sampler)
         nsrts.add(unstackfromblock_nsrt)
 
 
@@ -304,9 +325,17 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
             LiftedAtom(Clear, [otherblock])
         }
 
+        def putontable_sampler(state: State, goal: Set[GroundAtom],
+                                 rng: np.random.Generator,
+                                 objs: Sequence[Object]) -> Array:
+            x = rng.uniform()
+            y = rng.uniform()
+            return np.array([x, y], dtype=np.float32)
+
+
         stack_nsrt = NSRT("Stack", parameters, preconditions, add_effects,
                           delete_effects, set(), option, option_vars,
-                          null_sampler)
+                          putontable_sampler)
         nsrts.add(stack_nsrt)
 
         # PutOnTable
@@ -352,10 +381,14 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         add_effects = { LiftedAtom(RobotAt, [robot, table]) }
         delete_effects = { LiftedAtom(AtHome, [robot]) }
 
+        def move_sampler(state: State, goal: Set[GroundAtom],   
+                rng: np.random.Generator, objs: Sequence[Object]) -> Array:  
+            return np.array([rng.uniform(0, 1)], dtype=np.float32)
+
         move_from_home_nsrt = NSRT(
             "MoveFromHome", parameters, preconditions,
             add_effects, delete_effects, set(),
-            option, option_vars, null_sampler
+            option, option_vars, move_sampler
         )
         nsrts.add(move_from_home_nsrt)
 
@@ -372,10 +405,14 @@ class PyBulletMultiTableBlocksGroundTruthNSRTFactory(GroundTruthNSRTFactory):
         add_effects = {LiftedAtom(RobotAt, [robot, othertable])}
         delete_effects = {LiftedAtom(RobotAt, [robot, table])}
 
-        #Do we need a sampler?
+        #Do we need a sampler? Yes, in order to connect to global seed
+        #based determinism but still have local randomness.
+        def move_sampler(state: State, goal: Set[GroundAtom],   
+                rng: np.random.Generator, objs: Sequence[Object]) -> Array:  
+            return np.array([rng.uniform(0, 1)], dtype=np.float32)
 
         move_to_nsrt = NSRT("MoveFromTable", parameters, preconditions, add_effects,
-                        delete_effects, set(), option, option_vars, null_sampler)
+                        delete_effects, set(), option, option_vars, move_sampler)
 
         nsrts.add(move_to_nsrt)
 

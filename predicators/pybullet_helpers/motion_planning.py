@@ -893,7 +893,7 @@ def run_coordinated_motion_planning(
     # Making the sampler for base pose disjoint from rng used for planning
     # to ensure we don't get the same sequence of samples across multiple calls
     # while running TAMP
-    rad_sampler = np.random.default_rng()
+    rad_sampler = np.random.default_rng(seed)
 
     #candidate_base_poses = []
     #candidate_joint_solutions = {}

@@ -44,7 +44,7 @@ CFG.option_model_terminate_on_repeat = False
 
 
 # 1. Initialize your multi-table environment  
-env = PyBulletMultiTableBlocksEnv(use_gui=True, num_tables=3)
+env = PyBulletMultiTableBlocksEnv(use_gui=False, num_tables=3)
 CFG.env = env.get_name()
 
 symbolic_robot = env._robot

@@ -1491,7 +1491,6 @@ def create_arm_motion_planning_option(
     z_func: Union[Callable[[float], float], float],
     home_orn: Sequence[float],
     collision_bodies: Collection[int],
-    seed: int,
     held_obj_id: Optional[int] = None,
     base_link_to_held_object: Optional[NDArray] = None,
 ) -> ParameterizedOption:
@@ -1507,13 +1506,15 @@ def create_arm_motion_planning_option(
     """
 
     def _plan_once_and_cache_actions(robot: MobileSingleArmPyBulletRobot, 
-                                    state: State, objects: Sequence[Object], memory: Dict) -> None:
+                                    state: State, objects: Sequence[Object], 
+                                    memory: Dict, planning_seed: int) -> None:
 
         # ipdb.set_trace()
         # Sync PyBullet state to current simulator state
         # Crucial if you are planning inside the option as the 
         # state is reset only when env.simulate is called.
         # env.reset_state(state)
+        # time.sleep(0.1)
         waypoints: Optional[Sequence[JointPositions]] = None
         held_obj_id = env._held_obj_id
         base_link_to_held_object = None
@@ -1623,7 +1624,7 @@ def create_arm_motion_planning_option(
                                                     initial_positions=initial_joint_positions,
                                                     target_positions=target_joint_positions,
                                                     collision_bodies=filtered_collision_bodies,
-                                                    seed=seed,
+                                                    seed=planning_seed,
                                                     physics_client_id=physics_client_id,
                                                     held_object=held_obj_id,
                                                     base_link_to_held_object=base_link_to_held_object, 
@@ -1657,12 +1658,13 @@ def create_arm_motion_planning_option(
                     sys.exit(0)
 
                 sampling_tries = 0
+                rng = np.random.default_rng(planning_seed)
 
                 while sampling_tries < 50:
                     sampling_tries+=1
 
-                    x_sample = np.random.uniform(*x_workspace)
-                    y_sample = np.random.uniform(*y_workspace)
+                    x_sample = rng.uniform(*x_workspace)
+                    y_sample = rng.uniform(*y_workspace)
 
                     #Just remove all the table for ease of implementation:
                     collision_bodies_without_table = [body_id for body_id in filtered_collision_bodies\
@@ -1692,7 +1694,7 @@ def create_arm_motion_planning_option(
                                                             initial_positions=initial_joint_positions,
                                                             target_positions=target_joint_positions,
                                                             collision_bodies=filtered_collision_bodies,
-                                                            seed=seed,
+                                                            seed=planning_seed,
                                                             physics_client_id=physics_client_id,
                                                             held_object=held_obj_id,
                                                             base_link_to_held_object=base_link_to_held_object, 
@@ -1742,7 +1744,7 @@ def create_arm_motion_planning_option(
                                                         initial_positions=initial_joint_positions,
                                                         target_positions=target_joint_positions,
                                                         collision_bodies=filtered_collision_bodies,
-                                                        seed=seed,
+                                                        seed=planning_seed,
                                                         physics_client_id=physics_client_id,
                                                         held_object=held_obj_id,
                                                         base_link_to_held_object=base_link_to_held_object, 
@@ -1778,33 +1780,37 @@ def create_arm_motion_planning_option(
             # action.set_base_motion(fixed_base_pose, "smooth_position")
             actions.append(action)
 
-        actions = deque(actions)
+        # actions = deque(actions)
         memory["actions"] = actions
-        # memory["idx"] = 0
+        memory["idx"] = 0
 
 
     def _initiable(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
         # Reset cache each new initiation
-        memory.clear()
+        # memory.clear()
         return True
 
     def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
         # plan on first call
         if "actions" not in memory:
-            _plan_once_and_cache_actions(robot, state, objects, memory)
+            planning_seed = int((params[0]+params[1])*1e6)
+            _plan_once_and_cache_actions(robot, state, objects, memory, planning_seed)
 
         # if len(memory['actions']) == 1:
             # ipdb.set_trace()
-        action = memory["actions"].popleft()
+        # action = memory["actions"].popleft()
+        action = memory["actions"][memory["idx"]]
+        memory["idx"]+=1
         return action
 
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
         if "actions" not in memory:
             return False
-        terminal = len(memory["actions"])==0
+        terminal = len(memory["actions"]) == memory["idx"]+1
         if terminal:
             # print(f"Removing base constraint: {memory['freeze_id']}.")
             p.removeConstraint(memory['freeze_id'], physicsClientId=physics_client_id)
+            memory["idx"] = 0
             # print(f"Number of contraints in system now: {p.getNumConstraints(physics_client_id)}.")
             # input()
         return terminal
@@ -2356,7 +2362,6 @@ def create_base_reset_based_move_base_option(
                                             Tuple[Pose, JointPositions]],
     home_orn: Sequence[float],
     collision_bodies: Collection[int],
-    seed: int,
     physics_client_id: int,
     held_object_id_at_start: Optional[int] = None,
     ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
@@ -2368,7 +2373,7 @@ def create_base_reset_based_move_base_option(
     ) -> ParameterizedOption:
 
     def _plan_and_cache_base_motion(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object],
-                                   memory: Dict) -> None:
+                                   memory: Dict, planning_seed: int) -> None:
 
         # Sync PyBullet state to planner state before planning
         # as it's only set to planner state when env.simulate_state
@@ -2450,12 +2455,12 @@ def create_base_reset_based_move_base_option(
                                                                         robot=robot,
                                                                         target_ee_pose=target_ee_pose,
                                                                         collision_bodies=filtered_collision_bodies,
-                                                                        seed=seed,
+                                                                        seed=planning_seed,
                                                                         physics_client_id=physics_client_id,
                                                                         try_arm_only_first=try_arm_only_first,
                                                                         base_path_planner_max_tries=base_path_planner_max_tries,
                                                                         workspace_bounds=workspace_bounds,
-                                                                        rng=np.random.default_rng(seed),
+                                                                        rng=np.random.default_rng(planning_seed),
                                                                         final_finger_state=final_finger_state,
                                                                         held_object_id_at_start=held_object_id_at_start,
                                                                         ee_to_held_object_transform_at_start=ee_to_held_object_transform_at_start,
@@ -2471,9 +2476,10 @@ def create_base_reset_based_move_base_option(
         # env.reset_state(env._initial_state)
         # target_base_pose = base_path_waypoints[-1]
         current_arm_joints = robot.get_joints()
-        base_path_waypoints = deque(base_path_waypoints)
+        # base_path_waypoints = deque(base_path_waypoints)
         memory["path"] = base_path_waypoints
         memory["current_arm_joints"] = current_arm_joints
+        memory["idx"] = 0
 
         return
 
@@ -2484,11 +2490,14 @@ def create_base_reset_based_move_base_option(
 
     def _policy(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> Action:
         if "path" not in memory:
-            _plan_and_cache_base_motion(robot, state, objects, memory)
+            planning_seed = int(params[0]*1e6)
+            _plan_and_cache_base_motion(robot, state, objects, memory, planning_seed)
 
-        waypoint = memory["path"].popleft()
+        # waypoint = memory["path"].popleft()
+        waypoint = memory["path"][memory["idx"]]
         action = Action(np.array(memory["current_arm_joints"], dtype=np.float32))
         action.set_base_motion(params=waypoint, mode="smooth_position")
+        memory["idx"]+=1
         # if(len(memory["path"])<=5):
             # ipdb.set_trace()
         return action
@@ -2496,8 +2505,10 @@ def create_base_reset_based_move_base_option(
     def _terminal(state: State, memory: Dict, objects: Sequence[Object], params: Array) -> bool:
         if "path" not in memory:
             return False
-        return len(memory["path"])==0
-
+        terminal = len(memory["path"]) == memory["idx"]+1
+        if terminal:
+            memory["idx"] = 0
+        return terminal
     return ParameterizedOption(
         name=name,
         types=types,
@@ -2520,7 +2531,6 @@ def create_base_reset_based_move_base_to_pick_option(
                                             Tuple[Pose, JointPositions]],
     home_orn: Sequence[float],
     collision_bodies: Collection[int],
-    seed: int,
     physics_client_id: int,
     held_object_id_at_start: Optional[int] = None,
     ee_to_held_object_transform_at_start: Optional[Tuple[NDArray, NDArray]] = None,
@@ -2531,9 +2541,15 @@ def create_base_reset_based_move_base_to_pick_option(
     final_finger_state: Optional[float] = None,
     ) -> ParameterizedOption:
 
+    """
+    Not being used at the moment. Either remove it or determine where it can improve things.
+    """
+
     def _plan_and_cache_base_motion(robot: MobileSingleArmPyBulletRobot, state: State, objects: Sequence[Object],
                                    memory: Dict) -> None:
         
+        seed = 123
+
         filtered_collision_bodies = list(collision_bodies)
         if held_object_id_at_start is not None:
             # Exclude the held object from obstacle set
