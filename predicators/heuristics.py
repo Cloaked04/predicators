@@ -1,5 +1,4 @@
 import numpy as np
-from predicators.structs import GroundAtom, _GroundNSRT
 from heapq import *
 import time
 import logging
@@ -8,9 +7,11 @@ import ipdb
 
 from .heuristic_base import Heuristic
 from predicators import utils
-from predicators.structs import Object, Predicate
+from predicators import geometric_eval
+from predicators.structs import Object, Predicate, State, GroundAtom, _GroundNSRT
 from predicators.utils import _create_pyperplan_task, _atom_to_pyperplan_fact
-from typing import Set, List, Dict, Any, FrozenSet, Sequence
+from predicators.envs.blocks import BlocksEnv
+from typing import Set, List, Dict, Any, FrozenSet, Sequence, Optional
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,7 +55,8 @@ _PyperplanTask = Any
 class CombinedHeuristic:
     def __init__(self, init_atoms: Set[GroundAtom], goal_atoms:Set[GroundAtom],
                  ground_nsrts: List[_GroundNSRT], predicates: Set[Predicate], 
-                 objects: Sequence[Object], heuristic_type: str = "lmcut"):
+                 objects: Sequence[Object], continuous_env: Optional[BlocksEnv] = None,
+                 heuristic_type: str = "lmcut"):
         self.heuristic_type = heuristic_type
 
         # Compute and store static atoms. This is the key change.
@@ -73,8 +75,8 @@ class CombinedHeuristic:
             self.heuristic = HMaxHeuristic(pyperplan_task)
         elif self.heuristic_type == "hadd":
             self.heuristic = HAddHeuristic(pyperplan_task)
-        elif self.heuristic_type == "hadd_geometric":
-            self.heuristic = HAddGeometricHeuristic(pyperplan_task)
+        elif self.heuristic_type == "haddgeometric":
+            self.heuristic = HAddGeometricHeuristic(pyperplan_task, continuous_env)
         else:
             raise ValueError(f"Unknown or unsupported heuristic type: {self.heuristic_type}")
 
@@ -514,11 +516,12 @@ class _RelaxedOperatorForH:
     def __init__(self, name, preconditions, add_effects, delete_effects=None):
         self.name = name
         self.preconditions = preconditions
+        self.remaining = set(preconditions)
         self.add_effects = add_effects
         if delete_effects is not None:
             self.delete_effects = delete_effects
         self.cost = 1
-        self.counter = len(preconditions)
+        self.counter = len(self.preconditions)
 
     def __eq__(self, other):
         return isinstance(other, _RelaxedOperatorForH) and self.name == other.name
@@ -534,13 +537,14 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
     """
     def __init__(self, task: _PyperplanTask):
         self.facts = {fact: _RelaxedFactForH(fact) for fact in task.facts}
-        if self.operators is None:
-            self.operators = []
+        self.operators = []
         self.goals = {pred for pred in task.goals}
         self.init = task.initial_state
         self.tie_breaker = 0
         self.start_state = _RelaxedFactForH("start")
         self.eval = sum  # Default to h_add
+        self.NAME = "HADD"
+        self.state = None
 
         for op in task.operators:
             ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects)
@@ -551,14 +555,14 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
                 self.start_state.precondition_of.append(ro)
 
     def __call__(self, node):
-        state = set(node.state)
-        ipdb.set_trace()
-        self._init_distance(state)
+        self.state = set(node.state)
+        # ipdb.set_trace()
+        self._init_distance(self.state)
         heap = []
         heappush(heap, (0, self.tie_breaker, self.start_state))
         self.tie_breaker += 1
 
-        for fact in state:
+        for fact in self.state:
             heappush(
                 heap, (self.facts[fact].distance, self.tie_breaker, self.facts[fact])
             )
@@ -569,6 +573,7 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
         return h_value
 
     def _init_distance(self, state):
+
         def reset_fact(fact):
             fact.expanded = False
             fact.cheapest_achiever = None
@@ -589,6 +594,10 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             )
         else:
             cost = 0
+        if self.NAME == "HGEOMETRIC":
+            # ipdb.set_trace()
+            return cost + geometric_eval.get_geometric_cost(operator, self.operators, self.facts,
+                                                             self.state, self.continuous_env)
         return cost + operator.cost
 
     def _calc_goal_h(self):
@@ -613,6 +622,9 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             #Pop last fact from heap, check if it's in goal,
             #Add to achieved_goals if it is.
             _dist, _tie, fact = heappop(queue)
+            if fact.name != 'start':
+                assert fact.distance != float("inf"), f"\n Fact with infinite distance can't make it\
+                                                        into the queue."
             if fact.name in self.goals:
                 achieved_goals.add(fact.name)
                 # print(f"\nCurrent set of achieved goals:{achieved_goals}.")
@@ -626,28 +638,40 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             
             if not fact.expanded:
                 for operator in fact.precondition_of:
-                    operator.counter -= 1
-                    #Process operator if all its pre-conditions are met:
-                    if operator.counter <= 0:
-                        for n in operator.add_effects:
-                            neighbor = self.facts[n]
-                            tmp_dist = self._get_cost(operator)
-                            #Update distance/h_max value for facts in
-                            #add effects if new value is less than 
-                            #current value.
-                            if tmp_dist < neighbor.distance:
-                                neighbor.distance = tmp_dist
-                                neighbor.cheapest_achiever = operator
-                                heappush(
-                                    queue, (tmp_dist, self.tie_breaker, neighbor)
-                                )
+                    # ipdb.set_trace()
+                    if fact.name in operator.remaining:
+                        if fact.distance != float("inf"):
+                            operator.remaining.remove(fact.name)
+                        else:
+                            continue
+                        operator.counter -= 1
+                        #Process operator if all its pre-conditions are met:
+                        # if operator.counter <= 0:
+                        if not operator.remaining:
+                            for item in operator.preconditions:
+                                if self.facts[item].distance == float("inf"):
+                                    ipdb.set_trace()
+                            for n in operator.add_effects:
+                                neighbor = self.facts[n]
+                                tmp_dist = self._get_cost(operator)
+                                assert tmp_dist != float("inf"), f"\nNeighbour distance can't be \
+                                                                    inf when being pushed into the queue."
+                                #Update distance/h_max value for facts in
+                                #add effects if new value is less than 
+                                #current value.
+                                if tmp_dist < neighbor.distance:
+                                    neighbor.distance = tmp_dist
+                                    neighbor.cheapest_achiever = operator
+                                    heappush(
+                                        queue, (tmp_dist, self.tie_breaker, neighbor)
+                                    )
 
-                                self.tie_breaker += 1
+                                    self.tie_breaker += 1
 
                 fact.expanded = True
 
             if self.finished(achieved_goals, queue):
-                ipdb.set_trace()
+                # ipdb.set_trace()
                 print(f"\nAt the end of current loop, Finished returns:\
                                              {self.finished(achieved_goals, queue)}.")
 
@@ -663,6 +687,7 @@ class HAddHeuristic(_PyperplanRelaxationHeuristicBase):
     def __init__(self, task: _PyperplanTask):
         super().__init__(task)
         self.eval = sum
+        self.NAME = "HADD"
 
 
 class HMaxHeuristic(_PyperplanRelaxationHeuristicBase):
@@ -674,6 +699,7 @@ class HMaxHeuristic(_PyperplanRelaxationHeuristicBase):
     def __init__(self, task: _PyperplanTask):
         super().__init__(task)
         self.eval = max
+        self.NAME = "HMAX"
 
 
 class HAddGeometricHeuristic(_PyperplanRelaxationHeuristicBase):
@@ -682,15 +708,19 @@ class HAddGeometricHeuristic(_PyperplanRelaxationHeuristicBase):
     Pyperplan task interface. It is a subclass of the main relaxation
     heuristic implementation.
     """
-    def __init__(self, task: _PyperplanTask):
+    def __init__(self, task: _PyperplanTask, continuous_env: BlocksEnv):
+        super().__init__(task)
+
         self.operators = []
 
         for op in task.operators:
-            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.delete_effects)
+            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.del_effects)
             self.operators.append(ro)
             for var in op.preconditions:
                 self.facts[var].precondition_of.append(ro)
             if not op.preconditions:
                 self.start_state.precondition_of.append(ro)
-        super().__init__(task)
+
         self.eval = sum
+        self.NAME = "HGEOMETRIC"
+        self.continuous_env = continuous_env

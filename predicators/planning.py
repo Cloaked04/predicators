@@ -23,6 +23,7 @@ from typing import Any, Collection, Dict, FrozenSet, Iterator, List, \
 import numpy as np
 
 from predicators import utils
+from predicators import geometric_eval
 from predicators.option_model import _OptionModelBase
 from predicators.refinement_estimators import BaseRefinementEstimator
 from predicators.settings import CFG
@@ -31,13 +32,15 @@ from predicators.structs import NSRT, AbstractPolicy, DefaultState, \
     ParameterizedOption, Predicate, State, STRIPSOperator, Task, Type, \
     _GroundNSRT, _GroundSTRIPSOperator, _Option
 from predicators.utils import EnvironmentFailure, _TaskPlanningHeuristic
+from predicators.envs.blocks import BlocksEnv
 
 _NOT_CAUSES_FAILURE = "NotCausesFailure"
 
 
 # Importing the newly defined heuristic.py
 
-from .heuristics import CombinedHeuristic, HAddHeuristic
+from .heuristics import CombinedHeuristic, HAddHeuristic, HAddGeometricHeuristic
+from predicators import geometric_eval
 
 
 @dataclass(repr=False, eq=False)
@@ -114,7 +117,8 @@ def sesame_plan(
     refinement_estimator: Optional[BaseRefinementEstimator] = None,
     check_dr_reachable: bool = True,
     allow_noops: bool = False,
-    use_visited_state_set: bool = False
+    use_visited_state_set: bool = False,
+    continuous_env: Optional[BlocksEnv] = None
 ) -> Tuple[List[_Option], List[_GroundNSRT], Metrics]:
     """Run bilevel planning.
 
@@ -126,12 +130,13 @@ def sesame_plan(
     only consider at most one skeleton, and DiscoveredFailures cannot be
     handled.
     """
+    heuristic_method = "haddgeometric"
     if CFG.sesame_task_planner == "astar":
         return _sesame_plan_with_astar(
             task, option_model, nsrts, predicates, types, timeout, seed,
             task_planning_heuristic, max_skeletons_optimized, max_horizon, heuristic_method,
             abstract_policy, max_policy_guided_rollout, refinement_estimator,
-            check_dr_reachable, allow_noops, use_visited_state_set)
+            check_dr_reachable, allow_noops, use_visited_state_set, continuous_env)
 
     # Calls fast-downward to get an optimal plan
     if CFG.sesame_task_planner == "fdopt":
@@ -173,13 +178,14 @@ def _sesame_plan_with_astar(
     task_planning_heuristic: str,
     max_skeletons_optimized: int,
     max_horizon: int,
-    heuristic_method: str,  # New parameter
+    heuristic_method: str,
     abstract_policy: Optional[AbstractPolicy] = None,
     max_policy_guided_rollout: int = 0,
     refinement_estimator: Optional[BaseRefinementEstimator] = None,
     check_dr_reachable: bool = True,
     allow_noops: bool = False,
-    use_visited_state_set: bool = False
+    use_visited_state_set: bool = False,
+    continuous_env: Optional[BlocksEnv] = None
 ) -> Tuple[List[_Option], List[_GroundNSRT], Metrics]:
     """The default version of SeSamE, which runs A* to produce skeletons."""
 
@@ -240,6 +246,9 @@ def _sesame_plan_with_astar(
              heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hmax")
         elif heuristic_method == "hadd":
              heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hadd")
+        elif heuristic_method == "haddgeometric":
+             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, continuous_env,
+                                            heuristic_type="haddgeometric")
 
         else:
             raise ValueError(f"Unrecognized heuristic_method: {heuristic_method}")
@@ -253,7 +262,8 @@ def _sesame_plan_with_astar(
                 task, reachable_nsrts, init_atoms, heuristic, new_seed,
                 timeout - (time.perf_counter() - start_time), metrics,
                 max_skeletons_optimized, abstract_policy,
-                max_policy_guided_rollout, use_visited_state_set)
+                max_policy_guided_rollout, use_visited_state_set,
+                continuous_env)
 
             #print(gen)
             # If a refinement cost estimator is provided, generate a number of
@@ -273,6 +283,8 @@ def _sesame_plan_with_astar(
                            key=lambda s: estimator.get_cost(task, *s)))
             # Refinement section: goes over each plan and tries to refine it using 
             # run_low_level_search.
+            input("Symbolic planning complete.")
+            ipdb.set_trace()
             refinement_start_time = time.perf_counter()
             for skeleton, atoms_sequence in gen:
                 # ipdb.set_trace()
@@ -472,14 +484,15 @@ def _skeleton_generator(
     task: Task,
     ground_nsrts: List[_GroundNSRT],
     init_atoms: Set[GroundAtom],
-    heuristic: Union[_TaskPlanningHeuristic, HAddHeuristic],  # Updated type
+    heuristic: Union[_TaskPlanningHeuristic, HAddHeuristic,HAddGeometricHeuristic],  # Updated type
     seed: int,
     timeout: float,
     metrics: Metrics,
     max_skeletons_optimized: int,
     abstract_policy: Optional[AbstractPolicy] = None,
     sesame_max_policy_guided_rollout: int = 0,
-    use_visited_state_set: bool = False
+    use_visited_state_set: bool = False,
+    continuous_init_state: Optional[State] = None
 ) -> Iterator[Tuple[List[_GroundNSRT], List[Set[GroundAtom]]]]:
     """A* search over skeletons (sequences of ground NSRTs).
     Iterates over pairs of (skeleton, atoms sequence).
@@ -607,8 +620,16 @@ def _skeleton_generator(
                 if child_skeleton_tup in visited_skeletons:  # pragma: no cover
                     continue
                 visited_skeletons.add(child_skeleton_tup)
-                # Action costs are unitary.
-                child_cost = node.cumulative_cost + 1.0
+                # Action costs are unitary.(Pratyush: Not any more.-)
+                if isinstance(heuristic, HAddGeometricHeuristic):
+                    child_cost = node.cumulative_cost + \
+                                geometric_eval.get_geometric_cost_while_search(ground_nsrts, 
+                                                                               nsrt.name,
+                                                                               init_atoms,
+                                                                               node.atoms,
+                                                                               continuous_env)
+                else:
+                    child_cost = node.cumulative_cost + 1.0
                 child_node = _Node(atoms=child_atoms,
                                    skeleton=child_skeleton,
                                    atoms_sequence=node.atoms_sequence +

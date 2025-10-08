@@ -63,12 +63,16 @@ class BaseApproach(abc.ABC):
         """
         return []
 
-    def solve(self, task: Task, timeout: int) -> Callable[[State], Action]:
+    def solve(self, task: Task, timeout: int, **kwargs: Any) -> Callable[[State], Action]:
         """Light wrapper around the abstract self._solve().
 
         Checks that actions are in the action space.
         """
-        pi = self._solve(task, timeout)
+        continuous_env = kwargs.get("continuous_env", 0)
+        if continuous_env != 0:
+            pi = self._solve(task, timeout, **kwargs)
+        else:
+            pi = self._solve(task, timeout)
 
         def _policy(state: State) -> Action:
             assert isinstance(state, State)

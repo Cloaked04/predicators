@@ -168,8 +168,10 @@ approach = OracleApproach(
   
 # 6. Solve the TAMP problem using bilevel planning  
 print("Starting TAMP planning with bilevel approach...")  
-try:  
-    policy = approach.solve(task, timeout=20000)  
+try:
+    # ipdb.set_trace()  
+    policy = approach.solve(task, timeout=20000, continuous_env=env)
+    # policy = approach.solve(task, timeout=20000)  
     print("Planning completed successfully!")  
       
     # 7. Execute the policy  
