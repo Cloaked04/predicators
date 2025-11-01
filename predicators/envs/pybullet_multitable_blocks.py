@@ -27,68 +27,207 @@ from predicators.structs import Array, EnvironmentTask, Object, State, Type, Pre
 class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     """Pybullet Blocks env similar to PyBulletBlocks but with
     capability to initialize multiple tables.
+    Number of tables and their respective positions can be provided
+    or just hard-coded.
+    set_solid_obstacles is used to spawn solid obstacles in the
+    render.
+    This too can either be provided in the format: [(shape, length, breadth)];
+    shape: str; square, cylindrical, cuboid etc.
+    length: float,
+    breadth: float
+
+    or just be hard-coded.
     """
 
 
-    #Table params:
+    # #Table params: far vs close
+    # _default_table_poses: ClassVar[List[Pose3D]] = [
+    #         (1.0, -0.5, 0.0),
+    #         (2.35, 2.0, 0.0),
+    #         (-8.7, 1.5, 0.0)
+    #         ]
+
+    # _table_orientation: ClassVar[Quaternion] = (0., 0., 0., 1.)
+
+    # #Workspace params for each table:
+    # _default_table_workspaces: ClassVar[List[Dict[str, float]]] = [
+    #         {"x_lb":0.875, "x_ub": 1.125, "y_lb": -0.7, "y_ub": -0.3},
+    #         {"x_lb":2.225, "x_ub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
+    #         {"x_lb":-8.825, "x_ub": -8.575, "y_lb": 1.3, "y_ub": 1.7}
+    #         ]
+
+    # #Table params: Sequential(3-tables)
+
+    # _num_tables: ClassVar[int] = 3
+
+    # _default_table_poses: ClassVar[List[Pose3D]] = [
+    #         (-1.35, 2.0, 0.0),
+    #         (2.35, 2.0, 0.0),
+    #         (5.35, 2.0, 0.0)
+    #         ]
+
+    # _table_orientation: ClassVar[Quaternion] = (0., 0., 0., 1.)
+
+    # #Workspace params for each table:
+    # _default_table_workspaces: ClassVar[List[Dict[str, float]]] = [
+    #         {"x_lb":-1.475, "x_ub": -1.225, "y_lb": 1.8, "y_ub": 2.2},
+    #         {"x_lb":2.225, "x_ub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
+    #         {"x_lb":5.225, "x_ub": 5.475, "y_lb": 1.8, "y_ub": 2.2}
+    #         ]
+
+    # #Table params: Sequential(4-tables)
     _default_table_poses: ClassVar[List[Pose3D]] = [
-            (1.0, -0.5, 0.0),
-            (-1.7, 1.5, 0.0),
+            (-1.35, 2.0, 0.0),
             (2.35, 2.0, 0.0),
+            (5.35, 2.0, 0.0),
+            (8.35, 2.0, 0.0)
             ]
 
     _table_orientation: ClassVar[Quaternion] = (0., 0., 0., 1.)
 
     #Workspace params for each table:
-    _table_workspaces: ClassVar[List[Dict[str, float]]] = [
-            {"x_lb":0.875, "x_ub": 1.125, "y_lb": -0.7, "y_ub": -0.3},
-            {"x_lb":-1.825, "x_ub": -1.575, "y_lb": 1.3, "y_ub": 1.7},
+    _default_table_workspaces: ClassVar[List[Dict[str, float]]] = [
+            {"x_lb":-1.475, "x_ub": -1.225, "y_lb": 1.8, "y_ub": 2.2},
             {"x_lb":2.225, "x_ub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
+            {"x_lb":5.225, "x_ub": 5.475, "y_lb": 1.8, "y_ub": 2.2},
+            {"x_lb":8.225, "x_ub": 8.475, "y_lb": 1.8, "y_ub": 2.2}
             ]
+
+    # #Table params: Choke-point(4-tables)
+    # _default_table_poses: ClassVar[List[Pose3D]] = [
+    #         (-1.35, 2.0, 0.0),
+    #         (2.35, 2.0, 0.0),
+    #         (5.35, -2.0, 0.0),
+    #         (8.35, 6.0, 0.0)
+    #         ]
+
+    # _table_orientation: ClassVar[Quaternion] = (0., 0., 0., 1.)
+
+    # #Workspace params for each table:
+    # _default_table_workspaces: ClassVar[List[Dict[str, float]]] = [
+    #         {"x_lb":-1.475, "x_ub": -1.225, "y_lb": 1.8, "y_ub": 2.2},
+    #         {"x_lb":2.225, "x_ub": 2.475, "y_lb": 1.8, "y_ub": 2.2},
+    #         {"x_lb":5.225, "x_ub": 5.475, "y_lb": -2.2, "y_ub": -1.8},
+    #         {"x_lb":8.225, "x_ub": 8.475, "y_lb": 5.8, "y_ub": 6.2}
+    #         ]
+
+
     robo_x = sum(pose[0] for pose in _default_table_poses)/ len(_default_table_poses)
     robo_y = sum(pose[1] for pose in _default_table_poses)/ len(_default_table_poses)
     robo_z = 0.01
+
+    _default_num_solid_obstacles = 3
+    _default_solid_obstacle_features = [('cube', 0.3, 0.3), ('cylinder', 1.0, 0.5), ('cuboid', 1.0, 0.5, 0.3)]
+    # These are just random coordinates at the moment; need to be set to actual 
+    # x,y coords that are not in collision with any other static objects.
+    _default_solid_obstacle_positions = [(0.5, 0.5), (0.7, 0.8), (2.3, 1.4)]
 
     _default_blocks_per_table: ClassVar[List[int]] = [8, 8, 8]
     _initial_state: ClassVar[State] = None
 
     def __init__(self, use_gui: bool = True,
                  num_tables: int = 3,
-                 blocks_per_table: Optional[List[int]] = None,
                  table_poses: Optional[List[Pose3D]] = None,
                  table_workspaces: Optional[List[Dict[str, float]]] = None,
+                 solid_obstacle_features: Optional[List[Tuple[str, float, float]]] = None,
+                 # Input the goal items as (table_idx, list(range(num_items))) key, value pairs
+                 # for each table.
+                 use_num_goal_items: Optional[Dict[int, List[int]]] = None
                  ) -> None:
+        
+        # if len(table_poses) != num_tables or len(table_workspaces) != num_tables:
+        #     raise ValueError(
+        #         f"num_tables={num_tables} but got "
+        #         f"{len(table_poses)} poses and {len(table_workspaces)} workspaces."
+        #     )
 
+        if table_poses is not None:
+            #Assumes that if tables poses are passed with accompanying
+            #table workspaces.
+            type(self)._default_table_poses = table_poses
+            type(self)._default_table_workspaces = table_workspaces
+            block_per_table = self._default_blocks_per_table[0]
+            type(self)._default_blocks_per_table = [block_per_table for pose in table_poses]
+        super().__init__(use_gui)
+        self._num_tables = len(self._default_table_poses)
         #Store multi-table configuration
-        self._num_tables = num_tables
-        self._blocks_per_table = blocks_per_table or self._default_blocks_per_table
-        self._table_poses = table_poses or self._default_table_poses[:num_tables]
-        self._table_workspaces = table_workspaces or self._table_workspaces[:num_tables]
+        # In order to spawn obstacles, at least and empty list must be passed
+        # for solid_obstacle_features.
+        if solid_obstacle_features and len(solid_obstacle_features)>0:
+            self._num_solid_obstacles = len(solid_obstacle_features)
+            self._solid_obstacle_features = solid_obstacle_features
+        elif solid_obstacle_features and len(solid_obstacle_features)==0:
+            self._num_solid_obstacles = self._default_num_solid_obstacles
+            self._solid_obstacle_features = self._default_solid_obstacle_features
+        # These can be randomized/done via a heuristic as well;
+        # currently, it's just being hardcoded
+        self._solid_obstacle_positions = self._default_solid_obstacle_positions
+        self._use_num_goal_items = use_num_goal_items
+
+        # ipdb.set_trace()
 
         #Validate configuration
-        assert len(self._blocks_per_table) == num_tables, f"blocks_per_table length ({len(self._blocks_per_table)})"\
-                                                                                f"must match num_tables ({num_tables})."
-        assert len(self._table_poses) == num_tables, f"table_poses length ({len(self._table_poses)})"\
-                                                                f"must match num_tables ({num_tables})"
-        assert len(self._table_workspaces) == num_tables, f"table_workspaces length({len(self._table_workspaces)})" \
-                                                                            f"must match num_tables ({num_tables})"
-          
-        super().__init__(use_gui)
+        assert len(self._default_table_poses) == self._num_tables, f"table_poses length ({len(self._default_table_poses)})"\
+                                                                f"must match num_tables ({self._num_tables})"
+        assert len(self._default_table_workspaces) == self._num_tables, f"table_workspaces length({len(self._default_table_workspaces)})" \
+                                                                            f"must match num_tables ({self._num_tables})"
 
         #2D position of where the robot starts at
-        self._home_xy: Tuple[float, float] = None
+        # self._home_xy: Tuple[float, float] = None
+        # Set home_xy AFTER super().__init__() completes  
+        base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)  
+        self._home_xy = (float(base_x), float(base_y))
+
         self._AtHome = Predicate("AtHome", [self._robot_type], self._AtHomeHolds)
           
         # Create table type and objects  
         self._table_type = Type("table", ["pose_x", "pose_y", "pose_z", "id"])
-        self._tables = [Object(f"table{i}", self._table_type) for i in range(num_tables)]
+        self._tables = [Object(f"table{i}", self._table_type) for i in range(self._num_tables)]
+
+        # Create goal item, goal_loc type:
+        self._goal_obj_type = Type("goal", ["pose_x", "pose_y", "pose_z",  "held", "color_r", 
+                                                "color_g", "color_b"])
+        # Goal loc mirrors the table type; if we are using this, we will need to 
+        # define an object that is of goal_loc_type and accordingly add predicates 
+        # for it: TODO!!!
+        self._goal_loc_type = Type("goalLoc", ["pose_x", "pose_y", "pose_z", "id"])
           
         # On predicate for multi-table; Eg: On(block1, table2)  
         self._OnTable = Predicate("OnTable", [self._block_type, self._table_type],  
                                         self._OnTable_holds)
+        # Predicates for goal_item:
+        # On
+        self._OnTableGoalObj = Predicate("OnTableGoalObj", [self._goal_obj_type,
+                                             self._table_type], self._OnTableGoalObjHolds)
+        # At:
+        self._GoalObjAt = Predicate("GoalObjAt", [self._goal_obj_type, self._table_type],
+                                                    self._GoalObjAtHolds)
+        # GoalObjOnBlock:
+        self._GoalObjOnBlock = Predicate("GoalObjOnBlock", [self._goal_obj_type, self._block_type],
+                                                            self._GoalObjOnBlockHolds)
+        # BlockOnGoalObj:
+        self._BlockOnGoalObj = Predicate("BlockOnGoalObj", [self._block_type, self._goal_obj_type],
+                                                            self._BlockOnGoalObjHolds)
+        # GoalObjOnGoalObj:
+        self._GoalObjOnGoalObj = Predicate("GoalObjOnGoalObj", [self._goal_obj_type, self._goal_obj_type],
+                                                            self._GoalObjOnGoalObjHolds)
+        # ClearGoalObj:
+        self._ClearGoalObj = Predicate("ClearGoalObj", [self._goal_obj_type], self._ClearGoalObjHolds)
+
+        # Holding:
+        self._HoldingGoalObj = Predicate("HoldingGoalObj", [self._goal_obj_type],
+                                  self._HoldingGoalObjHolds)
+        # GOALOBJHELD:
+        self._GOALOBJHELD = Predicate("GOALOBJHELD", [], self._ANYGOALOBJHELD)
+
 
         # RobotAt predicate for determining robot's location; Eg: At(robot, table1)
         self._At = Predicate("RobotAt", [self._robot_type, self._table_type], self._AtHolds)
+
+        # NotRobotAt predicate for determining where robot's not location; Eg: NotAt(robot, table1)
+        self._NotAt = Predicate("RobotNotAt", [self._robot_type, self._table_type], self._NotAtHolds)
+
+        self._DifferentTable = Predicate("DifferentTable", [self._table_type, self._table_type], self._DifferentTableHolds)
 
         # BlockAt predicate for determining block is on what table: Eg: BlockAt(block, table1)
         self._BlockAt = Predicate("BlockAt", [self._block_type, self._table_type], self._BlockAtHolds)
@@ -96,6 +235,8 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         # Track correspondence between PyBullet IDs and objects  
         self._block_id_to_block: Dict[int, Object] = {}  
         self._table_id_to_table: Dict[int, Object] = {}
+        self._goal_obj_id_to_goal_obj: Dict[int, Object] = {}
+        self._goal_loc_id_to_goal_loc: Dict[int, Object] = {}
 
         if not isinstance(self._pybullet_robot, MobileSingleArmPyBulletRobot):
             raise TypeError("PyBulletBlocksEnv with coordinated options "
@@ -115,14 +256,25 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         # base_predicates.discard(BlocksEnv.OnTable)
         # base_predicates.add(self._OnTable)
         base_predicates.add(self._At)
+        base_predicates.add(self._NotAt)
+        base_predicates.add(self._DifferentTable)
         base_predicates.add(self._AtHome)
         base_predicates.add(self._BlockAt)
+        base_predicates.add(self._OnTableGoalObj)
+        base_predicates.add(self._GoalObjAt)
+        base_predicates.add(self._GoalObjOnBlock)
+        base_predicates.add(self._BlockOnGoalObj)
+        base_predicates.add(self._GoalObjOnGoalObj)
+        base_predicates.add(self._ClearGoalObj)
+        base_predicates.add(self._HoldingGoalObj)
+        base_predicates.add(self._GOALOBJHELD)
         return base_predicates
 
     @property
     def types(self) -> Set[Type]:
         base_types = set(super().types)
         base_types.add(self._table_type)
+        base_types.add(self._goal_obj_type)
         return base_types
 
     def _OnTable_holds(self, state:State, objects:List[Object]) -> bool:
@@ -134,7 +286,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         assert table.is_instance(self._table_type)
 
         table_id = int(state.get(table, "id"))
-        workspace = self._table_workspaces[table_id]
+        workspace = self._default_table_workspaces[table_id]
 
         block_x = state.get(block, "pose_x")
         block_y = state.get(block, "pose_y")
@@ -173,6 +325,24 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         
         return dist_from_center<=0.5
 
+    def _NotAtHolds(self, state: State, objects: List[Object]) -> bool:
+        """Check if a robot is not at the current the passed location.
+        """
+        robot = objects[0]
+        table = objects[1]
+        assert table.is_instance(self._table_type)
+
+        # ipdb.set_trace()
+
+        return not self._AtHolds(state, [robot, table])
+
+    def _DifferentTableHolds(self, state: State, objects: List[Object]) -> bool:
+
+        table1 = objects[0]
+        table2 = objects[1]
+
+        return table1 != table2
+
 
     def _AtHomeHolds(self, state: State, objects: List[Object]) -> bool:
         """True iff the robot's current base (x,y) is within eps of the start base (x,y).
@@ -208,7 +378,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         block_y = state.get(block, "pose_y")
         table_id = int(state.get(table, "id"))
 
-        table_workspace = self._table_workspaces[table_id]
+        table_workspace = self._default_table_workspaces[table_id]
 
         x_in_bounds = table_workspace["x_lb"] <=block_x <= table_workspace["x_ub"]
         y_in_bounds = table_workspace["y_lb"] <=block_y <= table_workspace["y_ub"]
@@ -217,23 +387,156 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         return x_in_bounds and y_in_bounds and not_held
 
 
+    def _OnTableGoalObjHolds(self, state: State, objects: List[Object]) -> bool:
+        """
+        Checks if goal_obj is on table;
+        """
+        assert len(objects) == 2
+        goal_obj, table = objects
+        assert goal_obj.is_instance(self._goal_obj_type)
+        assert table.is_instance(self._table_type)
+
+        table_id = int(state.get(table, "id"))
+        workspace = self._default_table_workspaces[table_id]
+
+        goal_obj_x = state.get(goal_obj, "pose_x")
+        goal_obj_y = state.get(goal_obj, "pose_y")
+        goal_obj_z = state.get(goal_obj, "pose_z")
+
+        # Check if block is within table workspace and at table height and not held by robot
+        # Currently, using _block_size as goal_obj_size as they are technically the same object
+        # physically; this would have to be updated in case a different object is to be used.
+        x_in_bounds = workspace["x_lb"] <=goal_obj_x <= workspace["x_ub"]
+        y_in_bounds = workspace["y_lb"] <=goal_obj_y <= workspace["y_ub"]
+        z_on_table = abs(goal_obj_z-(self.table_height+self._block_size/2))<self.on_tol
+        not_held = state.get(goal_obj, "held")<0.5
+
+        return x_in_bounds and y_in_bounds and z_on_table and not_held
+
+    def _GoalObjAtHolds(self, state: State, objects: List[Object]) -> bool:
+        """True iff the goal object x,y lie in the table's workspace.
+        """
+
+        assert len(objects) >=2
+        goal_obj = objects[0]
+        table = objects[1]
+
+        assert goal_obj.is_instance(self._goal_obj_type)
+        assert table.is_instance(self._table_type)
+
+        goal_obj_x = state.get(goal_obj, "pose_x")
+        goal_obj_y = state.get(goal_obj, "pose_y")
+        table_id = int(state.get(table, "id"))
+
+        table_workspace = self._default_table_workspaces[table_id]
+
+        x_in_bounds = table_workspace["x_lb"] <=goal_obj_x <= table_workspace["x_ub"]
+        y_in_bounds = table_workspace["y_lb"] <=goal_obj_y <= table_workspace["y_ub"]
+        not_held = state.get(goal_obj, "held")<0.5
+
+        return x_in_bounds and y_in_bounds and not_held
+
+    def _GoalObjOnBlockHolds(self, state: State, objects: Sequence[Object]) -> bool:
+        """
+        Checks if a goal obj is on a block
+        """
+        goal_obj, block = objects
+        if state.get(goal_obj, "held") >= self.held_tol or \
+           state.get(block, "held") >= self.held_tol:
+            return False
+        x1 = state.get(goal_obj, "pose_x")
+        y1 = state.get(goal_obj, "pose_y")
+        z1 = state.get(goal_obj, "pose_z")
+        x2 = state.get(block, "pose_x")
+        y2 = state.get(block, "pose_y")
+        z2 = state.get(block, "pose_z")
+        return np.allclose([x1, y1, z1], [x2, y2, z2 + self._block_size],
+                           atol=self.on_tol)
+
+    def _BlockOnGoalObjHolds(self, state: State, objects: Sequence[Object]) -> bool:
+        """
+        Checks if a block is on goal obj
+        """
+        block, goal_obj = objects
+        if state.get(block, "held") >= self.held_tol or \
+           state.get(goal_obj, "held") >= self.held_tol:
+            return False
+        x1 = state.get(block, "pose_x")
+        y1 = state.get(block, "pose_y")
+        z1 = state.get(block, "pose_z")
+        x2 = state.get(goal_obj, "pose_x")
+        y2 = state.get(goal_obj, "pose_y")
+        z2 = state.get(goal_obj, "pose_z")
+        return np.allclose([x1, y1, z1], [x2, y2, z2 + self._block_size],
+                           atol=self.on_tol)
+
+    def _GoalObjOnGoalObjHolds(self, state: State, objects: Sequence[Object]) -> bool:
+        """
+        Checks if a goal obj1 is on another goal obj2;
+        Ensure that the predicate usage is implemented appropriately to
+        maintain input order.
+        """
+        goal_obj1, goal_obj2 = objects
+        if state.get(goal_obj1, "held") >= self.held_tol or \
+           state.get(goal_obj2, "held") >= self.held_tol:
+            return False
+        x1 = state.get(goal_obj1, "pose_x")
+        y1 = state.get(goal_obj1, "pose_y")
+        z1 = state.get(goal_obj1, "pose_z")
+        x2 = state.get(goal_obj2, "pose_x")
+        y2 = state.get(goal_obj2, "pose_y")
+        z2 = state.get(goal_obj2, "pose_z")
+        return np.allclose([x1, y1, z1], [x2, y2, z2 + self._block_size],
+                           atol=self.on_tol)
+
+    def _ClearGoalObjHolds(self, state: State, objects: Sequence[Object]) -> bool:
+        """
+        Checks if a goal object is held
+        """
+        if self._HoldingGoalObjHolds(state, objects):
+            return False
+        goal_obj, = objects
+        for other_obj in state:
+            if other_obj.type not in {self._block_type, self._goal_obj_type}:
+                continue
+            elif other_obj.type == self._block_type:
+                if self._BlockOnGoalObjHolds(state, [other_obj, goal_obj]):
+                    return False
+            elif other_obj.type == self._goal_obj_type:
+                if self._GoalObjOnGoalObjHolds(state, [other_obj, goal_obj]):
+                    return False
+        return True
+
+    def _get_held_goal_obj(self, state: State) -> Optional[Object]:
+        for obj in state:
+            if not obj.is_instance(self._goal_obj_type):
+                continue
+            if state.get(obj, "held") >= self.held_tol:
+                return obj
+        return None
+
+    def _HoldingGoalObjHolds(self, state: State, objects: Sequence[Object]) -> bool:
+        goal_obj, = objects
+        return self._get_held_goal_obj(state) == goal_obj
+
+    def _ANYGOALOBJHELD(self, state: State, objects: Sequence[Object]) -> bool:
+        if self._get_held_goal_obj(state):
+            return True
+        return False
+
     @classmethod
     def get_name(cls) -> str:
         return "pybullet_multitable_blocks"
 
     @classmethod
     def initialize_pybullet(
-        cls, using_gui: bool,
-        num_tables: int = 3,
-        table_poses: Optional[List[Pose3D]] = None
+        cls, using_gui: bool
         ) -> Tuple[int, MobileSingleArmPyBulletRobot, Dict[str, Any]]:
         """Initialize pybullet with multiple tables"""
 
         physics_client_id, pybullet_robot, bodies = super().initialize_pybullet(using_gui)
-
-        #Use provided poses or defaults
-        poses = table_poses or cls._default_table_poses[:num_tables]
-
+        # ipdb.set_trace()
+        poses = cls._default_table_poses
         #Create multiple tables
         table_ids = []
         for _, pose in enumerate(poses):
@@ -251,7 +554,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
           
             # Draw workspace for each table: draw debug lines on each table
             # similar to PyBulletBlocksEnv.
-            for i, workspace in enumerate(cls._table_workspaces[:num_tables]):  
+            for i, workspace in enumerate(cls._default_table_workspaces):  
                 color = [1.0, 0.0, 0.0] if i == 0 else [0.0, 1.0, 0.0] if i == 1 else [0.0, 0.0, 1.0]  
                   
                 p.addUserDebugLine([workspace["x_lb"], workspace["y_lb"], cls.table_height],  
@@ -284,8 +587,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                                     cls._obj_friction, cls._default_orn,  
                                     physics_client_id))  
         bodies["block_ids"] = block_ids
-
-        assert len(bodies["block_ids"]) == max(total_blocks, 30), "Not enough blocks for env."  
+ 
 
         # p.setPhysicsEngineParameter(useSplitImpulse=1,
         #                             splitImpulsePenetrationThreshold=-0.01,
@@ -299,6 +601,94 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         #                      rollingFriction=0.0, physicsClientId=physics_client_id)
         # for table_id in table_ids:
         #     p.changeDynamics(table_id, -1, lateralFriction=1.0, physicsClientId=physics_client_id)
+
+        # Set solid obstacles:
+        # solid_obstacle_features = None
+        # if solid_obstacle_features:
+
+        #     n = min(len(self._solid_obstacle_features), len(self._solid_obstacle_positions))
+        #     base_z_offset = 0.2
+        #     obstacle_ids = []
+        #     base_area = {}
+
+        #     for i in range(n):
+        #         spec = self._solid_obstacle_features[i]
+        #         (x, y) = self._solid_obstacle_positions[i]
+
+        #         if len(spec) < 2:
+        #             raise ValueError(f"Bad spec at index {i}: {spec}")
+
+        #         shape = spec[0].lower()
+
+        #         # Defaults (you can randomize colors if you like)
+        #         rgba = (0.6, 0.6, 0.8, 1.0)
+
+        #         if shape == 'cube':
+        #             # ('cube', length, breadth)
+        #             if len(spec) != 3:
+        #                 raise ValueError(f"Cube expects ('cube', length, breadth). Got: {spec}")
+        #             length, breadth = float(spec[1]), float(spec[2])  # height, sideXY
+        #             half_extents = (breadth / 2.0, breadth / 2.0, length / 2.0)
+        #             base_area['cube'] = breadth**2
+        #             z = base_z_offset + half_extents[2]
+
+        #             col = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_extents)
+        #             vis = p.createVisualShape(p.GEOM_BOX, halfExtents=half_extents, rgbaColor=rgba)
+        #             bid = p.createMultiBody(
+        #                 baseMass=0,  # static obstacle
+        #                 baseCollisionShapeIndex=col,
+        #                 baseVisualShapeIndex=vis,
+        #                 basePosition=(x, y, z),
+        #                 baseOrientation=p.getQuaternionFromEuler((0, 0, 0)),
+        #             )
+        #             obstacle_ids.append(bid)
+
+        #         elif shape == 'cuboid':
+        #             # ('cuboid', length, breadth, width)
+        #             if len(spec) != 4:
+        #                 raise ValueError(f"Cuboid expects ('cuboid', length, breadth, width). Got: {spec}")
+        #             length, breadth, width = float(spec[1]), float(spec[2]), float(spec[3])  # height, sizeX, sizeY
+        #             half_extents = (breadth / 2.0, width / 2.0, length / 2.0)
+        #             base_area['cuboid'] = breadth * width
+        #             z = base_z_offset + half_extents[2]
+
+        #             col = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_extents)
+        #             vis = p.createVisualShape(p.GEOM_BOX, halfExtents=half_extents, rgbaColor=rgba)
+        #             bid = p.createMultiBody(
+        #                 baseMass=0,
+        #                 baseCollisionShapeIndex=col,
+        #                 baseVisualShapeIndex=vis,
+        #                 basePosition=(x, y, z),
+        #                 baseOrientation=p.getQuaternionFromEuler((0, 0, 0)),
+        #             )
+        #             obstacle_ids.append(bid)
+
+        #         elif shape == 'cylinder':
+        #             # ('cylinder', length, breadth) → height=length, radius=breadth/2
+        #             if len(spec) != 3:
+        #                 raise ValueError(f"Cylinder expects ('cylinder', length, breadth). Got: {spec}")
+        #             height, breadth = float(spec[1]), float(spec[2])
+        #             radius = breadth / 2.0
+        #             base_area['cylinder'] = np.pi * (radius)**2
+        #             z = base_z_offset + height / 2.0
+
+        #             col = p.createCollisionShape(p.GEOM_CYLINDER, radius=radius, height=height)
+        #             vis = p.createVisualShape(p.GEOM_CYLINDER, radius=radius, length=height, rgbaColor=rgba)
+        #             bid = p.createMultiBody(
+        #                 baseMass=0,
+        #                 baseCollisionShapeIndex=col,
+        #                 baseVisualShapeIndex=vis,
+        #                 basePosition=(x, y, z),
+        #                 baseOrientation=p.getQuaternionFromEuler((0, 0, 0)),  # cylinder axis along Z
+        #             )
+        #             obstacle_ids.append(bid)
+
+        #         else:
+        #             raise ValueError(f"Unknown shape '{shape}' at index {i}. Supported: cube, cuboid, cylinder.")
+
+        #         bodies["obstacle_ids"] = obstacle_ids
+        #         self._obstacle_base_area = base_area
+
   
         return physics_client_id, pybullet_robot, bodies
 
@@ -306,6 +696,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     def _store_pybullet_bodies(self, pybullet_bodies: Dict[str, Any]) -> None:
         self._table_ids = pybullet_bodies["table_ids"]
         self._block_ids = pybullet_bodies["block_ids"]
+        # self._goal_obj_ids = pybullet_bodies["goal_ids"]
 
 
     @classmethod
@@ -313,8 +704,10 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         """Create robot positioned to reach all tables."""
 
         #Position robot at center of tables:
-        avg_x = sum(pose[0] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
-        avg_y = sum(pose[1] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
+        # avg_x = sum(pose[0] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
+        # avg_y = sum(pose[1] for pose in cls._default_table_poses)/ len(cls._default_table_poses)
+        avg_x = 0.5464
+        avg_y = 1.0
         base_pose = Pose(position=(avg_x, avg_y, 0.0), orientation=(0.0, 0.0, 0.0, 1.0))
 
         robot_ee_orn = cls.get_robot_ee_home_orn()
@@ -382,6 +775,9 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                                   f,
                                   physicsClientId=self._physics_client_id)
 
+        base_x, base_y, _ = self._pybullet_robot.get_base_pose(self._physics_client_id)
+        self._home_xy = (float(base_x), float(base_y))
+
         #Reset tables
         table_objs = state.get_objects(self._table_type)
         self._table_id_to_table = {}
@@ -389,6 +785,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             if i<len(self._table_ids):
                 table_id = self._table_ids[i]
                 self._table_id_to_table[table_id] = table_obj
+        # ipdb.set_trace()
 
         #Reset blocks: save a mapping from block id to block obj,
         #and update its pose and color.
@@ -413,22 +810,62 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                 color = (r, g, b, 1.0)
                 p.changeVisualShape(block_id, linkIndex=-1, rgbaColor=color, physicsClientId=self._physics_client_id)
 
-        #Handle held objects
+        # Initialize physical goal items if required
+        # We use the pybullet blocks as pybullet goal objects as well
+        # They are merely assigned to the goal object types.
+        self._goal_obj_id_to_goal_obj = {}
+        if self._use_num_goal_items:
+            num_used_pybullet_blocks = len(block_objs)
+            goal_objs = state.get_objects(self._goal_obj_type)
+            for j, goal_obj in enumerate(goal_objs):
+                if num_used_pybullet_blocks+j<len(self._block_ids):
+                    goal_obj_id = self._block_ids[num_used_pybullet_blocks+j]
+                    self._goal_obj_id_to_goal_obj[goal_obj_id] = goal_obj
+
+                    bx = state.get(goal_obj, "pose_x")
+                    by = state.get(goal_obj, "pose_y")
+                    bz = state.get(goal_obj, "pose_z")
+
+                    p.resetBasePositionAndOrientation(goal_obj_id, [bx, by, bz], self._default_orn,
+                                                        physicsClientId=self._physics_client_id)
+
+                    #Update block color
+                    r = state.get(goal_obj, "color_r")
+                    g = state.get(goal_obj, "color_g")
+                    b = state.get(goal_obj, "color_b")
+                    color = (r, g, b, 1.0)
+                    p.changeVisualShape(goal_obj_id, linkIndex=-1, rgbaColor=color, physicsClientId=self._physics_client_id)
+
+        # Handle held objects
         held_object = self._get_held_block(state)
         if held_object is not None:
             self._force_grasp_object(held_object)
 
-        #Move unused blocks out of view
+        # Move unused blocks out of view
         h = self._block_size
         oov_x, oov_y = self._out_of_view_xy
-        for i in range(len(block_objs), len(self._block_ids)):
+        if self._use_num_goal_items:
+            total_pybullet_blocks_used = len(block_objs)+len(goal_objs)
+        else:
+            total_pybullet_blocks_used = len(block_objs)
+        for i in range(total_pybullet_blocks_used, len(self._block_ids)):
             block_id = self._block_ids[i]
-            assert block_id not in self._block_id_to_block
+            assert block_id not in (self._block_id_to_block.keys() | self._goal_obj_id_to_goal_obj.keys())
             p.resetBasePositionAndOrientation(block_id, [oov_x, oov_y, i*h], self._default_orn,
                                             physicsClientId=self._physics_client_id)
 
+        # Move unused goal_objs out of view
+        # h = self._block_size
+        # oov_x, oov_y = self._out_of_view_xy
+        # for i in range(len(goal_objs), len(self._goal_obj_ids)):
+        #     goal_obj_id = self._goal_obj_ids[i]
+        #     assert goal_obj_id not in self._goal_obj_id_to_goal_obj
+        #     p.resetBasePositionAndOrientation(goal_obj_id, [oov_x, oov_y, i*h], self._default_orn,
+        #                                     physicsClientId=self._physics_client_id)
+
         #Validate state reconstruction
         reconstructed_state = self._get_state()
+        # ipdb.set_trace()
         if not reconstructed_state.allclose(state):
             logging.debug("Desired state:")
             logging.debug(state.pretty_str())
@@ -458,6 +895,20 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             state_dict[block] = np.array([bx, by, bz, held, r, g, b],
                                          dtype=np.float32)
 
+        # Get goal obj states.
+        if self._use_num_goal_items:
+            for goal_obj_id, goal_obj in self._goal_obj_id_to_goal_obj.items():
+                (bx, by, bz), _ = p.getBasePositionAndOrientation(
+                    goal_obj_id, physicsClientId=self._physics_client_id)
+                held = (goal_obj_id == self._held_obj_id)
+                visual_data = p.getVisualShapeData(
+                    goal_obj_id, physicsClientId=self._physics_client_id)[0]
+                r, g, b, _ = visual_data[7]
+                # pose_x, pose_y, pose_z, held
+                state_dict[goal_obj] = np.array([bx, by, bz, held, r, g, b],
+                                             dtype=np.float32)
+
+        # ipdb.set_trace()
         #Get table states
         for table_id, table in self._table_id_to_table.items():
             (tx, ty, tz), _ = p.getBasePositionAndOrientation(
@@ -495,6 +946,9 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         return self._add_pybullet_state_to_tasks([task])[0]
 
     def _get_object_ids_for_held_check(self) -> List[int]:
+        if self._use_num_goal_items:
+            combined_dict = {**self._block_id_to_block, **self._goal_obj_id_to_goal_obj}
+            return combined_dict
         return sorted(self._block_id_to_block)
 
     def _get_expected_finger_normals(self) -> Dict[int, Array]:
@@ -521,13 +975,20 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
     #TODO: Check if this needs to be updated for use with multiple
     #tables.
     def _force_grasp_object(self, block: Object) -> None:
-        block_to_block_id = {b: i for i, b in self._block_id_to_block.items()}
-        block_id = block_to_block_id[block]
+        # Pratyush: added the extra section to detect held goal objects
+        # if the passed object is actually a goal object.
+        if block.type.name == "goal":
+            goal_obj_to_goal_obj_id = {g: i for i, g in self._goal_obj_id_to_goal_obj.items()}
+            goal_obj_id = goal_obj_to_goal_obj_id[block]
+        else:
+            block_to_block_id = {b: i for i, b in self._block_id_to_block.items()}
+            block_id = block_to_block_id[block]
+
         # The block should already be held. Otherwise, the position of the
         # block was wrong in the state.
         held_obj_id = self._detect_held_object()
-        if block_id != held_obj_id:
-            ipdb.set_trace()
+        # if block_id != held_obj_id:
+            # ipdb.set_trace()
         assert block_id == held_obj_id
         # Create the grasp constraint.
         self._held_obj_id = block_id
@@ -567,13 +1028,19 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         Randomly sample a new (x, y) position for a pile of blocks on the table, making sure it doesn’t overlap
         too closely with any existing piles.
         """
-        table_workspace = self._table_workspaces[table_idx]
+        table_workspace = self._default_table_workspaces[table_idx]
+        # Setting lower bound for sampling z
+        z_lower_bound = self.table_height + self._block_size
 
         while True:
             x = rng.uniform(table_workspace['x_lb'], table_workspace['x_ub'])
             y = rng.uniform(table_workspace['y_lb'], table_workspace['y_ub'])
+            # For sampling in the air:
+            # z = rng.uniform(z_lower_bound, 15)
             if self.table_xy_is_clear(x, y, existing_xys):
                 return (x, y)
+            # if self.table_xy_is_clear(x, y, z, existing_xys):
+            #     return (x, y, z)
 
     def table_xy_is_clear(self, x: float, y: float,
                            existing_xys: Set[Tuple[float, float]]) -> bool:
@@ -581,6 +1048,8 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         Determine whether a newly sampled (x, y) location is sufficiently far from all existing pile positions
         to avoid a collision.
         """
+        self.collision_padding = 2.0
+
         if all(
                 abs(x - other_x) > self.collision_padding * self._block_size
                 for other_x, _ in existing_xys):
@@ -590,6 +1059,32 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                 for _, other_y in existing_xys):
             return True
         return False
+
+    # def table_xy_is_clear(self, x: float, y: float, z: float,
+    #                        existing_xys: Set[Tuple[float, float]]) -> bool:
+    #     """
+    #     Determine whether a newly sampled (x, y) location is sufficiently far from all existing pile positions
+    #     to avoid a collision. This one samples values on z for simplifying scene sampling.
+    #     """
+    #     self.collision_padding = 1.5
+
+    #     # if all(
+    #     #         abs(x - other_x) > self.collision_padding * self._block_size
+    #     #         for other_x, _ in existing_xys):
+    #     #     return True
+    #     # if all(
+    #     #         abs(y - other_y) > self.collision_padding * self._block_size
+    #     #         for _, other_y in existing_xys):
+    #     #     return True
+    #     # return False
+    #     point_to_check = np.asarray((x, y, z), dtype=float)
+
+    #     for coord in existing_xys:
+    #         point = np.asarray(coord, dtype=float)
+    #         dist = np.abs(point_to_check - point)
+    #         if np.all(dist <= self._block_size):
+    #             return False
+        # return True
 
 
     def set_table(self, table_idx: int, exact_state: Dict[str, Any], setup: str = 'pile',
@@ -611,14 +1106,25 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
         assert table_idx is not None, f"Table idx not provided."
 
+        num_goal_items_on_table = 0
+        if self._use_num_goal_items is not None and table_idx in self._use_num_goal_items.keys():
+            num_goal_items_on_table = len(self._use_num_goal_items[table_idx])
+
         if setup == 'pile':
             if params is None:
                 num_piles = 3
                 #Setting all piles to have the same number of blocks for now.
                 num_block_per_pile = random.choice([1,2,3,4])
             else:
-                assert isinstance(params, list), f"Params must be a set for mode = pile."
+                assert isinstance(params, list), f"Params must be a list with 2 entries for mode = pile."
                 num_piles, num_blocks_per_pile = params[0], params[1]
+
+            # If number of goal objects on table are more than total number of 
+            # items on table, add some extra blocks into the pile.
+            # However, ensure while passing the table setup that the number of
+            # blocks on table far outweigh the number of goal objects on the table.
+            if num_piles*num_blocks_per_pile < num_goal_items_on_table:
+                num_blocks_per_pile = num_goal_items_on_table+4
 
             #Create list of piles; each pile constains list of 
             #block objects.
@@ -626,9 +1132,20 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             for pile in range(num_piles):
                 piles.append([])
                 for block_num in range(num_blocks_per_pile):
+                    if num_goal_items_on_table > 0:
+                        random_sample = random.uniform(0.0, 1.0)
+                        print(f"\nSample for goal obj in {setup}: {random_sample}")
+                        if random_sample > 0.2:
+                            goal_object = Object(f"goalObj{table_idx}_{pile}_{block_num}", self._goal_obj_type)
+                            piles[-1].append(goal_object)
+                            num_goal_items_on_table-=1
+                            continue
                     block = Object(f"block{table_idx}_{pile}_{block_num}", self._block_type)
                     # Add block to pile
                     piles[-1].append(block)
+
+            assert num_goal_items_on_table == 0, f"\nThe required number of goal objects\
+                                                     didn't get assigned on table. {num_goal_items_on_table} more required."
 
             data: Dict[Object, Array] = {}
             # Create a block to pile index:
@@ -674,14 +1191,25 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
 
             piles: List[List[Object]] = []
             block_to_params_dict: Dict[Object, Any] = {}
-            block_count = 0
-            for pile in exact_state.keys():
+            # block_count = 0
+            for i, (pile_name, colors) in enumerate(exact_state.items()):
                 piles.append([])
-                for i in range(len(exact_state[pile])):
-                    block = Object(f"block{table_idx}_{len(piles)}_{block_count}", self._block_type)
+                for j, color in enumerate(colors):
+                    if num_goal_items_on_table > 0:
+                        random_sample = random.uniform(0.0, 1.0)
+                        print(f"\nSample for goal obj in {setup}: {random_sample}")
+                        if random_sample > 0.2:
+                            goal_object = Object(f"goalObj{table_idx}_{i}_{j}", self._goal_obj_type)
+                            piles[-1].append(goal_object)
+                            block_to_params_dict[goal_object] = color
+                            num_goal_items_on_table-=1
+                            continue
+                    block = Object(f"block{table_idx}_{i}_{j}", self._block_type)
                     piles[-1].append(block)
-                    block_to_params_dict[block] = exact_state[pile][i]
-                    block_count+=1
+                    block_to_params_dict[block] = color
+                    # block_count+=1
+            assert num_goal_items_on_table == 0, f"\nThe required number of goal objects\
+                                                     didn't get assigned on table. {num_goal_items_on_table} more required."
 
             data: Dict[Object, Array] = {}
             # Create a block to pile index:
@@ -726,28 +1254,40 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             assert isinstance(exact_state, list), f"State description must be provided in a list format for\
                                                     mode exact_scattered."
 
-            table_workspace = self._table_workspaces[table_idx]
+            table_workspace = self._default_table_workspaces[table_idx]
             #Compute the max number of blocks that can be on the table;
             #maximum allowed blocks is a constant number below that.
             #This constant can be updated if required.
             table_width = np.abs(table_workspace['x_ub'] - table_workspace['x_lb'])
             table_length = np.abs(table_workspace['y_ub'] - table_workspace['y_lb'])
+
             #TODO: Fix computation for max_blocks_on_table; currently it's gives a negative value.
-            max_blocks_on_table = int(np.floor(((table_length*table_width)/(self._block_size*self._block_size))\
-                                                        *(1 - self.collision_padding)))
+            # max_blocks_on_table = int(np.floor(((table_length*table_width)/(self._block_size*self._block_size))\
+                                                        # *(1 - self.collision_padding)))
             
             # max_num_block_limit = max_blocks_on_table+5
-            max_num_block_limit = 20
+            # max_num_block_limit = 20
 
-            exact_state = exact_state[:max_num_block_limit]
+            # exact_state = exact_state[:max_num_block_limit]
 
 
             #Each block is a new pile, scattered on the table.
             piles: List[List[Object]] = []
-            for i in range(len(exact_state)):
-                piles.append([])    
-                block = Object(f"block{table_idx}_{len(piles)}_{i}", self._block_type)
+            for i, color in enumerate(exact_state):
+                piles.append([])
+                if num_goal_items_on_table > 0:
+                    random_sample = random.uniform(0.0, 1.0)
+                    print(f"\nSample for goal obj in {setup}: {random_sample}")
+                    if random_sample > 0.2:
+                        goal_object = Object(f"goalObj{table_idx}_{i}_0", self._goal_obj_type)
+                        piles[-1].append(goal_object)
+                        num_goal_items_on_table-=1
+                        continue
+                block = Object(f"block{table_idx}_{i}_0", self._block_type)
                 piles[-1].append(block)
+
+            assert num_goal_items_on_table == 0, f"\nThe required number of goal objects\
+                                                     didn't get assigned on table. {num_goal_items_on_table} more required."
 
             data: Dict[Object, Array] = {}
             # Sample pile (x, y)s
@@ -789,7 +1329,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
           
         # Add all table objects  
         for i, table in enumerate(self._tables):  
-            tx, ty, tz = self._table_poses[i]  
+            tx, ty, tz = self._default_table_poses[i]  
             complete_data[table] = np.array([tx, ty, tz, i], dtype=np.float32)  
           
         # Add robot 
@@ -803,7 +1343,6 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         rf = 1.0  # fingers start out open
         complete_data[self._robot] = np.array([rx, ry, rz, rf], dtype=np.float32)
         
-          
         # For each table configuration, add blocks  
         for table_idx, config in table_configs.items(): 
 
@@ -812,15 +1351,17 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
             for obj, obj_data in table_state.items():  
                 if obj.is_instance(self._block_type):
                     complete_data[obj] = obj_data
+                elif obj.is_instance(self._goal_obj_type):
+                    complete_data[obj] = obj_data
                 else:
-                    raise NotImplementedError(f"The environment is currently designed to accept only blocks.")
+                    raise NotImplementedError(f"The environment is currently designed to accept only blocks, goal_obj.")
           
         final_state = State(complete_data)
 
         # Create PyBulletState with initial joint positions  
         joint_positions = list(self._pybullet_robot.get_joints())
         base_pose = self._pybullet_robot.get_base_pose(self._physics_client_id)
-        state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions, base_pose=base_pose)  
+        state_with_sim = utils.PyBulletState(final_state.data, simulator_state=joint_positions, base_pose=base_pose)
         self._current_observation = state_with_sim  
         self._reset_state(state_with_sim, mode="initial_reset")
         #Set robot's home location to where it is.
@@ -828,6 +1369,7 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
         self._home_xy = (float(base_x), float(base_y))
         self._initial_state = copy.deepcopy(state_with_sim)
         print(f"\nBlocks with corresponding ids: {self._block_id_to_block}.")
+        print(f"\nGoal objects with corresponding ids: {self._goal_obj_id_to_goal_obj}")
         print(f"\nTables with corresponding ids: {self._table_id_to_table}.")
         # ipdb.set_trace()
         return state_with_sim
@@ -882,19 +1424,53 @@ class PyBulletMultiTableBlocksEnv(PyBulletEnv, BlocksEnv):
                     color = (r, g, b, 1.0)
                     p.changeVisualShape(block_id, linkIndex=-1, rgbaColor=color, physicsClientId=self._physics_client_id)
 
+            num_used_pybullet_blocks = len(block_objs)
+            goal_objs = []
+
+            self._goal_obj_id_to_goal_obj = {}
+            if self._use_num_goal_items:
+                goal_objs = state.get_objects(self._goal_obj_type)
+                for j, goal_obj in enumerate(goal_objs):
+                    if num_used_pybullet_blocks+j<len(self._block_ids):
+                        goal_obj_id = self._block_ids[num_used_pybullet_blocks+j]
+                        self._goal_obj_id_to_goal_obj[goal_obj_id] = goal_obj
+
+                        bx = state.get(goal_obj, "pose_x")
+                        by = state.get(goal_obj, "pose_y")
+                        bz = state.get(goal_obj, "pose_z")
+
+                        p.resetBasePositionAndOrientation(goal_obj_id, [bx, by, bz], self._default_orn,
+                                                            physicsClientId=self._physics_client_id)
+
+                        #Update block color
+                        r = state.get(goal_obj, "color_r")
+                        g = state.get(goal_obj, "color_g")
+                        b = state.get(goal_obj, "color_b")
+                        color = (r, g, b, 1.0)
+                        p.changeVisualShape(goal_obj_id, linkIndex=-1, rgbaColor=color, physicsClientId=self._physics_client_id)
+
             #Handle held objects
             held_object = self._get_held_block(state)
             if held_object is not None:
                 self._force_grasp_object(held_object)
 
-            #Move unused blocks out of view
+            # Move unused blocks out of view
             h = self._block_size
             oov_x, oov_y = self._out_of_view_xy
-            for i in range(len(block_objs), len(self._block_ids)):
+            for i in range(len(block_objs)+len(goal_objs), len(self._block_ids)):
                 block_id = self._block_ids[i]
-                assert block_id not in self._block_id_to_block
+                assert block_id not in (self._block_id_to_block.keys() | self._goal_obj_id_to_goal_obj.keys())
                 p.resetBasePositionAndOrientation(block_id, [oov_x, oov_y, i*h], self._default_orn,
                                                 physicsClientId=self._physics_client_id)
+
+            # Move unused goal_objs out of view
+            # h = self._block_size
+            # oov_x, oov_y = self._out_of_view_xy
+            # for i in range(len(goal_objs), len(self._goal_obj_ids)):
+            #     goal_obj_id = self._goal_obj_ids[i]
+            #     assert goal_obj_id not in self._goal_obj_id_to_goal_obj
+            #     p.resetBasePositionAndOrientation(goal_obj_id, [oov_x, oov_y, i*h], self._default_orn,
+            #                                     physicsClientId=self._physics_client_id)
 
             #Validate state reconstruction
             # reconstructed_state = self._get_state()

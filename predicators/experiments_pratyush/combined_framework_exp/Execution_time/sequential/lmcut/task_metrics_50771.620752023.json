@@ -1,0 +1,2768 @@
+{
+  "num_failures_discovered": 0.0,
+  "num_nodes_created": 249.0,
+  "num_skeletons_optimized": 7.0,
+  "expansion_data": [
+    {
+      "node_id": 140282170916144,
+      "parent_id": null,
+      "skeleton": [],
+      "skeleton_length": 0,
+      "cumulative_cost": 0,
+      "heuristic_value": 7.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "AtHome(robby:robot)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 0,
+      "total_nodes_created": 1.0,
+      "total_nodes_expanded": 0.0
+    },
+    {
+      "node_id": 140282185163840,
+      "parent_id": 140282170916144,
+      "skeleton": [
+        "MoveFromHome"
+      ],
+      "skeleton_length": 1,
+      "cumulative_cost": 1.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table0:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 2,
+      "total_nodes_created": 4.0,
+      "total_nodes_expanded": 1.0
+    },
+    {
+      "node_id": 140282185165904,
+      "parent_id": 140282185163840,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table0:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 5,
+      "total_nodes_created": 8.0,
+      "total_nodes_expanded": 2.0
+    },
+    {
+      "node_id": 140282185166288,
+      "parent_id": 140282185165904,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 8,
+      "total_nodes_created": 12.0,
+      "total_nodes_expanded": 3.0
+    },
+    {
+      "node_id": 140282185169408,
+      "parent_id": 140282185165904,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 12,
+      "total_nodes_created": 17.0,
+      "total_nodes_expanded": 4.0
+    },
+    {
+      "node_id": 140282185158272,
+      "parent_id": 140282170916144,
+      "skeleton": [
+        "MoveFromHome"
+      ],
+      "skeleton_length": 1,
+      "cumulative_cost": 1.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 16,
+      "total_nodes_created": 22.0,
+      "total_nodes_expanded": 5.0
+    },
+    {
+      "node_id": 140282185157984,
+      "parent_id": 140282185158272,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 19,
+      "total_nodes_created": 26.0,
+      "total_nodes_expanded": 6.0
+    },
+    {
+      "node_id": 140282185156832,
+      "parent_id": 140282170916144,
+      "skeleton": [
+        "MoveFromHome"
+      ],
+      "skeleton_length": 1,
+      "cumulative_cost": 1.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table2:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 22,
+      "total_nodes_created": 30.0,
+      "total_nodes_expanded": 7.0
+    },
+    {
+      "node_id": 140282185164368,
+      "parent_id": 140282185166288,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 25,
+      "total_nodes_created": 34.0,
+      "total_nodes_expanded": 8.0
+    },
+    {
+      "node_id": 140282185168064,
+      "parent_id": 140282185164368,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 29,
+      "total_nodes_created": 39.0,
+      "total_nodes_expanded": 9.0
+    },
+    {
+      "node_id": 140282185158992,
+      "parent_id": 140282185168064,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 33,
+      "total_nodes_created": 44.0,
+      "total_nodes_expanded": 10.0
+    },
+    {
+      "node_id": 140282185169072,
+      "parent_id": 140282185158992,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 37,
+      "total_nodes_created": 49.0,
+      "total_nodes_expanded": 11.0
+    },
+    {
+      "node_id": 140282185156016,
+      "parent_id": 140282185157984,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 36,
+      "total_nodes_created": 49.0,
+      "total_nodes_expanded": 11.0
+    },
+    {
+      "node_id": 140282185156928,
+      "parent_id": 140282185165904,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table0:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 40,
+      "total_nodes_created": 54.0,
+      "total_nodes_expanded": 12.0
+    },
+    {
+      "node_id": 140282185167824,
+      "parent_id": 140282185157984,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 43,
+      "total_nodes_created": 58.0,
+      "total_nodes_expanded": 13.0
+    },
+    {
+      "node_id": 140282185157120,
+      "parent_id": 140282185156832,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table0:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 46,
+      "total_nodes_created": 62.0,
+      "total_nodes_expanded": 14.0
+    },
+    {
+      "node_id": 140282185162640,
+      "parent_id": 140282185164368,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 49,
+      "total_nodes_created": 66.0,
+      "total_nodes_expanded": 15.0
+    },
+    {
+      "node_id": 140282185164080,
+      "parent_id": 140282185156832,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table2:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 53,
+      "total_nodes_created": 71.0,
+      "total_nodes_expanded": 16.0
+    },
+    {
+      "node_id": 140282185168496,
+      "parent_id": 140282185168064,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table0:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 56,
+      "total_nodes_created": 75.0,
+      "total_nodes_expanded": 17.0
+    },
+    {
+      "node_id": 140282170053184,
+      "parent_id": 140282185157120,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table0:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 59,
+      "total_nodes_created": 79.0,
+      "total_nodes_expanded": 18.0
+    },
+    {
+      "node_id": 140282180978288,
+      "parent_id": 140282170053184,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 62,
+      "total_nodes_created": 83.0,
+      "total_nodes_expanded": 19.0
+    },
+    {
+      "node_id": 140282180980832,
+      "parent_id": 140282180978288,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 66,
+      "total_nodes_created": 88.0,
+      "total_nodes_expanded": 20.0
+    },
+    {
+      "node_id": 140282180984480,
+      "parent_id": 140282180980832,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 70,
+      "total_nodes_created": 93.0,
+      "total_nodes_expanded": 21.0
+    },
+    {
+      "node_id": 140282185170272,
+      "parent_id": 140282185168064,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 74,
+      "total_nodes_created": 98.0,
+      "total_nodes_expanded": 22.0
+    },
+    {
+      "node_id": 140282180986016,
+      "parent_id": 140282185170272,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 78,
+      "total_nodes_created": 103.0,
+      "total_nodes_expanded": 23.0
+    },
+    {
+      "node_id": 140282185162688,
+      "parent_id": 140282185166288,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 82,
+      "total_nodes_created": 108.0,
+      "total_nodes_expanded": 24.0
+    },
+    {
+      "node_id": 140282185162208,
+      "parent_id": 140282185158992,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 86,
+      "total_nodes_created": 113.0,
+      "total_nodes_expanded": 25.0
+    },
+    {
+      "node_id": 140282180990096,
+      "parent_id": 140282185162208,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 90,
+      "total_nodes_created": 118.0,
+      "total_nodes_expanded": 26.0
+    },
+    {
+      "node_id": 140282185154720,
+      "parent_id": 140282185164368,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 89,
+      "total_nodes_created": 118.0,
+      "total_nodes_expanded": 26.0
+    },
+    {
+      "node_id": 140282170573152,
+      "parent_id": 140282185156016,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 92,
+      "total_nodes_created": 122.0,
+      "total_nodes_expanded": 27.0
+    },
+    {
+      "node_id": 140282168633440,
+      "parent_id": 140282170573152,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 96,
+      "total_nodes_created": 127.0,
+      "total_nodes_expanded": 28.0
+    },
+    {
+      "node_id": 140282185156688,
+      "parent_id": 140282185163840,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table2:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 98,
+      "total_nodes_created": 130.0,
+      "total_nodes_expanded": 29.0
+    },
+    {
+      "node_id": 140282185158752,
+      "parent_id": 140282185158272,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table0:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 101,
+      "total_nodes_created": 134.0,
+      "total_nodes_expanded": 30.0
+    },
+    {
+      "node_id": 140282168635552,
+      "parent_id": 140282185158752,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table0:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 104,
+      "total_nodes_created": 138.0,
+      "total_nodes_expanded": 31.0
+    },
+    {
+      "node_id": 140282180976896,
+      "parent_id": 140282170053184,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 107,
+      "total_nodes_created": 142.0,
+      "total_nodes_expanded": 32.0
+    },
+    {
+      "node_id": 140282170580256,
+      "parent_id": 140282185156928,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 111,
+      "total_nodes_created": 147.0,
+      "total_nodes_expanded": 33.0
+    },
+    {
+      "node_id": 140282168633152,
+      "parent_id": 140282170580256,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 115,
+      "total_nodes_created": 152.0,
+      "total_nodes_expanded": 34.0
+    },
+    {
+      "node_id": 140282168637040,
+      "parent_id": 140282168633152,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 119,
+      "total_nodes_created": 157.0,
+      "total_nodes_expanded": 35.0
+    },
+    {
+      "node_id": 140282168638384,
+      "parent_id": 140282168637040,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 123,
+      "total_nodes_created": 162.0,
+      "total_nodes_expanded": 36.0
+    },
+    {
+      "node_id": 140282168625088,
+      "parent_id": 140282168638384,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 127,
+      "total_nodes_created": 167.0,
+      "total_nodes_expanded": 37.0
+    },
+    {
+      "node_id": 140282185165856,
+      "parent_id": 140282185158272,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 126,
+      "total_nodes_created": 167.0,
+      "total_nodes_expanded": 37.0
+    },
+    {
+      "node_id": 140282168431696,
+      "parent_id": 140282185165856,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table0:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 129,
+      "total_nodes_created": 171.0,
+      "total_nodes_expanded": 38.0
+    },
+    {
+      "node_id": 140282180982176,
+      "parent_id": 140282185168496,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 132,
+      "total_nodes_created": 175.0,
+      "total_nodes_expanded": 39.0
+    },
+    {
+      "node_id": 140282168624368,
+      "parent_id": 140282168635552,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 136,
+      "total_nodes_created": 180.0,
+      "total_nodes_expanded": 40.0
+    },
+    {
+      "node_id": 140282168433424,
+      "parent_id": 140282180982176,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 140,
+      "total_nodes_created": 185.0,
+      "total_nodes_expanded": 41.0
+    },
+    {
+      "node_id": 140282185156592,
+      "parent_id": 140282185163840,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 139,
+      "total_nodes_created": 185.0,
+      "total_nodes_expanded": 41.0
+    },
+    {
+      "node_id": 140282180976992,
+      "parent_id": 140282185156592,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 142,
+      "total_nodes_created": 189.0,
+      "total_nodes_expanded": 42.0
+    },
+    {
+      "node_id": 140282180980160,
+      "parent_id": 140282185162640,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 145,
+      "total_nodes_created": 193.0,
+      "total_nodes_expanded": 43.0
+    },
+    {
+      "node_id": 140282180988032,
+      "parent_id": 140282180980160,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 149,
+      "total_nodes_created": 198.0,
+      "total_nodes_expanded": 44.0
+    },
+    {
+      "node_id": 140282180978576,
+      "parent_id": 140282180988032,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 153,
+      "total_nodes_created": 203.0,
+      "total_nodes_expanded": 45.0
+    },
+    {
+      "node_id": 140282185157264,
+      "parent_id": 140282185156832,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 152,
+      "total_nodes_created": 203.0,
+      "total_nodes_expanded": 45.0
+    },
+    {
+      "node_id": 140282184895840,
+      "parent_id": 140282185157264,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table0:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 155,
+      "total_nodes_created": 207.0,
+      "total_nodes_expanded": 46.0
+    },
+    {
+      "node_id": 140282170579488,
+      "parent_id": 140282185156928,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 158,
+      "total_nodes_created": 211.0,
+      "total_nodes_expanded": 47.0
+    },
+    {
+      "node_id": 140282180987168,
+      "parent_id": 140282180986016,
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 162,
+      "total_nodes_created": 216.0,
+      "total_nodes_expanded": 48.0
+    },
+    {
+      "node_id": 140282185166816,
+      "parent_id": 140282185163840,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 2,
+      "cumulative_cost": 2.0,
+      "heuristic_value": 6.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "OnTable(block0_0_0:block, table0:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "Clear(block0_0_0:block)",
+        "RobotAt(robby:robot, table0:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 161,
+      "total_nodes_created": 216.0,
+      "total_nodes_expanded": 48.0
+    },
+    {
+      "node_id": 140282182463840,
+      "parent_id": 140282185166816,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 3,
+      "cumulative_cost": 3.0,
+      "heuristic_value": 5.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table0:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 164,
+      "total_nodes_created": 220.0,
+      "total_nodes_expanded": 49.0
+    },
+    {
+      "node_id": 140282182452128,
+      "parent_id": 140282182463840,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 167,
+      "total_nodes_created": 224.0,
+      "total_nodes_expanded": 50.0
+    },
+    {
+      "node_id": 140282182456688,
+      "parent_id": 140282182452128,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 5,
+      "cumulative_cost": 5.0,
+      "heuristic_value": 3.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": false,
+      "queue_size": 171,
+      "total_nodes_created": 229.0,
+      "total_nodes_expanded": 51.0
+    },
+    {
+      "node_id": 140282182454432,
+      "parent_id": 140282182463840,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 4,
+      "cumulative_cost": 4.0,
+      "heuristic_value": 4.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "OnTable(block1_0_0:block, table1:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Holding(block0_0_0:block)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 175,
+      "total_nodes_created": 234.0,
+      "total_nodes_expanded": 52.0
+    },
+    {
+      "node_id": 140282181388128,
+      "parent_id": 140282182456688,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable"
+      ],
+      "skeleton_length": 6,
+      "cumulative_cost": 6.0,
+      "heuristic_value": 2.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table1:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 179,
+      "total_nodes_created": 239.0,
+      "total_nodes_expanded": 53.0
+    },
+    {
+      "node_id": 140282181389184,
+      "parent_id": 140282181388128,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable"
+      ],
+      "skeleton_length": 7,
+      "cumulative_cost": 7.0,
+      "heuristic_value": 1.0,
+      "num_atoms": 9,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "Holding(block1_0_0:block)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)"
+      ],
+      "is_goal": false,
+      "queue_size": 183,
+      "total_nodes_created": 244.0,
+      "total_nodes_expanded": 54.0
+    },
+    {
+      "node_id": 140282181396720,
+      "parent_id": 140282181389184,
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "skeleton_length": 8,
+      "cumulative_cost": 8.0,
+      "heuristic_value": 0.0,
+      "num_atoms": 11,
+      "atoms": [
+        "Clear(block2_0_0:block)",
+        "BlockAt(block1_0_0:block, table1:table)",
+        "BlockAt(block2_0_0:block, table2:table)",
+        "Clear(block1_0_0:block)",
+        "BlockAt(block0_0_0:block, table0:table)",
+        "RobotAt(robby:robot, table2:table)",
+        "Clear(block0_0_0:block)",
+        "OnTable(block1_0_0:block, table2:table)",
+        "OnTable(block0_0_0:block, table1:table)",
+        "OnTable(block2_0_0:block, table2:table)",
+        "GripperOpen(robby:robot)"
+      ],
+      "is_goal": true,
+      "queue_size": 187,
+      "total_nodes_created": 249.0,
+      "total_nodes_expanded": 55.0
+    }
+  ],
+  "num_nodes_expanded": 55.0,
+  "yielded_skeletons": [
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    },
+    {
+      "skeleton": [
+        "MoveFromHome",
+        "MoveFromTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable",
+        "PickFromTable",
+        "MoveFromTable",
+        "PutOnTable"
+      ],
+      "atoms_sequence": [
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "AtHome(robby:robot)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "OnTable(block0_0_0:block, table0:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "Clear(block0_0_0:block)",
+          "RobotAt(robby:robot, table0:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table0:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Holding(block0_0_0:block)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "OnTable(block1_0_0:block, table1:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table1:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "Holding(block1_0_0:block)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)"
+        ],
+        [
+          "Clear(block2_0_0:block)",
+          "BlockAt(block1_0_0:block, table1:table)",
+          "BlockAt(block2_0_0:block, table2:table)",
+          "Clear(block1_0_0:block)",
+          "BlockAt(block0_0_0:block, table0:table)",
+          "RobotAt(robby:robot, table2:table)",
+          "Clear(block0_0_0:block)",
+          "OnTable(block1_0_0:block, table2:table)",
+          "OnTable(block0_0_0:block, table1:table)",
+          "OnTable(block2_0_0:block, table2:table)",
+          "GripperOpen(robby:robot)"
+        ]
+      ]
+    }
+  ],
+  "cumulative_cost": [
+    7.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+  ],
+  "symbolic_planning_time": 0.015294110002287198,
+  "num_samples": 679.0,
+  "execution_times": {
+    "MoveTo": [
+      1.799937588912589,
+      5.999791963041964
+    ],
+    "Pick": [
+      [
+        0.24178765714168549,
+        0.9263497591018677,
+        0.38430434465408325,
+        1.0123076438903809,
+        0.8208438158035278,
+        0.3744626045227051,
+        0.5138764381408691,
+        0.04597996175289154,
+        0.045944757759571075
+      ],
+      3.4654780477285385
+    ],
+    "PutOnTable": [
+      [
+        0.4627680778503418,
+        0.4202703535556793,
+        1.335637092590332,
+        0.3446381092071533,
+        1.9071593284606934,
+        1.6769914627075195,
+        5.001112461090088,
+        0.01612686924636364,
+        0.01581929251551628
+      ],
+      13.050219714641571
+    ]
+  },
+  "low_level_search_time": 102.99860246200114
+}

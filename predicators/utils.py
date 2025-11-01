@@ -958,8 +958,7 @@ class LinearChainParameterizedOption(ParameterizedOption):
 
         # Only print when current_child changes
         if self._last_child is not current_child:
-            print(f"\nExecuting LinearChainParameterizedOption: {self._children}")
-            print(f"\nExecuting exact sub-option: {current_child}.")
+            print(f"\nExecuting exact sub-option: {current_child.name}.")
             self._last_child = current_child
 
         child_memory = memory["child_memory"][current_index]
@@ -970,8 +969,8 @@ class LinearChainParameterizedOption(ParameterizedOption):
             current_child = self._children[current_index]
             #Print when control moves to next child:
             if self._last_child is not current_child:
-                print(f"\nExecuting LinearChainParameterizedOption: {self._children}")
-                print(f"\nExecuting exact sub-option: {current_child}.")
+                logging.info(f"\nExecuting LinearChainParameterizedOption: {self._children}")
+                print(f"\nExecuting exact sub-option: {current_child.name}.")
                 self._last_child = current_child
             child_memory = memory["child_memory"][current_index]
             assert current_child.initiable(state, child_memory, objects,

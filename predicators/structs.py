@@ -122,6 +122,16 @@ class Type:
             return Variable(name, self)
         return Object(name, self)
 
+    def get_ancestors(self) -> Set[Type]:
+        """Get the set of all types that are ancestors (i.e. parents,
+        grandparents, great-grandparents, etc.) of the current type."""
+        curr_type: Optional[Type] = self
+        ancestors_set = set()
+        while curr_type is not None:
+            ancestors_set.add(curr_type)
+            curr_type = curr_type.parent
+        return ancestors_set
+
     def __hash__(self) -> int:
         return hash((self.name, tuple(self.feature_names)))
 
@@ -2355,7 +2365,8 @@ NSRTSampler = Callable[
 NSRTSamplerWithEpsilonIndicator = Callable[
     [State, Set[GroundAtom], np.random.Generator, Sequence[Object]],
     Tuple[Array, bool]]
-Metrics = DefaultDict[str, float]
+# Metrics = DefaultDict[str, float]
+Metrics = DefaultDict[str, Any]
 LiftedOrGroundAtom = TypeVar("LiftedOrGroundAtom", LiftedAtom, GroundAtom,
                              _Atom)
 NSRTOrSTRIPSOperator = TypeVar("NSRTOrSTRIPSOperator", NSRT, STRIPSOperator)

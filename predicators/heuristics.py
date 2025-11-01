@@ -516,7 +516,7 @@ class _RelaxedOperatorForH:
     def __init__(self, name, preconditions, add_effects, delete_effects=None):
         self.name = name
         self.preconditions = preconditions
-        self.remaining = set(preconditions)
+        # self.pre_set = set(preconditions)
         self.add_effects = add_effects
         if delete_effects is not None:
             self.delete_effects = delete_effects
@@ -547,7 +547,10 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
         self.state = None
 
         for op in task.operators:
-            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects)
+            if op.del_effects is not None:
+                ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.del_effects)
+            else:
+                ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects)
             self.operators.append(ro)
             for var in op.preconditions:
                 self.facts[var].precondition_of.append(ro)
@@ -596,8 +599,9 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             cost = 0
         if self.NAME == "HGEOMETRIC":
             # ipdb.set_trace()
-            return cost + geometric_eval.get_geometric_cost(operator, self.operators, self.facts,
+            geometric_cost = geometric_eval.get_geometric_cost(operator, self.operators, self.facts,
                                                              self.state, self.continuous_env)
+            return cost + geometric_cost
         return cost + operator.cost
 
     def _calc_goal_h(self):
@@ -638,42 +642,31 @@ class _PyperplanRelaxationHeuristicBase(Heuristic):
             
             if not fact.expanded:
                 for operator in fact.precondition_of:
-                    # ipdb.set_trace()
-                    if fact.name in operator.remaining:
-                        if fact.distance != float("inf"):
-                            operator.remaining.remove(fact.name)
-                        else:
-                            continue
-                        operator.counter -= 1
-                        #Process operator if all its pre-conditions are met:
-                        # if operator.counter <= 0:
-                        if not operator.remaining:
-                            for item in operator.preconditions:
-                                if self.facts[item].distance == float("inf"):
-                                    ipdb.set_trace()
-                            for n in operator.add_effects:
-                                neighbor = self.facts[n]
-                                tmp_dist = self._get_cost(operator)
-                                assert tmp_dist != float("inf"), f"\nNeighbour distance can't be \
-                                                                    inf when being pushed into the queue."
-                                #Update distance/h_max value for facts in
-                                #add effects if new value is less than 
-                                #current value.
-                                if tmp_dist < neighbor.distance:
-                                    neighbor.distance = tmp_dist
-                                    neighbor.cheapest_achiever = operator
-                                    heappush(
-                                        queue, (tmp_dist, self.tie_breaker, neighbor)
-                                    )
+                    # ipdb.set_trace()    
+                    operator.counter -= 1
+                    if operator.counter<=0:
+                        for n in operator.add_effects:
+                            neighbor = self.facts[n]
+                            tmp_dist = self._get_cost(operator)
+                            #Update distance/h_max value for facts in
+                            #add effects if new value is less than 
+                            #current value.
+                            if tmp_dist < neighbor.distance:
+                                neighbor.distance = tmp_dist
+                                neighbor.cheapest_achiever = operator
+                                heappush(
+                                    queue, (tmp_dist, self.tie_breaker, neighbor)
+                                )
 
-                                    self.tie_breaker += 1
+                                self.tie_breaker += 1
+            
 
                 fact.expanded = True
 
-            if self.finished(achieved_goals, queue):
-                # ipdb.set_trace()
-                print(f"\nAt the end of current loop, Finished returns:\
-                                             {self.finished(achieved_goals, queue)}.")
+            # if self.finished(achieved_goals, queue):
+            #     # ipdb.set_trace()
+            #     print(f"\nAt the end of current loop, Finished returns:\
+            #                                  {self.finished(achieved_goals, queue)}.")
 
 
 # Now, the H_max and H_add heuristics are mere wrappers around the _PyperplanRelaxationHeuristicBase.
@@ -711,15 +704,15 @@ class HAddGeometricHeuristic(_PyperplanRelaxationHeuristicBase):
     def __init__(self, task: _PyperplanTask, continuous_env: BlocksEnv):
         super().__init__(task)
 
-        self.operators = []
+        # self.operators = []
 
-        for op in task.operators:
-            ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.del_effects)
-            self.operators.append(ro)
-            for var in op.preconditions:
-                self.facts[var].precondition_of.append(ro)
-            if not op.preconditions:
-                self.start_state.precondition_of.append(ro)
+        # for op in task.operators:
+        #     ro = _RelaxedOperatorForH(op.name, op.preconditions, op.add_effects, op.del_effects)
+        #     self.operators.append(ro)
+        #     for var in op.preconditions:
+        #         self.facts[var].precondition_of.append(ro)
+        #     if not op.preconditions:
+        #         self.start_state.precondition_of.append(ro)
 
         self.eval = sum
         self.NAME = "HGEOMETRIC"

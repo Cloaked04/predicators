@@ -14,6 +14,8 @@ import sys
 import tempfile
 import time
 import ipdb
+import json
+from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import islice
@@ -130,6 +132,8 @@ def sesame_plan(
     only consider at most one skeleton, and DiscoveredFailures cannot be
     handled.
     """
+    # heuristic_method = "hadd"
+    # heuristic_method = "lmcut"
     heuristic_method = "haddgeometric"
     if CFG.sesame_task_planner == "astar":
         return _sesame_plan_with_astar(
@@ -185,7 +189,7 @@ def _sesame_plan_with_astar(
     check_dr_reachable: bool = True,
     allow_noops: bool = False,
     use_visited_state_set: bool = False,
-    continuous_env: Optional[BlocksEnv] = None
+    continuous_env: Optional[BlocksEnv] = None,
 ) -> Tuple[List[_Option], List[_GroundNSRT], Metrics]:
     """The default version of SeSamE, which runs A* to produce skeletons."""
 
@@ -240,32 +244,51 @@ def _sesame_plan_with_astar(
         # elif heuristic_method == "hadd":
         #     heuristic = HAddHeuristic(init_atoms, task.goal, reachable_nsrts)
         elif heuristic_method == "lmcut":
-             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="lmcut")
+            heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="lmcut")
         #Some bug in the search process; very slow.
         elif heuristic_method == "hmax":
-             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hmax")
+            heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hmax")
         elif heuristic_method == "hadd":
-             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hadd")
+            heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, heuristic_type="hadd")
         elif heuristic_method == "haddgeometric":
-             heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, continuous_env,
+            heuristic = CombinedHeuristic(init_atoms, task.goal, reachable_nsrts, predicates, objects, continuous_env,
                                             heuristic_type="haddgeometric")
-
         else:
             raise ValueError(f"Unrecognized heuristic_method: {heuristic_method}")
 
 
-
+        # If you just wish to print the plan cost, along with 
+        # set the symbolic_plan_only to True.
+        # symbolic_plan_only = True
+        
 
         try:
             new_seed = seed + int(metrics["num_failures_discovered"])
+
+            # if symbolic_plan_only:
+            #     # return_plan_cost = True
+            #     gen = _skeleton_generator(
+            #         task, reachable_nsrts, init_atoms, heuristic, new_seed,
+            #         timeout - (time.perf_counter() - start_time), metrics,
+            #         max_skeletons_optimized, abstract_policy,
+            #         max_policy_guided_rollout, use_visited_state_set,
+            #         continuous_init_state=continuous_env)
+
+            #     gen_iter = 0
+            #     for skeleton, _ in gen:
+            #         print(f"\n Plan skeleton: {skeleton}.")
+            #         cum_cost = metrics["cumulative_cost"][gen_iter]
+            #         print(f"\n Plan cumulative cost: {cum_cost}.")
+            #         gen_iter+=1
+            #         ipdb.set_trace()
+
             gen = _skeleton_generator(
                 task, reachable_nsrts, init_atoms, heuristic, new_seed,
                 timeout - (time.perf_counter() - start_time), metrics,
                 max_skeletons_optimized, abstract_policy,
                 max_policy_guided_rollout, use_visited_state_set,
-                continuous_env)
+                continuous_init_state=continuous_env)
 
-            #print(gen)
             # If a refinement cost estimator is provided, generate a number of
             # skeletons first, then predict the refinement cost of each skeleton
             # and attempt to refine them in this order.
@@ -283,10 +306,9 @@ def _sesame_plan_with_astar(
                            key=lambda s: estimator.get_cost(task, *s)))
             # Refinement section: goes over each plan and tries to refine it using 
             # run_low_level_search.
-            input("Symbolic planning complete.")
-            ipdb.set_trace()
             refinement_start_time = time.perf_counter()
             for skeleton, atoms_sequence in gen:
+                # input("Symbolic planning complete.")
                 # ipdb.set_trace()
                 if CFG.sesame_use_necessary_atoms:
                     atoms_seq = utils.compute_necessary_atoms_seq(
@@ -299,6 +321,51 @@ def _sesame_plan_with_astar(
                     max_horizon)
                 if suc:
                     # Success! It's a complete plan.
+
+                    # ----------Dump desired fields from metrics to json--------
+
+                    def prepare_metrics_for_json(metrics: dict) -> dict:  
+                        """Convert GroundAtom objects to strings for JSON serialization."""  
+                        metrics_copy = dict(metrics)  
+                          
+                        # Handle yielded_skeletons  
+                        if 'yielded_skeletons' in metrics_copy:  
+                            converted_skeletons = []  
+                            for skel_data in metrics_copy['yielded_skeletons']:  
+                                converted_skel = {  
+                                    'skeleton': skel_data['skeleton'],  # Already strings  
+                                    'atoms_sequence': [  
+                                        [str(atom) for atom in atoms_set]   
+                                        for atoms_set in skel_data['atoms_sequence']  
+                                    ]  
+                                }  
+                                converted_skeletons.append(converted_skel)  
+                            metrics_copy['yielded_skeletons'] = converted_skeletons 
+
+                        if 'execution_times' in metrics_copy:
+
+                            converted_times = {}  
+                            for action_name, time_data in metrics_copy['execution_times'].items():  
+                                if isinstance(time_data, tuple):  
+                                    # Convert each element of the tuple  
+                                    converted_tuple = []  
+                                    for item in time_data:  
+                                        if isinstance(item, np.ndarray):  
+                                            converted_tuple.append(item.tolist())  
+                                        else:  
+                                            converted_tuple.append(float(item) if not isinstance(item, (list, dict)) else item)  
+                                    converted_times[action_name] = tuple(converted_tuple)  
+                                else:  
+                                    converted_times[action_name] = time_data  
+                            metrics_copy['execution_times'] = converted_times
+                        return metrics_copy
+
+                    converted_metrics = prepare_metrics_for_json(metrics)
+
+                    with open(f"Execution_time/sequential_four_tables/haddgeometric/task_metrics_{time.perf_counter()}.json", 'w') as f:
+                        json.dump(converted_metrics, f, indent=2)
+                    #-----------------------------------------------------------
+
                     logging.info(
                         f"Planning succeeded! Found plan of length "
                         f"{len(plan)} after "
@@ -392,6 +459,7 @@ def filter_nsrts(
     # NSRT's add_effects to the set of init_atoms.
     all_reachable_atoms = utils.get_reachable_atoms(nonempty_ground_nsrts,
                                                     init_atoms)
+    
     if check_dr_reachable and not task.goal.issubset(all_reachable_atoms):
         raise PlanningFailure(f"Goal {task.goal} not dr-reachable")
 
@@ -491,8 +559,9 @@ def _skeleton_generator(
     max_skeletons_optimized: int,
     abstract_policy: Optional[AbstractPolicy] = None,
     sesame_max_policy_guided_rollout: int = 0,
-    use_visited_state_set: bool = False,
-    continuous_init_state: Optional[State] = None
+    use_visited_state_set: bool = True,
+    continuous_init_state: Optional[State] = None,
+    return_plan_cost: Optional[bool] = False
 ) -> Iterator[Tuple[List[_GroundNSRT], List[Set[GroundAtom]]]]:
     """A* search over skeletons (sequences of ground NSRTs).
     Iterates over pairs of (skeleton, atoms sequence).
@@ -542,7 +611,31 @@ def _skeleton_generator(
         if int(metrics["num_skeletons_optimized"]) == max_skeletons_optimized:
             raise _MaxSkeletonsFailure(
                 "Planning reached max_skeletons_optimized!")
-        _, _, node = hq.heappop(queue)
+        # _, _, node = hq.heappop(queue)
+        priority, _, node = hq.heappop(queue)
+
+        #------------------------------------------------------------#
+        # Save node expansion data  
+        if "expansion_data" not in metrics:  
+            metrics["expansion_data"] = []
+
+        expansion_data = {  
+            'node_id': id(node),  
+            'parent_id': id(node.parent) if node.parent else None,  
+            'skeleton': [nsrt.name for nsrt in node.skeleton],  
+            'skeleton_length': len(node.skeleton),  
+            'cumulative_cost': node.cumulative_cost,  
+            'heuristic_value': priority - node.cumulative_cost,
+            'num_atoms': len(node.atoms),  
+            'atoms': [str(atom) for atom in node.atoms],
+            'is_goal': task.goal.issubset(node.atoms),  
+            'queue_size': len(queue),  
+            'total_nodes_created': metrics["num_nodes_created"],  
+            'total_nodes_expanded': metrics["num_nodes_expanded"],  
+        }
+        metrics["expansion_data"].append(expansion_data)
+        #--------------------------------------------------------------#
+
         if use_visited_state_set:
             frozen_atoms = frozenset(node.atoms)
             visited_atom_sets.add(frozen_atoms)
@@ -554,6 +647,21 @@ def _skeleton_generator(
         if task.goal.issubset(node.atoms):
             # If this skeleton satisfies the goal, yield it.
             metrics["num_skeletons_optimized"] += 1
+
+            #-------- Collect skeleton data in metrics -------------------------  
+            if "yielded_skeletons" not in metrics:  
+                metrics["yielded_skeletons"] = []  
+            metrics["yielded_skeletons"].append({  
+                'skeleton': [nsrt.name for nsrt in node.skeleton],  
+                'atoms_sequence': [list(atoms) for atoms in node.atoms_sequence]  
+            })
+            if "cumulative_cost" not in metrics:
+                metrics["cumulative_cost"] = []
+            metrics["cumulative_cost"].append(node.cumulative_cost)
+            if "symbolic_planning_time" not in metrics:
+                metrics["symbolic_planning_time"] = time.perf_counter() - start_time
+            #------------------------------------------------------------------
+
             yield node.skeleton, node.atoms_sequence
         else:
             # Generate successors.
@@ -621,13 +729,17 @@ def _skeleton_generator(
                     continue
                 visited_skeletons.add(child_skeleton_tup)
                 # Action costs are unitary.(Pratyush: Not any more.-)
-                if isinstance(heuristic, HAddGeometricHeuristic):
+                # ipdb.set_trace()
+                if heuristic.heuristic_type == "haddgeometric":
+                    nsrt_name = nsrt.name
+                    for obj in nsrt.objects:
+                        nsrt_name+=obj.name
                     child_cost = node.cumulative_cost + \
                                 geometric_eval.get_geometric_cost_while_search(ground_nsrts, 
-                                                                               nsrt.name,
+                                                                               nsrt_name,
                                                                                init_atoms,
                                                                                node.atoms,
-                                                                               continuous_env)
+                                                                               continuous_init_state)
                 else:
                     child_cost = node.cumulative_cost + 1.0
                 child_node = _Node(atoms=child_atoms,
@@ -650,6 +762,7 @@ def _skeleton_generator(
 
 
                 hq.heappush(queue, (priority, rng_prio.uniform(), child_node))
+                print(f"Current queue length: {len(queue)}")
                 if time.perf_counter() - start_time >= timeout:
                     break
     if not queue:
@@ -711,6 +824,9 @@ def run_low_level_search(
         None for _ in skeleton
     ]
     plan_found = False
+    # List to store actions
+    action_list = []
+    action_added = [False for _ in skeleton] 
     while cur_idx < len(skeleton):
         if time.perf_counter() - start_time > timeout:
             return longest_failed_refinement, False
@@ -727,6 +843,7 @@ def run_low_level_search(
         # The NSRT.sample_option method samples params for objects
         # within their param_space and returns the grounded option.
         option = nsrt.sample_option(state, task.goal, rng_sampler)
+        # ipdb.set_trace()
         plan[cur_idx] = option
         # Increment num_samples metric by 1
         metrics["num_samples"] += 1
@@ -735,7 +852,9 @@ def run_low_level_search(
         # ipdb.set_trace()
         if option.initiable(state):
             try:
-                next_state, num_actions = \
+                # next_state, num_actions = \
+                #     option_model.get_next_state_and_num_actions(state, option)
+                next_state, num_actions, curr_actions = \
                     option_model.get_next_state_and_num_actions(state, option)
             except EnvironmentFailure as e:
                 can_continue_on = False
@@ -783,6 +902,9 @@ def run_low_level_search(
                     # utils.abstract(traj[cur_idx], predicates).
                     if all(a.holds(traj[cur_idx]) for a in expected_atoms):
                         can_continue_on = True
+                        # Save the action becuase we can move forward.
+                        action_added[cur_idx - 1] = True 
+                        action_list.append((option.name, curr_actions))
                         if cur_idx == len(skeleton):
                             plan_found = True
                     else:
@@ -791,6 +913,9 @@ def run_low_level_search(
                     # If we're not checking expected_atoms, we need to
                     # explicitly check the goal on the final timestep.
                     can_continue_on = True
+                    # Save the action becuase we can move forward.
+                    action_added[cur_idx - 1] = True 
+                    action_list.append((option.name, curr_actions))
                     if cur_idx == len(skeleton):
                         if task.goal_holds(traj[cur_idx]):
                             plan_found = True
@@ -803,6 +928,57 @@ def run_low_level_search(
             try_end_time = time.perf_counter()
             refinement_time[cur_idx - 1] += try_end_time - try_start_time
         if plan_found:
+            #Process the actions to get execution time:
+            execution_times = {}
+            # ipdb.set_trace()
+            for option_name, motion_plans in action_list:
+                if 'move' in option_name.lower():
+                    # Compute time based on distance moved
+                    total_distance = []
+                    for i in range(len(motion_plans)-1):
+                        current_base_pose = np.array(motion_plans[i].extra_info['base_motion']['params'][:2])
+                        next_base_pose = np.array(motion_plans[i+1].extra_info['base_motion']['params'][:2])
+                        step_size = np.linalg.norm(next_base_pose-current_base_pose)
+                        total_distance.append(step_size)
+                    # Assuming a speed of 0.3 m/s
+                    travel_speed = sum(total_distance)/0.3
+                    execution_times[option_name] = (sum(total_distance), travel_speed)
+                    # ipdb.set_trace()
+
+                else:
+                    # Compute the time taken for arm motion based
+                    # on waypoints
+                    joint_speed = 0.4 # rad/s
+                    v_joints = np.full(7, joint_speed, dtype=float)
+                    total_dist = 0.0
+                    total_time = 0.0
+
+                    for i in range(len(motion_plans)-1):
+                        arr_next = motion_plans[i+1]._arr
+                        arr_curr = motion_plans[i]._arr
+                        diff_q = np.abs(arr_next - arr_curr)
+                        total_dist+=diff_q
+                        # segment_length = float(np.linalg.norm(diff_q, ord=2))
+                        segment_time = float(np.max(diff_q[:7]/v_joints))
+                        # total+=segment_length / arm_speed
+                        total_time+=segment_time
+                    execution_times[option_name] = (total_dist, total_time)
+
+            metrics["execution_times"] = execution_times
+
+            if "low_level_search_time" not in metrics:
+                metrics['low_level_search_time'] = time.perf_counter() - start_time
+
+            # Dump the time in a file and exit the code.
+            # import json
+            # from pathlib import Path
+
+            # FILE = Path("cluttered_table2.jsonl")
+
+            # with FILE.open("a") as f:
+            #     f.write(json.dumps(execution_times)+"\n")
+                # sys.exit(0)
+
             return plan, True  # success!
         if not can_continue_on:  # we got stuck, time to resample / backtrack!
             # Update the longest_failed_refinement found so far.
@@ -820,6 +996,11 @@ def run_low_level_search(
                     {"longest_failed_refinement": longest_failed_refinement})
             # Decrement cur_idx to re-do the step we just did. If num_tries
             # is exhausted, backtrack.
+            # Pop the last action store because we are backtracking
+            # only if this step had added an action  
+            if action_added[cur_idx - 1] and len(action_list) != 0:  
+                action_list.pop()  
+                action_added[cur_idx - 1] = False
             cur_idx -= 1
             assert cur_idx >= 0
             while num_tries[cur_idx] == max_tries[cur_idx]:
@@ -827,6 +1008,11 @@ def run_low_level_search(
                 plan[cur_idx] = DummyOption
                 num_actions_per_option[cur_idx] = 0
                 traj[cur_idx + 1] = DefaultState
+                # Pop action for this backtracked step  
+                # if this step had added an action  
+                if action_added[cur_idx] and len(action_list) != 0:  
+                    action_list.pop()  
+                    action_added[cur_idx] = False 
                 cur_idx -= 1
                 if cur_idx < 0:
                     # Backtracking exhausted. If we're only propagating failures

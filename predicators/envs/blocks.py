@@ -481,7 +481,8 @@ class BlocksEnv(BaseEnv):
 
     def _get_held_block(self, state: State) -> Optional[Object]:
         for block in state:
-            if not block.is_instance(self._block_type):
+            if not (block.is_instance(self._block_type) or 
+                        block.is_instance(self._goal_obj_type)):
                 continue
             if state.get(block, "held") >= self.held_tol:
                 return block

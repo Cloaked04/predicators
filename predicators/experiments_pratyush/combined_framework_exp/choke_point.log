@@ -1,0 +1,4549 @@
+pybullet build time: Jan 29 2025 23:16:28
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Collides with body id:3.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Collides with body id:3.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Collides with body id:3.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Collides with body id:3.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Collides with body id:3.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Collides with body id:3.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Collides with body id:2.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:4.
+
+Collides with body id:4.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Collides with body id:5.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPrePutOnTable.
+
+Executing exact sub-option: MoveEndEffectorToPutOnTable.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostPutOnTable.
+Planning completed successfully!
+
+Blocks with corresponding ids: {6: block0_0_0:block, 7: block1_0_0:block, 8: block2_0_0:block, 9: block3_0_0:block}.
+
+Goal objects with corresponding ids: {}
+
+Tables with corresponding ids: {2: table0:table, 3: table1:table, 4: table2:table, 5: table3:table}.
+Starting TAMP planning with bilevel approach...
+Current queue length: 1
+Current queue length: 2
+Current queue length: 3
+Current queue length: 4
+Current queue length: 4
+Current queue length: 5
+Current queue length: 6
+Current queue length: 7
+Current queue length: 7
+Current queue length: 8
+Current queue length: 9
+Current queue length: 10
+Current queue length: 10
+Current queue length: 11
+Current queue length: 12
+Current queue length: 13
+Current queue length: 13
+Current queue length: 14
+Current queue length: 15
+Current queue length: 16
+Current queue length: 16
+Current queue length: 17
+Current queue length: 18
+Current queue length: 19
+Current queue length: 19
+Current queue length: 20
+Current queue length: 21
+Current queue length: 22
+Current queue length: 22
+Current queue length: 23
+Current queue length: 24
+Current queue length: 25
+Current queue length: 25
+Current queue length: 26
+Current queue length: 27
+Current queue length: 28
+Current queue length: 28
+Current queue length: 29
+Current queue length: 30
+Current queue length: 31
+Current queue length: 31
+Current queue length: 32
+Current queue length: 33
+Current queue length: 34
+Current queue length: 34
+Current queue length: 35
+Current queue length: 36
+Current queue length: 37
+Current queue length: 37
+Current queue length: 38
+Current queue length: 39
+Current queue length: 40
+Current queue length: 41
+Current queue length: 41
+Current queue length: 42
+Current queue length: 43
+Current queue length: 44
+Current queue length: 44
+Current queue length: 45
+Current queue length: 46
+Current queue length: 47
+Current queue length: 47
+Current queue length: 48
+Current queue length: 49
+Current queue length: 50
+Current queue length: 51
+Current queue length: 51
+Current queue length: 52
+Current queue length: 53
+Current queue length: 54
+Current queue length: 55
+Current queue length: 55
+Current queue length: 56
+Current queue length: 57
+Current queue length: 57
+Current queue length: 58
+Current queue length: 59
+Current queue length: 60
+Current queue length: 60
+Current queue length: 61
+Current queue length: 62
+Current queue length: 63
+Current queue length: 63
+Current queue length: 64
+Current queue length: 65
+Current queue length: 66
+Current queue length: 66
+Current queue length: 67
+Current queue length: 68
+Current queue length: 69
+Current queue length: 69
+Current queue length: 70
+Current queue length: 71
+Current queue length: 72
+Current queue length: 73
+
+Executing exact sub-option: MoveRobot.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Executing exact sub-option: MoveEndEffectorToPreGrasp.
+
+Executing exact sub-option: OpenFingers.
+
+Executing exact sub-option: MoveEndEffectorToGrasp.
+
+Executing exact sub-option: CloseFingers.
+
+Executing exact sub-option: MoveEndEffectorBackUpPostGrasp.
+
+Collides with body id:2.
+Traceback (most recent call last):
+  File "/home/cloaked04/projects/predicators/predicators/experiments_pratyush/combined_framework_exp/choke_point_four_tables_exp.py", line 164, in <module>
+    policy = approach.solve(task, timeout=20000, continuous_env=env)
+  File "/home/cloaked04/projects/predicators/predicators/approaches/base_approach.py", line 73, in solve
+    pi = self._solve(task, timeout, **kwargs)
+  File "/home/cloaked04/projects/predicators/predicators/approaches/bilevel_planning_approach.py", line 78, in _solve
+    option_plan, nsrt_plan, metrics = self._run_sesame_plan(
+  File "/home/cloaked04/projects/predicators/predicators/approaches/bilevel_planning_approach.py", line 103, in _run_sesame_plan
+    option_plan, nsrt_plan, metrics = sesame_plan(
+  File "/home/cloaked04/projects/predicators/predicators/planning.py", line 139, in sesame_plan
+    return _sesame_plan_with_astar(
+  File "/home/cloaked04/projects/predicators/predicators/planning.py", line 318, in _sesame_plan_with_astar
+    plan, suc = run_low_level_search(
+  File "/home/cloaked04/projects/predicators/predicators/planning.py", line 858, in run_low_level_search
+    option_model.get_next_state_and_num_actions(state, option)
+  File "/home/cloaked04/projects/predicators/predicators/option_model.py", line 127, in get_next_state_and_num_actions
+    traj = utils.run_policy_with_simulator(
+  File "/home/cloaked04/projects/predicators/predicators/utils.py", line 1252, in run_policy_with_simulator
+    act = policy(state)
+  File "/home/cloaked04/projects/predicators/predicators/structs.py", line 816, in policy
+    action = self._policy(state)
+  File "/home/cloaked04/projects/predicators/predicators/structs.py", line 756, in <lambda>
+    lambda s: self.policy(s, memory, objects, params),
+  File "/home/cloaked04/projects/predicators/predicators/utils.py", line 978, in _policy
+    return current_child.policy(state, child_memory, objects, params)
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/controllers.py", line 2496, in _policy
+    _plan_and_cache_base_motion(robot, state, objects, memory, planning_seed)
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/controllers.py", line 2456, in _plan_and_cache_base_motion
+    base_path_waypoints: List[Tuple[float, float, float]] = run_coordinated_motion_planning(
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/motion_planning.py", line 943, in run_coordinated_motion_planning
+    joint_solution_above_target = robot.inverse_kinematics(
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/robots/single_arm.py", line 491, in inverse_kinematics
+    joint_positions = self._ikfast_inverse_kinematics(
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/robots/single_arm.py", line 443, in _ikfast_inverse_kinematics
+    ik_solutions = ikfast_closest_inverse_kinematics(
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/ikfast/utils.py", line 393, in ikfast_closest_inverse_kinematics
+    candidate_solutions = list(generator)
+  File "/home/cloaked04/projects/predicators/predicators/pybullet_helpers/ikfast/utils.py", line 303, in ikfast_inverse_kinematics
+    elapsed_time = time.perf_counter() - start_time
+KeyboardInterrupt

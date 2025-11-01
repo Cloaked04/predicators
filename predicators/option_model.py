@@ -22,12 +22,14 @@ from predicators.envs.blocks import BlocksEnv
 from predicators.pybullet_helpers.robots.single_arm import SingleArmPyBulletRobot
 
 
-def create_option_model(name: str) -> _OptionModelBase:
+def create_option_model(name: str, 
+                        use_num_goal_items: Optional[Dict[int, List[int]]] = None) -> _OptionModelBase:
     """Create an option model given its name."""
     if name == "oracle":
         env = create_new_env(CFG.env,
                              do_cache=False,
-                             use_gui=CFG.option_model_use_gui)
+                             use_gui=CFG.option_model_use_gui,
+                             use_num_goal_items=use_num_goal_items)
         robot = env._pybullet_robot
         if env.get_name() in CFG.envs_with_planning_option:
             options = get_gt_options(env.get_name(), robot=robot, env_obj=env)
@@ -132,9 +134,11 @@ class _OracleOptionModel(_OptionModelBase):
             # If there is a failure during the execution of the option, treat
             # this as a noop.
             # ipdb.set_trace()
-            return state, 0
+            # return state, 0
+            return state, 0, 0
         # Note that in the case of using a PyBullet environment, the
         # second return value (num_actions) will be an underestimate
         # since we are not actually rolling out the option in the full
         # simulator, but that's okay; it leads to optimistic planning.
-        return traj.states[-1], len(traj.actions)
+        # return traj.states[-1], len(traj.actions)
+        return traj.states[-1], len(traj.actions), traj.actions

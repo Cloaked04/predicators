@@ -389,6 +389,7 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
         robot_type = types["robot"]
         block_type = types["block"]
         table_type = types["table"]
+        goal_obj_type = types["goal"]
         block_size = CFG.blocks_block_size
 
         physics_client_id = env._physics_client_id
@@ -491,11 +492,105 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                     physics_client_id=physics_client_id),
             ])
 
+
+        # PickGoalObj
+        option_types = [robot_type, goal_obj_type]
+        params_space = Box(0, 1, (2, ))
+        PickGoalObj = utils.LinearChainParameterizedOption(
+            "PickGoalObj",
+            [
+                # Move to far above the block which we will grasp.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorToPreGrasp",
+                    z_func=lambda z: (z+0.2),
+                    finger_status="open",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Open fingers.
+                create_change_fingers_option(
+                    robot, "OpenFingers", option_types, params_space,
+                    open_fingers_func, CFG.pybullet_max_vel_norm,
+                    PyBulletBlocksEnv.grasp_tol, env=env),
+                # Move down to grasp.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorToGrasp",
+                    z_func=lambda z: (z + cls._offset_z),
+                    finger_status="open",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Close fingers.
+                create_change_fingers_option(
+                    robot, "CloseFingers", option_types, params_space,
+                    close_fingers_func, CFG.pybullet_max_vel_norm,
+                    PyBulletBlocksEnv.grasp_tol, env=env),
+                # Move back up.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorBackUpPostGrasp",
+                    z_func=lambda z: (z+0.2),
+                    finger_status="closed",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+            ])
+
+
         # Stack
         option_types = [robot_type, block_type, table_type]
         params_space = Box(0, 1, (2, ))
         Stack = utils.LinearChainParameterizedOption(
             "Stack",
+            [
+                # Move to above the block on which we will stack.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorToPreStack",
+                    z_func=lambda z: (z+0.2),
+                    finger_status="closed",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Move down to place.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorToStack",
+                    z_func=lambda block_z:
+                    (block_z + block_size + cls._offset_z),
+                    finger_status="closed",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Open fingers.
+                create_change_fingers_option(
+                    robot, "OpenFingers", option_types, params_space,
+                    open_fingers_func, CFG.pybullet_max_vel_norm,
+                    PyBulletBlocksEnv.grasp_tol, env=env),
+                # Move back up.
+                cls._create_move_arm_to_above_block_option(
+                    name="MoveEndEffectorBackUpPostStack",
+                    z_func=lambda z: (z+0.2),
+                    finger_status="open",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+            ])
+
+        # StackOnGoalObj
+        option_types = [robot_type, goal_obj_type, table_type]
+        params_space = Box(0, 1, (2, ))
+        StackOnGoalObj = utils.LinearChainParameterizedOption(
+            "StackOnGoalObj",
             [
                 # Move to above the block on which we will stack.
                 cls._create_move_arm_to_above_block_option(
@@ -580,7 +675,53 @@ class PyBulletMultiTableBlocksGroundTruthOptionFactory(GroundTruthOptionFactory)
                     physics_client_id=physics_client_id),
             ])
 
-        return {MoveTo, MoveToPick, Pick, Stack, PutOnTable}
+
+        # PutGoalObjOnTable
+        option_types = [robot_type, table_type, goal_obj_type]
+        params_space = Box(0, 1, (2, ))
+        place_z = PyBulletBlocksEnv.table_height + \
+            block_size / 2 + cls._offset_z
+        PutGoalObjOnTable = utils.LinearChainParameterizedOption(
+            "PutGoalObjOnTable",
+            [
+                # Move to above the table at the (x, y) where we will place.
+                cls._create_move_arm_to_above_table_option(
+                    name="MoveEndEffectorToPrePutOnTable",
+                    z=0.3,
+                    finger_status="closed",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Move down to place.
+                cls._create_move_arm_to_above_table_option(
+                    name="MoveEndEffectorToPutOnTable",
+                    z=place_z,
+                    finger_status="closed",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+                # Open fingers.
+                create_change_fingers_option(
+                    robot, "OpenFingers", option_types, params_space,
+                    open_fingers_func, CFG.pybullet_max_vel_norm,
+                    PyBulletBlocksEnv.grasp_tol, env=env),
+                # Move back up.
+                cls._create_move_arm_to_above_table_option(
+                    name="MoveEndEffectorBackUpPostPutOnTable",
+                    z=0.3,
+                    finger_status="open",
+                    robot=robot,
+                    option_types=option_types,
+                    params_space=params_space,
+                    env=env,
+                    physics_client_id=physics_client_id),
+            ])
+
+        return {MoveTo, MoveToPick, Pick, PickGoalObj, Stack, StackOnGoalObj, PutOnTable, PutGoalObjOnTable}
 
 
     @classmethod

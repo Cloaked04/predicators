@@ -1517,6 +1517,7 @@ def create_arm_motion_planning_option(
         # time.sleep(0.1)
         waypoints: Optional[Sequence[JointPositions]] = None
         held_obj_id = env._held_obj_id
+        # ipdb.set_trace()
         base_link_to_held_object = None
         filtered_collision_bodies = collision_bodies
         if held_obj_id is not None:
@@ -2378,9 +2379,9 @@ def create_base_reset_based_move_base_option(
         # Sync PyBullet state to planner state before planning
         # as it's only set to planner state when env.simulate_state
         # is called.
+        # ipdb.set_trace()
         env.reset_state(state)
         time.sleep(0.1)
-
         held_object_id_at_start = env._held_obj_id
         ee_to_held_object_transform_at_start = None
         filtered_collision_bodies = list(collision_bodies)
@@ -2425,7 +2426,8 @@ def create_base_reset_based_move_base_option(
                                      state.get(table, "pose_y"),
                                      state.get(table, "pose_z"))
 
-        target_z = table_z+0.4
+        # target_z = table_z+0.4
+        target_z = table_z+0.5
 
         # x_workspace = (table_x-0.125, table_x+0.125)
         # y_workspace = (table_y-0.2, table_y+0.2)

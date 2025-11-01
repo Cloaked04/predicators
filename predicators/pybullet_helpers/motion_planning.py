@@ -350,6 +350,7 @@ def run_base_motion_planning(
         # Check robot body collisions
         for body_id in collision_bodies:
             if p.getContactPoints(robot.robot_id, body_id, physicsClientId=physics_client_id):
+                # print(f"\nCollision with body id:{body_id} while executing rrt.")
                 collides = True
                 break
         
@@ -945,7 +946,7 @@ def run_coordinated_motion_planning(
                 if joint_solution_above_target is not None:
 
                     #logger.info(f"\n IK SUCCESSFUL. Proceeding to check collision for joint solution: {joint_solution_above_target}.")
-                    print(f"\nIK Succeeded for Target EE position: {pose_above_target} at test pose: {test_pose}." )
+                    logger.info(f"\nIK Succeeded for Target EE position: {pose_above_target} at test pose: {test_pose}." )
 
                     # candidate_base_poses.append(test_pose)
                     # #candidate_joint_solutions[test_pose] = candidate_joint_solution
