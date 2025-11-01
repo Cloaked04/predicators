@@ -942,7 +942,7 @@ def run_low_level_search(
                         total_distance.append(step_size)
                     # Assuming a speed of 0.3 m/s
                     travel_speed = sum(total_distance)/0.3
-                    execution_times[option_name] = (sum(total_distance), travel_speed)
+                    execution_times[option_name+str(len(execution_times))] = (sum(total_distance), travel_speed)
                     # ipdb.set_trace()
 
                 else:
